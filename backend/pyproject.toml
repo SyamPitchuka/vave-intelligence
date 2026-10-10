@@ -1,0 +1,22 @@
+[project]
+name = "vave-intelligence"
+version = "1.0.0"
+description = "VAVE Intelligence — idea management, duplicate detection, and engineering knowledge copilot"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+  "integration: tests that need PostgreSQL with pgvector",
+  "external: tests that need a live OpenAI key or a running Ollama model",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
