@@ -22,7 +22,12 @@ export function ImportPage() {
   const [partial, setPartial] = useState(false);
   const [batch, setBatch] = useState<ImportBatch | null>(null);
   const [confirm, setConfirm] = useState(false);
+  const [localFile, setLocalFile] = useState("");
   const batches = useQuery({ queryKey: ["import-batches"], queryFn: () => api<{ items: ImportBatch[] }>("/api/v1/ideas/import/batches") });
+  const localFolder = useQuery({
+    queryKey: ["local-folder"],
+    queryFn: () => api<{ folder: string; items: { name: string; size_bytes: number; suffix: string }[] }>("/api/v1/local-folder"),
+  });
 
   const preview = useMutation({
     mutationFn: async () => {
@@ -48,6 +53,25 @@ export function ImportPage() {
       queryClient.invalidateQueries({ queryKey: ["import-batches"] });
     },
   });
+  const loadLocal = useMutation({
+    mutationFn: async () => {
+      if (!localFile) throw new Error("Choose a file from the local folder.");
+      return api<ImportBatch>("/api/v1/ideas/import/from-folder", {
+        method: "POST",
+        body: JSON.stringify({
+          filename: localFile,
+          sheet_name: sheet || null,
+          merge_strategy: strategy,
+          is_synthetic: synthetic,
+          allow_partial: partial,
+        }),
+      });
+    },
+    onSuccess: (next) => {
+      setBatch(next);
+      queryClient.invalidateQueries({ queryKey: ["import-batches"] });
+    },
+  });
   const rollback = useMutation({
     mutationFn: (id: string) => api<ImportBatch>(`/api/v1/ideas/import/batches/${id}/rollback`, { method: "POST" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["import-batches"] }),
@@ -57,8 +81,26 @@ export function ImportPage() {
     <div className="space-y-4">
       <PageHeader
         title="Import data"
-        description="Map columns, review row errors, and confirm before anything is written. Historical rows are not overwritten silently."
+        description="Map columns, review row errors, and confirm before anything is written. Historical rows are not overwritten silently. Files you place in data/local can be loaded by name."
       />
+      <section className="card space-y-3 p-4" aria-label="Local folder">
+        <h2 className="text-sm font-semibold">Load from local folder</h2>
+        <p className="text-sm text-muted">Folder: {localFolder.data?.folder ?? "data/local"}. Put a CSV or XLSX file there, then load it. The server will not read a path outside this folder.</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-64 flex-1">
+            <Label htmlFor="local-file">File in data/local</Label>
+            <Select id="local-file" value={localFile} onChange={(event) => setLocalFile(event.target.value)}>
+              <option value="">Select a file</option>
+              {(localFolder.data?.items ?? []).filter((item) => item.suffix === ".xlsx" || item.suffix === ".csv").map((item) => (
+                <option key={item.name} value={item.name}>{item.name}</option>
+              ))}
+            </Select>
+          </div>
+          <Button type="button" variant="secondary" onClick={() => loadLocal.mutate()} disabled={!localFile || loadLocal.isPending}>Load selected file</Button>
+        </div>
+        {localFolder.isError ? <ErrorState message={errorMessage(localFolder.error)} onRetry={() => localFolder.refetch()} /> : null}
+        {loadLocal.isError ? <p className="text-sm text-rose-700">{errorMessage(loadLocal.error)}</p> : null}
+      </section>
       <form
         className="card space-y-4 p-4"
         onSubmit={(event) => {

@@ -53,6 +53,7 @@ from app.services.ideas.service import create_submission, list_ideas, load_idea,
 from app.services.imports.service import build_preview, commit_batch, rollback_batch
 from app.services.llm_providers.factory import build_chat_provider, build_embedding_provider
 from app.services.llm_providers.fallback import DeterministicEmbeddingProvider, FallbackChatProvider
+from app.services.local_folder import list_local_files, read_local_file
 from app.services.present import idea_dict, user_dict
 from app.services.settings_store import effective_ai, record_connection_check, save_ai_settings
 from app.services.sources.corporate import fetch_rows, test_connection
@@ -94,6 +95,14 @@ class IdeaBody(BaseModel):
 class CommitBody(BaseModel):
     batch_id: uuid.UUID
     confirm: bool = False
+
+
+class LocalImportBody(BaseModel):
+    filename: str
+    sheet_name: str | None = None
+    merge_strategy: str = "reject_conflicts"
+    is_synthetic: bool = True
+    allow_partial: bool = False
 
 
 class ReviewBody(BaseModel):
@@ -447,6 +456,46 @@ def analyze_inline(body: IdeaBody, request: Request, db: Session = Depends(get_d
     add_audit(db, user_id=user.id, action="analysis.run", entity_type="duplicate_analysis_run", entity_id=str(run.id), details={"idea_code": created.idea_code, "provider": run.provider}, ip_address=client_ip(request))
     db.commit()
     return _analysis(db, run.id)
+
+
+@api.get("/local-folder", tags=["import"])
+def local_folder_list(_: User = Depends(require("ideas:read"))) -> dict[str, Any]:
+    return {"folder": "data/local", "items": list_local_files()}
+
+
+@api.post("/ideas/import/from-folder", tags=["import"])
+def import_from_folder(
+    body: LocalImportBody,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require("ideas:import")),
+) -> dict[str, Any]:
+    filename, content = read_local_file(body.filename)
+    if Path(filename).suffix.lower() not in {".xlsx", ".csv"}:
+        raise ValueError("Load a CSV or XLSX file from the local folder. Other types belong in the knowledge copilot upload.")
+    batch = build_preview(
+        db,
+        content=content,
+        filename=filename,
+        sheet_name=body.sheet_name,
+        mapping_override=None,
+        merge_strategy=body.merge_strategy,
+        is_synthetic=body.is_synthetic,
+        allow_partial=body.allow_partial,
+        user_id=user.id,
+        storage_dir=get_settings().resolved_storage_dir(),
+    )
+    add_audit(
+        db,
+        user_id=user.id,
+        action="import.local_folder",
+        entity_type="import_batch",
+        entity_id=str(batch.id),
+        details={"filename": filename},
+        ip_address=client_ip(request),
+    )
+    db.commit()
+    return _batch(db, batch.id)
 
 
 @api.post("/ideas/import/preview", tags=["import"])
