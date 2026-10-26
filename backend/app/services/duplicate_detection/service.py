@@ -174,9 +174,10 @@ def analyze_submission(
 
 
 def rank_historical(db: Session, submission: Idea, *, embedder, limit: int) -> list[dict[str, Any]]:
+    is_candidate = (Idea.origin == "historical", Idea.id != submission.id)
     historical = db.scalars(
         select(Idea)
-        .where(Idea.origin == "historical", Idea.id != submission.id)
+        .where(*is_candidate)
         .options(
             selectinload(Idea.applicability).selectinload(IdeaVehicleApplicability.vehicle_family),
             selectinload(Idea.belonged_department),
@@ -186,8 +187,14 @@ def rank_historical(db: Session, submission: Idea, *, embedder, limit: int) -> l
     cosine_by_id: dict[uuid.UUID, float] = {}
     try:
         vector = embedder.embed(idea_embedding_text(submission))
+        # Restrict to historical ideas so stored submissions cannot take the top slots.
         for entity_id, score in search_similar(
-            db, vector=vector, model_name=embedder.model, entity_type="idea", limit=max(limit, 20)
+            db,
+            vector=vector,
+            model_name=embedder.model,
+            entity_type="idea",
+            limit=max(limit, 20),
+            entity_ids=select(Idea.id).where(*is_candidate),
         ):
             cosine_by_id[entity_id] = score
     except Exception:

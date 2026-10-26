@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from app.models import EmbeddingRecord
@@ -82,13 +82,15 @@ def search_similar(
     model_name: str,
     entity_type: str,
     limit: int,
+    entity_ids: Select | None = None,
 ) -> list[tuple[uuid.UUID, float]]:
+    """Nearest vectors by cosine. ``entity_ids`` (a select of ids) restricts the search before the limit applies."""
     distance = EmbeddingRecord.embedding.cosine_distance(vector)
     similarity = (1 - distance).label("similarity")
-    rows = db.execute(
-        select(EmbeddingRecord.entity_id, similarity)
-        .where(EmbeddingRecord.entity_type == entity_type, EmbeddingRecord.model_name == model_name)
-        .order_by(distance)
-        .limit(limit)
-    ).all()
+    query = select(EmbeddingRecord.entity_id, similarity).where(
+        EmbeddingRecord.entity_type == entity_type, EmbeddingRecord.model_name == model_name
+    )
+    if entity_ids is not None:
+        query = query.where(EmbeddingRecord.entity_id.in_(entity_ids))
+    rows = db.execute(query.order_by(distance).limit(limit)).all()
     return [(row[0], float(row[1])) for row in rows]

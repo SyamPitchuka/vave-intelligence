@@ -243,7 +243,7 @@ On Windows, use `.\.venv\Scripts\python.exe -m pytest -q`.
 
 `scripts/evaluate.py` evaluates the embedding model active in AI settings, so that model must already be indexed. It stores a run in the database, as the Evaluation page does. Its precision, recall, and F1 come from the heuristic comparison, which does not use cosine, so they are the same for every embedding model. Only the retrieval figures can differ.
 
-Pytest uses `vave_intelligence_test`, not the development database. The suite applies migrations and seeds synthetic data into that database. To create it, the test setup connects to a database named `postgres` on the same server. On a hosted provider, create `vave_intelligence_test` in the provider's console first, and point `TEST_DATABASE_URL` at it. The integration tests have not been run against a hosted database. The unit tests need no database: `pytest tests/unit -q`.
+Pytest uses `vave_intelligence_test`, not the development database. The suite applies migrations and seeds synthetic data into that database. To create it, the test setup connects to a database named `postgres` on the same server. On a hosted provider, create `vave_intelligence_test` in the provider's console first, and point `TEST_DATABASE_URL` at it. On Neon the owner role can create databases, so the test setup creates `vave_intelligence_test` itself; set `TEST_DATABASE_URL` in the shell (conftest reads the environment, not `.env`). The unit tests need no database: `pytest tests/unit -q`.
 
 ## Checks that were run
 
@@ -318,7 +318,11 @@ The live candidate filter was checked at thresholds from 0.22 to 0.80 on the sam
 
 `cosine_retrieve_threshold` is therefore 0.40 in `.env.example`; the code default is still 0.22. The full tables, both fixed defects, and the limits of this 12-case sample are in [docs/evaluation-results.md](docs/evaluation-results.md).
 
-Not run on Windows: the integration tests and `npm run build`.
+Later on 26 October 2026, on a second Windows 11 laptop (Python 3.14, Node.js 24) against the same Neon project:
+
+- Backend pytest, full suite: 23 passed (13 unit, 10 integration against `vave_intelligence_test` on Neon), including `tests/integration/test_vector_search.py` for the submission-crowding fix.
+- Frontend typecheck, vitest (8 passed), and `npm run build`: passed.
+- `scripts/evaluate.py` with MiniLM after the fix: unchanged figures (see [docs/evaluation-results.md](docs/evaluation-results.md)).
 
 ### Not run anywhere
 

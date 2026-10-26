@@ -180,14 +180,24 @@ VAVE-SYN-008 (`Headliner substrate`, cosine 0.423434, fuzzy 49.45, Jaccard 0.071
 
 In this one run, 4 of the 15 candidates were sent to manual review. Only VAVE-SYN-017 was related to the query. If that rate holds on real history, reviewers would spend much of their time on parts that are clearly unrelated. That risks reviewer fatigue, and with it the chance that a real duplicate is waved through. This is a risk, not a measured effect.
 
-### Open defect: submissions crowd historical ideas out of vector search
+### Fixed defect: submissions crowded historical ideas out of vector search
 
 In the same run, four historical candidates had **no** cosine score: VAVE-SYN-004, -012, -006, and -002.
 
-- **Cause:** `rank_historical` asks `search_similar` for the top `max(retrieval_k, 20)` idea vectors and filters only by entity type and model, not by origin.
+- **Cause:** `rank_historical` asked `search_similar` for the top `max(retrieval_k, 20)` idea vectors and filtered only by entity type and model, not by origin.
 - **State at the time:** the index held 27 MiniLM idea vectors, 20 historical and 7 earlier test submissions. The submissions are near-copies of the query, so they took 7 of the 20 slots.
-- **Effect:** the problem grows with every stored submission. A historical idea pushed out of the top 20 can still be shown through the fuzzy rule, but its cosine does not count for ranking or the filter.
-- **Status:** not fixed. Filtering the search to `origin = 'historical'` would remove it.
+- **Effect:** the problem grew with every stored submission. A historical idea pushed out of the top 20 could still be shown through the fuzzy rule, but its cosine did not count for ranking or the filter.
+- **Fix:** `search_similar` takes an optional `entity_ids` select, applied before the limit. `rank_historical` passes the historical idea ids (excluding the submission itself), so submissions can no longer take slots. `tests/integration/test_vector_search.py` stores 25 identical submissions and checks that all 20 historical ideas still get a cosine. It fails without the fix.
+
+#### Re-run after the fix
+
+Run on 26 October 2026 on the same Neon database, MiniLM active, 20 historical and 7 submission vectors in the index.
+
+- **The evaluation was affected too.** Before the fix, every one of the 12 labelled queries was missing cosine for 7 historical ideas, one per stored submission. After it, none are missing. This was measured read-only by running each query through `rank_historical` with and without the filter.
+- **Nothing that the metrics depend on moved.** No labelled candidate was among the missing ideas, the candidate order was identical for all 12 queries, and every retrieval target stayed at rank 1.
+- **Metrics:** precision 1.0, recall 0.8, F1 0.889, false-positive rate 0, TP 4 / FP 0 / FN 1 / TN 7, 2 abstentions, top-k success 1.0, MRR 1.0, copilot hit rate 1.0. These are identical to the table above.
+
+This was expected. Precision, recall, and F1 cannot change with cosine (see [How cosine is used](#how-cosine-is-used)), because the evaluation computes fuzzy and exact for every historical idea whether or not the vector search returned it. The retrieval figures could only have changed through a cosine tie-break, and no query had a fuzzy tie at the top. The fix matters for the live candidate filter and for ranking ties, not for these metrics.
 
 ## Limitations
 
@@ -200,4 +210,4 @@ In the same run, four historical candidates had **no** cosine score: VAVE-SYN-00
 - **The 0.40 threshold is a cut-off for this data, not a calibrated value.** It rests on 4 low-fuzzy pairs. Re-run the sweep on labelled real history before trusting it.
 - **Evaluation queries are embedded from their text only.** The live app also embeds the component, department, and other fields, which produces different cosines. For example, the integration test's paraphrase request scored 0.836 against VAVE-SYN-001 with MiniLM in the live app, against 0.814 here.
 - **No language model was involved.** Ollama was not running, so every verdict came from the deterministic heuristic.
-- **The integration tests were not run** against the hosted database or with the new defaults.
+- **The integration tests ran against a hosted Neon database only with the code defaults** (deterministic embeddings, threshold 0.22), not with MiniLM or 0.40.
