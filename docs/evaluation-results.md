@@ -130,6 +130,65 @@ Both were fixed in commit `9050064`.
    - **Defect:** `settings_store._defaults` used the configured embedding provider only when `AI_MODE=online`. A fresh database with `AI_MODE=offline` and `EMBEDDING_PROVIDER=sentence_transformers` therefore started on deterministic embeddings, with no message, even though `effective_ai` allows that combination.
    - **Fix:** a new `_default_embedding` applies the same rules as `effective_ai`. Fallback mode is always deterministic, non-online modes never select OpenAI, and anything else uses the configured provider. A unit test covers all three cases.
 
+## Observed examples
+
+These come from duplicate analysis `a8555c14-8649-4e7a-a3c7-d410e33c301f`, run on 26 October 2026:
+
+- **Submission:** VAVE-NEW-00007, component `Cab mounting bracket`, department `Cab`. The description was the DUP-PARAPHRASE text, with no other fields.
+- **Settings:** MiniLM embeddings, `cosine_retrieve_threshold` 0.22 (before the change to 0.40), and Ollama unavailable, so every category comes from the heuristic in `classify_pair`.
+- **Verification:** the stored category was recomputed from the classifier's inputs for all 15 candidates and matched every time.
+
+The rules below are from `classifier.py`:
+- **Potential duplicate** needs one of:
+  - fuzzy ≥ 86
+  - Jaccard word overlap ≥ 0.62
+  - the same component, the same detected kind of change, Jaccard ≥ 0.42, and fuzzy ≥ 68
+
+  It also requires that the two kinds of change do not contradict each other.
+- **No strong match** needs fuzzy < 48 and Jaccard < 0.18.
+
+Cosine is not an input to any of these rules.
+
+### 1. The highest cosine lost to a lower one on word overlap
+
+| Candidate | Cosine | Fuzzy | Jaccard | Verdict |
+| --- | --- | --- | --- | --- |
+| VAVE-SYN-017 | **0.855865** (highest) | 79.80 | 0.3750 | Insufficient Evidence |
+| VAVE-SYN-001 | 0.825851 | 85.98 | 0.4242 | Potential Duplicate |
+
+Neither candidate reaches fuzzy 86, so that rule does not separate them.
+- **VAVE-SYN-001** qualifies through the same-component, same-action route: both texts are detected as material substitution, its Jaccard of 0.4242 clears 0.42, and its fuzzy of 85.98 clears 68.
+- **VAVE-SYN-017** has the same component and the same detected action, and its fuzzy of 79.8 clears 68. It fails only on Jaccard: 0.375 against 0.42. It then falls through to Insufficient Evidence.
+
+VAVE-SYN-017 is itself a reworded copy of VAVE-SYN-001 in the synthetic data. Its rationale reads "Same material substitution as a steel-to-aluminium cab mount bracket". The candidate the embedding rated most similar was the one the verdict rejected, and VAVE-SYN-001 passed by only 0.004 of Jaccard. The verdict follows the words the two texts share, not their meaning.
+
+### 2. A high-cosine look-alike was correctly separated by keywords
+
+VAVE-SYN-019 (cosine 0.775903, fuzzy 53.87, Jaccard 0.1395) was called **Similar but Distinct**, which is correct. It is a topology-optimised steel casting, not a material change.
+- **What decided it:** the detected kind of change differs: `material_substitution` for the query against `topology` for the candidate.
+- **Where that comes from:** `change_types()`, which matches keywords in the free text. "topology", "optimized", and "casting" mean topology; a material word such as "aluminum" with a verb such as "use" or "replace" means material substitution. It is not a structured field.
+- **What did not decide it:** the embedding. At 0.776 the cosine was close to the true duplicates' 0.826 – 0.834.
+
+A paraphrase that avoids those keywords would lose this protection.
+
+### 3. A different component was sent to manual review
+
+VAVE-SYN-008 (`Headliner substrate`, cosine 0.423434, fuzzy 49.45, Jaccard 0.0714) was called **Insufficient Evidence / Manual Review Required**, not No Strong Match.
+- **Why:** its fuzzy score of 49.45 is just above the 48 cut-off for No Strong Match. Its detected kinds of change (`dimension`, `material_substitution`) overlap the query's, so it was not treated as a different mechanism either, and it falls through to Insufficient Evidence.
+- **Cosine played no part.**
+- **Other unrelated parts got the same verdict:** VAVE-SYN-016 (`Steering column lower bracket`, fuzzy 75.14) and VAVE-SYN-005 (`Rear axle banjo housing`, fuzzy 48.61).
+
+In this one run, 4 of the 15 candidates were sent to manual review. Only VAVE-SYN-017 was related to the query. If that rate holds on real history, reviewers would spend much of their time on parts that are clearly unrelated. That risks reviewer fatigue, and with it the chance that a real duplicate is waved through. This is a risk, not a measured effect.
+
+### Open defect: submissions crowd historical ideas out of vector search
+
+In the same run, four historical candidates had **no** cosine score: VAVE-SYN-004, -012, -006, and -002.
+
+- **Cause:** `rank_historical` asks `search_similar` for the top `max(retrieval_k, 20)` idea vectors and filters only by entity type and model, not by origin.
+- **State at the time:** the index held 27 MiniLM idea vectors, 20 historical and 7 earlier test submissions. The submissions are near-copies of the query, so they took 7 of the 20 slots.
+- **Effect:** the problem grows with every stored submission. A historical idea pushed out of the top 20 can still be shown through the fuzzy rule, but its cosine does not count for ranking or the filter.
+- **Status:** not fixed. Filtering the search to `origin = 'historical'` would remove it.
+
 ## Limitations
 
 - **The sample is small and synthetic.**
