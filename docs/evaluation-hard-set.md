@@ -9,7 +9,7 @@ Every number here comes from `data/vave_duplicate_eval_set_v2.xlsx`, a synthetic
 - **Overall, precision 1.0, recall 0.322, F1 0.487.** Of 90 labelled duplicates, 29 were called Potential Duplicate. There were no false positives.
 - **Recall depends almost entirely on wording.** Easy duplicates: recall 0.967 (29 of 30). Medium and hard duplicates: recall 0 (0 of 60).
 - **Retrieval is not the cause.** All 90 labelled duplicates were among the 15 candidates shown, 65 of them at rank 1. Scoring end to end and scoring the classifier alone give identical precision, recall, and F1.
-- **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 – 0.34.
+- **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 – 0.34. That rule has since been removed. Those 53 now go to manual review, recall is unchanged, and 127 correct look-alike verdicts went to manual review with them ([details](#after-removing-the-low-overlap-rule)).
 - **The embedding separates the labels better than the verdict does,** but not cleanly. Within each query, the labelled duplicate has the highest MiniLM cosine of its labelled candidates in 83 of 90 queries. Across queries, 28 similar-but-distinct pairs score above 0.80, where 77 of the 90 duplicates sit.
 
 ## Setup
@@ -149,7 +149,7 @@ Each of the 61 missed duplicates was traced through the branches of `classify_pa
 | hard | Insufficient Evidence | same component, Jaccard 0.28 – 0.45 | 1 |
 | easy | Insufficient Evidence | fell through every rule | 1 |
 
-**The main cause is this rule** in `classifier.py`:
+**The main cause was this rule** in `classifier.py` (since removed, see [below](#after-removing-the-low-overlap-rule)):
 
 ```python
 elif same_component and overlap < 0.45:
@@ -172,6 +172,40 @@ Hard examples (all labelled duplicate, all called Similar but Distinct):
 In each case a reviewer would be told the historical idea is a different change.
 
 **This is the risk noted in [evaluation-results.md](evaluation-results.md#2-a-high-cosine-look-alike-was-correctly-separated-by-keywords): "A paraphrase that avoids those keywords would lose this protection."** On this set the failure goes further than losing protection, because the low-overlap rule returns the opposite verdict.
+
+### After removing the low-overlap rule
+
+The rule was changed so that this branch returns Insufficient Evidence. Similar but Distinct now needs a detected difference in technical action. That case is handled one branch earlier, which already covered every same-component pair with disjoint kinds of change, so the `different_mechanism` part of the old line could never be true. The live condition was `overlap < 0.28` alone.
+
+The evaluation was re-run on the same data and settings. Recall cannot change, because these pairs fail every rule that leads to Potential Duplicate:
+
+| Difficulty | Recall before | Recall after | Precision before → after | F1 before → after | Abstentions before → after |
+| --- | --- | --- | --- | --- | --- |
+| overall | 0.322 | 0.322 | 1.000 → 1.000 | 0.487 → 0.487 | 60 → 240 |
+| easy | 0.967 | 0.967 | 1.000 → 1.000 | 0.983 → 0.983 | 28 → 28 |
+| medium | 0.000 | 0.000 | — → — | — → — | 6 → 30 |
+| hard | 0.000 | 0.000 | — → — | — → — | 26 → 182 |
+
+What changed was the verdict on 180 pairs, end to end:
+
+| Label | Potential Duplicate | Insufficient Evidence | Similar but Distinct | Not shown |
+| --- | --- | --- | --- | --- |
+| duplicate (easy) | 29 → 29 | 1 → 1 | 0 → 0 | 0 → 0 |
+| duplicate (medium) | 0 → 0 | 6 → **30** | 24 → **0** | 0 → 0 |
+| duplicate (hard) | 0 → 0 | 1 → **30** | 29 → **0** | 0 → 0 |
+| similar but distinct | 0 → 0 | 25 → **152** | 141 → **14** | 71 → 71 |
+| unrelated | 0 → 0 | 27 → 27 | 0 → 0 | 243 → 243 |
+
+- **Gained:** no duplicate is now called Similar but Distinct. The 53 that were now go to manual review.
+- **Lost:** 127 correct Similar but Distinct verdicts on look-alikes also went to manual review. Only 14 of the 237 look-alikes are still called distinct, because only those have a detected difference in action.
+  - Most of the old rule's correct verdicts rested on low word overlap, which is the same signal that mislabelled the paraphrased duplicates.
+  - On this set, low overlap was weak evidence either way: 53 times it pointed the wrong way, and 127 times the right way.
+- **Reviewer load:**
+  - Per candidate, labelled pairs sent to manual review went from 60 to 240.
+  - Per query, the headline outcome is unchanged (30 Potential Duplicate, 60 Insufficient Evidence), because Insufficient Evidence already outranked Similar but Distinct in every affected query.
+- **The v1 evaluation is unaffected by construction.** `scripts/evaluate.py` passes `query_component=None`, so the same-component branch is never reached there.
+
+Raising medium and hard recall needs a positive signal that the action is the same, despite different words. The candidates are a language model comparison, wider `change_types()` vocabulary, or embedding similarity. Removing this rule does not provide one.
 
 ## Other observations
 

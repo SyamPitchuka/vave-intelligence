@@ -93,6 +93,36 @@ def test_classifier_does_not_treat_same_component_as_duplicate():
     assert result.category != "potential_duplicate"
 
 
+def test_low_word_overlap_alone_does_not_make_a_pair_distinct():
+    # A paraphrase of the same change: same component, few shared words, no detected action on the query side.
+    paraphrase = "Lighter cab anchorage: move away from the current ferrous part to a light-alloy design, geometry adjusted so rigidity is not lost."
+    aluminum = "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness to reduce vehicle mass."
+    result = classify_pair(
+        query_component="Cab mounting bracket",
+        query_text=paraphrase,
+        candidate_component="Cab mounting bracket",
+        candidate_text=aluminum,
+        fuzzy_score=58,
+        exact=False,
+    )
+    assert result.token_jaccard < 0.28
+    assert result.category == "insufficient_evidence"
+
+
+def test_detected_different_action_is_similar_but_distinct():
+    aluminum = "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness."
+    topology = "Redesign the cab mounting bracket as a topology-optimised steel casting, retaining the steel grade."
+    result = classify_pair(
+        query_component="Cab mounting bracket",
+        query_text=topology,
+        candidate_component="Cab mounting bracket",
+        candidate_text=aluminum,
+        fuzzy_score=50,
+        exact=False,
+    )
+    assert result.category == "similar_but_distinct"
+
+
 def test_exact_text_is_a_potential_duplicate():
     text = "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness to reduce vehicle mass."
     result = classify_pair(

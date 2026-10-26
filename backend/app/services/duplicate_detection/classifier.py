@@ -122,9 +122,12 @@ def classify_pair(
         category = "no_strong_match"
         explanation = "No strong lexical match was found against this historical record."
     elif same_component and overlap < 0.45:
-        category = "similar_but_distinct" if different_mechanism or overlap < 0.28 else "insufficient_evidence"
+        # Low word overlap is not evidence of a different action: a paraphrase of the same change lands here.
+        # Similar but distinct needs a detected difference in technical action, handled above.
+        category = "insufficient_evidence"
         explanation = (
-            "The component matches, but the descriptions do not establish that the engineering change is the same."
+            "The component matches, but the descriptions neither establish that the engineering change is the same "
+            "nor show a different technical action. Manual engineering review is required."
         )
     else:
         category = "insufficient_evidence"
