@@ -536,10 +536,9 @@ async def import_preview(
 @api.post("/ideas/import/commit", tags=["import"])
 def import_commit(body: CommitBody, request: Request, db: Session = Depends(get_db), user: User = Depends(require("ideas:import"))) -> dict[str, Any]:
     batch = commit_batch(db, body.batch_id, confirm=body.confirm, user_id=user.id)
-    _reindex_ids(db, [row.idea_id for row in db.scalars(select(DuplicateAnalysisCandidate)).all()] and [])
     from app.models import ImportChange
 
-    changed = [row.idea_id for row in db.scalars(select(ImportChange.idea_id).where(ImportChange.batch_id == batch.id)).all()]
+    changed = list(db.scalars(select(ImportChange.idea_id).where(ImportChange.batch_id == batch.id)).all())
     _reindex_ids(db, changed)
     add_audit(db, user_id=user.id, action="import.commit.requested", entity_type="import_batch", entity_id=str(batch.id), details={"inserted": batch.inserted_count}, ip_address=client_ip(request))
     db.commit()

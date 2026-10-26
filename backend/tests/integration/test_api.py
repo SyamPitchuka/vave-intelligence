@@ -72,6 +72,45 @@ def test_exception_sheet_is_rejected_until_fixed(client):
     assert commit.status_code == 400
 
 
+def test_valid_import_commits_and_indexes(client):
+    from app.db.session import get_session_factory
+    from app.models import EmbeddingRecord, Idea, ImportChange
+    from sqlalchemy import delete, func, select
+
+    token = login(client, "admin@vave.local", "ChangeMeAdmin!23")
+    csv = (
+        "Idea_ID,Component,Idea belonged department,Idea_Description,Stage_Status\n"
+        "VAVE-TEST-IMPORT-001,Fuel tank strap,Chassis,Replace the fuel tank strap rubber liner with a cheaper EPDM grade.,A\n"
+    )
+    preview = client.post(
+        "/api/v1/ideas/import/preview",
+        headers=auth(token),
+        files={"file": ("one-row.csv", csv.encode(), "text/csv")},
+        data={"merge_strategy": "reject_conflicts", "is_synthetic": "true", "allow_partial": "false"},
+    )
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["error_count"] == 0
+    batch_id = preview.json()["id"]
+
+    commit = client.post("/api/v1/ideas/import/commit", headers=auth(token), json={"batch_id": batch_id, "confirm": True})
+    assert commit.status_code == 200, commit.text
+    assert commit.json()["inserted_count"] == 1
+    db = get_session_factory()()
+    try:
+        idea_id = db.scalar(select(Idea.id).where(Idea.idea_code == "VAVE-TEST-IMPORT-001"))
+        assert idea_id is not None
+        vectors = db.scalar(select(func.count()).select_from(EmbeddingRecord).where(EmbeddingRecord.entity_id == idea_id))
+        assert vectors == 1
+    finally:
+        # Remove the row directly so later tests see only the seeded ideas. Rollback cannot do this yet:
+        # import_changes.idea_id is NOT NULL with no ON DELETE rule, so deleting the idea is refused.
+        db.execute(delete(ImportChange).where(ImportChange.batch_id == batch_id))
+        db.execute(delete(EmbeddingRecord).where(EmbeddingRecord.entity_type == "idea", EmbeddingRecord.entity_id == idea_id))
+        db.execute(delete(Idea).where(Idea.id == idea_id))
+        db.commit()
+        db.close()
+
+
 def test_duplicate_analysis_and_review_leave_history_unchanged(client):
     token = login(client, "engineer@vave.local", "VaveDemo!234")
     analysis = client.post(
