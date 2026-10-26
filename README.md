@@ -34,7 +34,7 @@ Synthetic rows are labelled synthetic. Stage letters in the sample guideline are
 - Labelled evaluation that omits a metric when the labels are insufficient.
 - Role checks on the API for system administrator, VAVE engineer, department reviewer, department head, and read-only management.
 
-Further notes are in [docs/architecture.md](docs/architecture.md), [docs/api.md](docs/api.md), [docs/data-dictionary.md](docs/data-dictionary.md), [docs/security.md](docs/security.md), and [docs/limitations.md](docs/limitations.md).
+Further notes are in [docs/architecture.md](docs/architecture.md), [docs/api.md](docs/api.md), [docs/data-dictionary.md](docs/data-dictionary.md), [docs/security.md](docs/security.md), [docs/limitations.md](docs/limitations.md), and [docs/evaluation-results.md](docs/evaluation-results.md).
 
 ## Screenshots
 
@@ -315,6 +315,8 @@ The live candidate filter was checked at thresholds from 0.22 to 0.80 on the sam
 - **The threshold only matters for the 4 query–candidate pairs with fuzzy < 40.**
 - **With MiniLM at 0.22, cosine alone admits all 4 of those pairs,** including the pair labelled unrelated (UNREL-CHIME → VAVE-SYN-001, cosine 0.273).
 - **At 0.40 cosine admits none of them, and no duplicate is lost.** Nothing changes between 0.40 and 0.80.
+
+`cosine_retrieve_threshold` is therefore 0.40 in `.env.example`; the code default is still 0.22. The full tables, both fixed defects, and the limits of this 12-case sample are in [docs/evaluation-results.md](docs/evaluation-results.md).
 
 Not run on Windows: the integration tests and `npm run build`.
 

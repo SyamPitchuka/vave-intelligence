@@ -1,0 +1,144 @@
+# Evaluation results: deterministic and MiniLM embeddings
+
+Run on 26 October 2026, on Windows 11 with Python 3.14, sentence-transformers 6.2.0, PyTorch 2.14.1 (CPU), and a hosted Neon PostgreSQL database seeded with the synthetic data only.
+
+Two embedding models were compared, both 384 dimensions:
+
+- `deterministic-hash-v1`, the hashed lexical vector used in `fallback` mode
+- `sentence-transformers/all-MiniLM-L6-v2`, a local neural model used in `offline` mode
+
+Every number here comes from 12 labelled synthetic cases. Read [Limitations](#limitations) before relying on any of it.
+
+## How cosine is used
+
+Cosine similarity never decides whether an idea is a duplicate.
+
+- **The duplicate verdict.**
+  - In the evaluation, the category comes from `classify_pair` in `duplicate_detection/classifier.py`. Its inputs are the two texts, the components, the fuzzy score, and the exact-match flag. Cosine is not an input.
+  - In the live app, the category comes from the same heuristic and, when a language model is available, from that model's comparison.
+- **Ranking.** `rank_historical` sorts candidates by exact match, then fuzzy score, then cosine. Cosine only breaks ties.
+- **Candidate filter.** The live app shows a historical idea when `exact OR fuzzy >= 40 OR cosine >= cosine_retrieve_threshold` (`duplicate_detection/service.py`). This is the only place the threshold has an effect.
+- **The evaluation never applies `cosine_retrieve_threshold`.** `run_evaluation` stores the value in the run's config, but `_duplicates` does not receive it.
+
+As a result, changing the embedding model cannot change the evaluation's precision, recall, or F1. It can only change the retrieval metrics, and even those only through tie-breaks.
+
+## Precision, recall, and F1
+
+Command: `scripts/evaluate.py --deterministic` for the baseline, and `HF_HUB_OFFLINE=1 scripts/evaluate.py` for MiniLM, with MiniLM active and indexed. Positive class: `duplicate`.
+
+| Embedding | Precision | Recall | F1 | False-positive rate | TP | FP | FN | TN | Abstentions | Top-k success (k=15) | MRR | Copilot hit rate |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| deterministic-hash-v1 | 1.0 | 0.8 | 0.889 | 0 | 4 | 0 | 1 | 7 | 2 | 1.0 | 1.0 | 1.0 |
+| all-MiniLM-L6-v2 | 1.0 | 0.8 | 0.889 | 0 | 4 | 0 | 1 | 7 | 2 | 1.0 | 1.0 | 1.0 |
+
+The two rows are identical by construction, for the reasons in [How cosine is used](#how-cosine-is-used).
+
+- **Retrieval figures:** 5 cases with labelled retrieval targets.
+- **Copilot figures:** 3 cases. The copilot ranks document chunks by lexical coverage, not by embeddings.
+
+## Cosine by label
+
+Cosine between each labelled query and its labelled historical candidate. The query is embedded from its text only, as `scripts/evaluate.py` does.
+
+| Label | Cases | deterministic-hash-v1 | all-MiniLM-L6-v2 |
+| --- | --- | --- | --- |
+| duplicate | 5 | 0.595 – 0.695 | 0.814 – 0.892 |
+| similar but distinct | 4 | 0.337 – 0.448 | 0.693 – 0.772 |
+| unrelated | 3 | 0.000 – 0.399 | 0.273 – 0.428 |
+
+Per case:
+
+| Case | Label | Candidate | Deterministic | MiniLM | Fuzzy |
+| --- | --- | --- | --- | --- | --- |
+| DUP-AXLE | duplicate | VAVE-SYN-005 | 0.659 | 0.892 | 90.3 |
+| DUP-BRAKE | duplicate | VAVE-SYN-002 | 0.649 | 0.838 | 87.1 |
+| DUP-EXACT | duplicate | VAVE-SYN-001 | 0.695 | 0.834 | 100.0 |
+| DUP-PARAPHRASE | duplicate | VAVE-SYN-001 | 0.595 | 0.814 | 86.0 |
+| DUP-STEER | duplicate | VAVE-SYN-016 | 0.693 | 0.872 | 91.1 |
+| SIM-BOLT | similar but distinct | VAVE-SYN-001 | 0.337 | 0.693 | 57.0 |
+| SIM-GAUGE | similar but distinct | VAVE-SYN-001 | 0.448 | 0.772 | 60.0 |
+| SIM-TITANIUM | similar but distinct | VAVE-SYN-001 | 0.438 | 0.697 | 63.5 |
+| SIM-TOPOLOGY | similar but distinct | VAVE-SYN-001 | 0.357 | 0.741 | 55.2 |
+| UNREL-BEZEL | unrelated | VAVE-SYN-009 | 0.000 | 0.274 | 44.0 |
+| UNREL-CHIME | unrelated | VAVE-SYN-001 | 0.000 | 0.273 | 39.3 |
+| UNREL-PAD | unrelated | VAVE-SYN-002 | 0.399 | 0.428 | 45.3 |
+
+## Separation between duplicates and look-alikes
+
+Both models rank every labelled duplicate above every non-duplicate. The margin is what differs. It is measured from the lowest duplicate to the highest similar-but-distinct pair:
+
+| Embedding | Lowest duplicate | Highest similar but distinct | Gap |
+| --- | --- | --- | --- |
+| deterministic-hash-v1 | 0.595 | 0.448 | **0.147** |
+| all-MiniLM-L6-v2 | 0.814 | 0.772 | **0.042** |
+
+MiniLM raises every score, duplicates and look-alikes alike. A paraphrase scores higher than before, but so does a different change to the same part. On this set MiniLM does not separate duplicates from similar-but-distinct ideas better than the hashed vector. Its margin is about a third of the size. A high MiniLM cosine on its own is not evidence of a duplicate.
+
+## Threshold sweep
+
+The live candidate filter, `exact OR fuzzy >= 40 OR cosine >= t`, was replayed for each of the 12 labelled queries against the 20 historical ideas. The replay is read-only.
+
+- **Duplicates kept:** labelled duplicate candidates admitted, of 5.
+- **Non-duplicates admitted:** labelled similar-but-distinct or unrelated candidates admitted, of 7.
+- **Cosine-only admissions:** candidates admitted only because of the cosine rule (not exact, fuzzy < 40), summed over the 12 queries.
+- **Shown per query:** the average number of candidates admitted, out of 20.
+
+| Embedding | t | Duplicates kept | Non-duplicates admitted | Cosine-only admissions | Shown per query |
+| --- | --- | --- | --- | --- | --- |
+| deterministic-hash-v1 | 0.22 | 5 | 6 | 2 | 19.8 |
+| deterministic-hash-v1 | 0.30 | 5 | 6 | 1 | 19.8 |
+| deterministic-hash-v1 | 0.40 – 0.80 | 5 | 6 | 0 | 19.7 |
+| all-MiniLM-L6-v2 | 0.22 | 5 | 7 | 4 | 20.0 |
+| all-MiniLM-L6-v2 | 0.30 | 5 | 6 | 2 | 19.8 |
+| all-MiniLM-L6-v2 | 0.40 – 0.80 | 5 | 6 | 0 | 19.7 |
+
+The values 0.40, 0.50, 0.60, 0.65, 0.70, 0.75, and 0.80 were each tested and gave identical rows, so they are combined above.
+
+Only 4 query–candidate pairs have fuzzy < 40, so only these depend on the threshold:
+
+| Query | Candidate | Deterministic | MiniLM |
+| --- | --- | --- | --- |
+| SIM-TITANIUM | VAVE-SYN-003 | 0.296 | 0.388 |
+| UNREL-BEZEL | VAVE-SYN-019 | 0.354 | 0.313 |
+| UNREL-CHIME | VAVE-SYN-018 | 0.000 | 0.273 |
+| UNREL-CHIME | VAVE-SYN-001, labelled unrelated | 0.000 | 0.273 |
+
+### Decision
+
+`cosine_retrieve_threshold` was raised from 0.22 to **0.40**:
+
+- **Live:** set on 26 October 2026 with `PUT /api/v1/ai/settings` as `admin@vave.local`, which is recorded in the audit log.
+- **New setups:** set in `.env.example`.
+- **Code default:** stays at 0.22 in `app/core/config.py`, because the integration tests run on that default and have not been re-run.
+
+Reasons:
+
+- **At 0.22, MiniLM admits all 4 low-fuzzy pairs on cosine alone.** That includes UNREL-CHIME → VAVE-SYN-001, which is labelled unrelated.
+- **0.40 is the lowest tested value with no cosine-only admissions for either model,** and every labelled duplicate is kept at it.
+- **No tested value above 0.40 changes anything,** so a higher value gains nothing on this data and leaves less room for real paraphrases with low fuzzy scores.
+
+The practical effect is small. `fuzzy >= 40` already admits about 19.7 of the 20 historical ideas per query, and every labelled duplicate has fuzzy ≥ 86. The fuzzy cut-off controls the candidate list far more than the cosine threshold does. It was not tuned, because 12 cases are too few.
+
+## Defects fixed
+
+Both were fixed in commit `9050064`.
+
+1. **`scripts/evaluate.py` always evaluated the deterministic model.**
+   - **Defect:** the script built `DeterministicEmbeddingProvider()` directly, whatever the AI settings said. With MiniLM active, it still reported deterministic figures and could not measure the active model at all.
+   - **Fix:** it now builds the active provider with `build_embedding_provider`, prints the model name, and keeps the baseline behind `--deterministic`.
+2. **First-start settings ignored `EMBEDDING_PROVIDER` outside `online` mode.**
+   - **Defect:** `settings_store._defaults` used the configured embedding provider only when `AI_MODE=online`. A fresh database with `AI_MODE=offline` and `EMBEDDING_PROVIDER=sentence_transformers` therefore started on deterministic embeddings, with no message, even though `effective_ai` allows that combination.
+   - **Fix:** a new `_default_embedding` applies the same rules as `effective_ai`. Fallback mode is always deterministic, non-online modes never select OpenAI, and anything else uses the configured provider. A unit test covers all three cases.
+
+## Limitations
+
+- **The sample is small and synthetic.**
+  - Only 12 labelled cases (5 duplicate, 4 similar but distinct, 3 unrelated) against 20 synthetic historical ideas, plus 3 copilot cases.
+  - One case changes recall by 0.2.
+  - The 0.147 and 0.042 gaps each rest on two cosine values.
+  - None of this is a production accuracy claim.
+- **Every candidate comes from one family.** All 4 similar-but-distinct cases compare against the same historical idea, VAVE-SYN-001, a cab mounting bracket.
+- **The 0.40 threshold is a cut-off for this data, not a calibrated value.** It rests on 4 low-fuzzy pairs. Re-run the sweep on labelled real history before trusting it.
+- **Evaluation queries are embedded from their text only.** The live app also embeds the component, department, and other fields, which produces different cosines. For example, the integration test's paraphrase request scored 0.836 against VAVE-SYN-001 with MiniLM in the live app, against 0.814 here.
+- **No language model was involved.** Ollama was not running, so every verdict came from the deterministic heuristic.
+- **The integration tests were not run** against the hosted database or with the new defaults.
