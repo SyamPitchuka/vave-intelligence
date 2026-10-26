@@ -8,14 +8,15 @@ VAVE Intelligence: a React/TypeScript SPA (`frontend/`) plus a FastAPI service (
 
 ## Commands
 
-The README uses POSIX venv paths (`.venv/bin/...`). On this Windows machine the venv executables are under `.venv/Scripts/`.
+The commands below use POSIX venv paths (`.venv/bin/...`). On the Windows dev laptop, application control blocks the `.venv\Scripts\*.exe` launchers ("Access is denied"). Always run tools as modules there: `.\.venv\Scripts\python.exe -m alembic|uvicorn|pytest|ruff ...`. The dev database is hosted on Neon. It needs outbound TCP 5432, which the office network blocks, and the hotspot can drop connections mid-request.
 
 Backend (run from `backend/`):
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+.venv/bin/python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"  # once
 .venv/bin/alembic upgrade head
-.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+HF_HUB_OFFLINE=1 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 .venv/bin/ruff check app tests
 .venv/bin/pytest -q                                   # default suite (unit + integration)
 .venv/bin/pytest tests/unit/test_domain_rules.py::test_name -q   # single test
@@ -36,7 +37,8 @@ npm run build          # tsc + vite build
 Other:
 
 - `sh scripts/start-local.sh` sets up `.env`, the venv, migrations, and starts both servers.
-- `backend/.venv/bin/python scripts/evaluate.py` runs labelled duplicate/copilot evaluation against the dev DB.
+- `backend/.venv/bin/python scripts/evaluate.py` runs the labelled duplicate/copilot evaluation against the dev DB with the **active** embedding model (`--deterministic` for the hashed baseline). It stores evaluation runs. Precision, recall, and F1 come from `classify_pair`, which ignores cosine, so they don't change with the embedding model; only the retrieval metrics can.
+- Seeding (every API start and `evaluate.py`) rewrites `data/synthetic/vave_synthetic_ideas.xlsx` with new timestamps. Don't commit that file unless the synthetic data actually changed.
 - `docker compose up --build` (UI on 8080, API on 8000; `--profile offline` adds Ollama). Not verified in the original environment.
 
 ## Testing notes
@@ -56,16 +58,20 @@ Backend layering:
 - `app/models/entities.py`: all SQLAlchemy models. Schema changes need an Alembic migration in `backend/alembic/versions/`. `repositories/`, `schemas/` and `scripts/` are empty placeholders.
 - `app/core/config.py`: settings from `.env` via a cached `get_settings()` (tests call `get_settings.cache_clear()` and `reset_engine()`). Production startup refuses the dev secret or demo password on purpose.
 
-AI provider modes (`AI_MODE`, also changeable at runtime by an admin through `settings_store`):
+AI settings (`services/settings_store.py`): `.env` (`AI_MODE`, `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`) only provides defaults when the `ai` row in `application_settings` is first created. After that, **the stored row wins over `.env`**. Change settings with `PUT /api/v1/ai/settings` as admin, which is audited, then `POST /api/v1/ai/reindex`. `effective_ai` and `_default_embedding` enforce the same rules: fallback always uses deterministic embeddings, and non-online modes never use OpenAI.
 
-- `fallback`: exact + RapidFuzz + deterministic hashed embeddings (`deterministic-hash-v1`); no network.
-- `offline`: Ollama on an allow-listed host only (`OLLAMA_ALLOW_HOSTS`); never downloads models; must never fall back to OpenAI.
+AI provider modes:
+
+- `fallback`: exact + RapidFuzz + deterministic hashed embeddings (`deterministic-hash-v1`); no network. Ignores the configured embedding provider.
+- `offline` (current default): local `sentence-transformers/all-MiniLM-L6-v2` embeddings and Ollama on an allow-listed host only (`OLLAMA_ALLOW_HOSTS`) for chat; never downloads Ollama models; must never fall back to OpenAI. With Ollama down and `LLM_REQUIRED=false`, analysis uses the heuristic comparison and returns an "Ollama is not reachable" warning.
 - `online`: OpenAI with a server-side key; the key is never returned to the browser, and the browser never calls a provider.
 - `llm_providers/factory.py` builds providers. Offline and fallback refuse to construct an OpenAI client, and a test checks that offline mode doesn't call `api.openai.com`.
 
 Duplicate pipeline (`services/duplicate_detection`): normalise → exact match → fuzzy → pgvector search → dedupe by idea id → heuristic classify (optional LLM rerank) → attach historical rejection fields from the DB **after** the model returns → store the run. The results are only recommendations (`Potential Duplicate`, `Similar but Distinct`, `No Strong Match Found`, `Insufficient Evidence / Manual Review Required`). Human review decisions are stored separately and never overwrite historical idea or rejection fields.
 
-Embeddings: vectors are fixed at **384 dimensions** in the schema. Idea and document-chunk vectors share one table, told apart by `entity_type` and filtered by embedding model name. Changing the model requires an admin re-index. A different dimension requires a new migration (so `nomic-embed-text`, at 768, is rejected).
+Embeddings: vectors are fixed at **384 dimensions** in the schema. Idea and document-chunk vectors share one table, told apart by `entity_type` and filtered by embedding model name. Old models' vectors are kept. Changing the model requires an admin re-index. A different dimension requires a new migration (so `nomic-embed-text`, at 768, is rejected). The seed always writes deterministic vectors (`seed.py`), so a fresh database needs one re-index before MiniLM search works. `rank_historical` swallows embedding errors and returns no cosine scores, so a broken embedder fails silently. Check that the `cosine_similarity` values aren't null.
+
+Cosine is used in only two places: as the final tie-breaker in candidate ranking (after exact match and fuzzy score), and in the candidate filter `exact OR fuzzy >= 40 OR cosine >= cosine_retrieve_threshold` (`duplicate_detection/service.py`). The evaluation records `cosine_retrieve_threshold` but never applies it.
 
 Savings (`services/savings.py`) is the authoritative calculation: saving per vehicle × the sum of annual volumes across *unique* vehicle families, in INR (projected, not realised). A missing saving stays `None` and is never treated as 0. The spreadsheet figure is never trusted. The frontend must not calculate official savings or rejection status.
 

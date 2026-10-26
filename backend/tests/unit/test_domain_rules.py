@@ -137,6 +137,18 @@ def test_offline_factory_never_returns_openai_and_blocks_before_network(monkeypa
         raise AssertionError("offline mode must not construct OpenAI embeddings")
 
 
+def test_default_embedding_follows_mode_rules():
+    from app.services.settings_store import _default_embedding
+
+    minilm = "sentence-transformers/all-MiniLM-L6-v2"
+    offline = Settings(ai_mode="offline", embedding_provider="sentence_transformers", embedding_model=minilm)
+    assert _default_embedding(offline) == ("sentence_transformers", minilm)
+    fallback = Settings(ai_mode="fallback", embedding_provider="sentence_transformers", embedding_model=minilm)
+    assert _default_embedding(fallback) == ("deterministic", "deterministic-hash-v1")
+    offline_openai = Settings(ai_mode="offline", embedding_provider="openai", embedding_model="text-embedding-3-small")
+    assert _default_embedding(offline_openai) == ("deterministic", "deterministic-hash-v1")
+
+
 def test_date_parse_day_first():
     from app.services.imports.validate import parse_date
 

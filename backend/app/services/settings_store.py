@@ -28,15 +28,24 @@ EDITABLE = {
 }
 
 
+def _default_embedding(settings: Settings) -> tuple[str, str]:
+    """Same rules as effective_ai: fallback is deterministic, and offline never selects OpenAI."""
+    provider = settings.embedding_provider
+    if settings.ai_mode == "fallback" or (settings.ai_mode != "online" and provider == "openai"):
+        provider = "deterministic"
+    if provider == "deterministic":
+        return provider, DETERMINISTIC_EMBEDDING_MODEL
+    return provider, settings.embedding_model
+
+
 def _defaults(settings: Settings) -> dict[str, Any]:
+    embedding_provider, embedding_model = _default_embedding(settings)
     return {
         "mode": settings.ai_mode,
         "llm_required": settings.llm_required,
         "chat_model": _default_chat_model(settings),
-        "embedding_provider": settings.embedding_provider if settings.ai_mode == "online" else "deterministic",
-        "embedding_model": settings.embedding_model
-        if settings.ai_mode == "online" and settings.embedding_provider != "deterministic"
-        else DETERMINISTIC_EMBEDDING_MODEL,
+        "embedding_provider": embedding_provider,
+        "embedding_model": embedding_model,
         "retrieval_top_k": settings.retrieval_top_k,
         "comparison_timeout_seconds": settings.comparison_timeout_seconds,
         "fuzzy_strong_threshold": settings.fuzzy_strong_threshold,
