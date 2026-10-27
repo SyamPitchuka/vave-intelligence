@@ -67,12 +67,13 @@ AI provider modes:
 - `online`: OpenAI with a server-side key; the key is never returned to the browser, and the browser never calls a provider.
 - `llm_providers/factory.py` builds providers. Offline and fallback refuse to construct an OpenAI client, and a test checks that offline mode doesn't call `api.openai.com`.
 
-Duplicate pipeline (`services/duplicate_detection`): normalise → exact match → fuzzy → pgvector search → dedupe by idea id → heuristic classify (optional LLM rerank) → attach historical rejection fields from the DB **after** the model returns → store the run. The results are only recommendations (`Potential Duplicate`, `Similar but Distinct`, `No Strong Match Found`, `Insufficient Evidence / Manual Review Required`). Human review decisions are stored separately and never overwrite historical idea or rejection fields.
+Duplicate pipeline (`services/duplicate_detection`): normalise → exact match → fuzzy → pgvector search → dedupe by idea id → select the first `retrieval_top_k` in (exact, fuzzy, cosine) order → heuristic classify (optional LLM rerank of the first 5) → re-sort the shown candidates by verdict (`VERDICT_PRIORITY`), then cosine, and renumber `rank` (`candidate_display_key`) → attach historical rejection fields from the DB **after** the model returns → store the run. Selection and LLM budget still follow fuzzy order; only the displayed order is by verdict. The results are only recommendations (`Potential Duplicate`, `Similar but Distinct`, `No Strong Match Found`, `Insufficient Evidence / Manual Review Required`). Human review decisions are stored separately and never overwrite historical idea or rejection fields.
 
 Embeddings: vectors are fixed at **384 dimensions** in the schema. Idea and document-chunk vectors share one table, told apart by `entity_type` and filtered by embedding model name. Old models' vectors are kept. Changing the model requires an admin re-index. A different dimension requires a new migration (so `nomic-embed-text`, at 768, is rejected). The seed always writes deterministic vectors (`seed.py`), so a fresh database needs one re-index before MiniLM search works. `rank_historical` swallows embedding errors and returns no cosine scores, so a broken embedder fails silently. Check that the `cosine_similarity` values aren't null.
 
-Cosine is used in three places:
-- as the final tie-breaker in candidate ranking (after exact match and fuzzy score)
+Cosine is used in four places:
+- as the final tie-breaker in retrieval order, which decides which candidates are shown (after exact match and fuzzy score)
+- as the main key within a verdict group in the displayed candidate order
 - in the candidate filter `exact OR fuzzy >= 40 OR cosine >= cosine_retrieve_threshold` (`duplicate_detection/service.py`)
 - in the optional semantic route to Potential Duplicate in `classify_pair`: same component AND cosine >= `semantic_duplicate_threshold` AND no detected different action
 

@@ -21,7 +21,7 @@ from app.models import (
     IdeaVehicleApplicability,
     ReviewDecision,
 )
-from app.services.duplicate_detection.classifier import classify_pair, headline_category
+from app.services.duplicate_detection.classifier import VERDICT_PRIORITY, classify_pair, headline_category
 from app.services.embeddings.index import (
     comparison_text,
     idea_embedding_text,
@@ -147,6 +147,11 @@ def analyze_submission(
                 },
             )
         )
+    # Retrieval order (exact, fuzzy, cosine) decided which candidates were compared, and in which order the
+    # language model saw them. The reviewer sees them by verdict, then by meaning.
+    candidates.sort(key=candidate_display_key)
+    for rank, candidate in enumerate(candidates, start=1):
+        candidate.rank = rank
     outcome = headline_category([item.category for item in candidates])
     if not candidates:
         outcome = "no_strong_match"
@@ -173,6 +178,17 @@ def analyze_submission(
     db.add(run)
     db.flush()
     return run
+
+
+def candidate_display_key(candidate) -> tuple:
+    """Verdict first (Potential Duplicate on top), then cosine descending, then fuzzy descending.
+
+    A candidate without a cosine (outside the vector search) goes after those with one in its verdict group.
+    The sort is stable, so full ties keep retrieval order.
+    """
+    priority = VERDICT_PRIORITY.index(candidate.category) if candidate.category in VERDICT_PRIORITY else len(VERDICT_PRIORITY)
+    cosine = candidate.cosine_similarity
+    return (priority, cosine is None, -float(cosine or 0), -float(candidate.fuzzy_score or 0))
 
 
 def rank_historical(db: Session, submission: Idea, *, embedder, limit: int) -> list[dict[str, Any]]:

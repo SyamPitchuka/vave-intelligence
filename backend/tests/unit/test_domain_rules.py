@@ -170,6 +170,26 @@ def test_semantic_route_respects_a_detected_different_action():
     assert result.category == "similar_but_distinct"
 
 
+def test_candidates_are_ordered_by_verdict_then_cosine():
+    from types import SimpleNamespace
+
+    from app.services.duplicate_detection.service import candidate_display_key
+
+    def candidate(code, category, cosine, fuzzy):
+        return SimpleNamespace(code=code, category=category, cosine_similarity=cosine, fuzzy_score=fuzzy)
+
+    # Retrieval order is by fuzzy score; the duplicate came last.
+    retrieved = [
+        candidate("air-tank", "insufficient_evidence", Decimal("0.648"), Decimal("57.04")),
+        candidate("look-alike", "similar_but_distinct", Decimal("0.900"), Decimal("56.00")),
+        candidate("no-cosine", "potential_duplicate", None, Decimal("90.00")),
+        candidate("unrelated", "no_strong_match", Decimal("0.950"), Decimal("55.00")),
+        candidate("syn-017", "potential_duplicate", Decimal("0.844"), Decimal("53.38")),
+    ]
+    ordered = [item.code for item in sorted(retrieved, key=candidate_display_key)]
+    assert ordered == ["syn-017", "no-cosine", "air-tank", "look-alike", "unrelated"]
+
+
 def test_exact_text_is_a_potential_duplicate():
     text = "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness to reduce vehicle mass."
     result = classify_pair(

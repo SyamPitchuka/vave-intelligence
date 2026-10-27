@@ -12,6 +12,7 @@ Every number here comes from `data/vave_duplicate_eval_set_v2.xlsx`, a synthetic
 - **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 – 0.34. That rule has since been removed. Those 53 now go to manual review, recall is unchanged, and 127 correct look-alike verdicts went to manual review with them ([details](#after-removing-the-low-overlap-rule)).
 - **The embedding separates the labels better than the verdict does,** but not cleanly. Within each query, the labelled duplicate has the highest MiniLM cosine of its labelled candidates in 83 of 90 queries. Across queries, 28 similar-but-distinct pairs score above 0.80, where 77 of the 90 duplicates sit.
 - **A semantic route to Potential Duplicate** (same component, cosine ≥ threshold, no detected different action) was added on 27 October 2026. It is off by default in code, and was then turned on at 0.82 in the development database. Every measurement here was taken with it off ([how to revert](#live-setting-and-how-to-revert-it)). On the 15 held-out component families, a threshold of 0.82 chosen on the other 15 gives **precision 0.857, recall 0.800, F1 0.828**, against recall 0.333 and F1 0.500 without the route. At 0.91, the lowest threshold with precision 1.0 on the tuning families, held-out precision stays 1.0 but recall is only 0.378. See [Semantic Potential Duplicate route](#semantic-potential-duplicate-route).
+- **Candidates are now ordered by verdict, then cosine,** instead of by fuzzy score. With the live settings, the labelled duplicate's mean rank went from 1.533 to 1.200 and rank@1 from 0.722 to 0.833. Precision, recall, and F1 are unchanged. See [Candidate ordering by verdict](#candidate-ordering-by-verdict).
 
 ## Setup
 
@@ -434,6 +435,93 @@ Three query–candidate pairs appear twice in LabelledPairs, each time with conf
 - VAVE-Q-0079 → VAVE-H-0011
 
 All three are in the held-out families, and none is a same-component pair. They count as negatives under either label and can never fire the route, so the figures above are unaffected. The total is 597 rows, but only 594 distinct pairs.
+
+## Candidate ordering by verdict
+
+Run on 27 October 2026, same database and data, with the live settings: `semantic_duplicate_threshold` 0.82, `cosine_retrieve_threshold` 0.40, `retrieval_top_k` 15, and Ollama not running.
+
+### The defect
+
+In a live test on `Cab mounting bracket`:
+
+| Rank | Candidate | Component | Verdict | Cosine | Fuzzy |
+| --- | --- | --- | --- | --- | --- |
+| 1 | VAVE-H-0060 | Air tank mounting bracket | Insufficient Evidence | 0.648 | 57.04 |
+| 12 | VAVE-SYN-017 (the true duplicate) | Cab mounting bracket | Potential Duplicate | 0.844 | 53.38 |
+
+**The old rule.** `rank_historical` (`duplicate_detection/service.py`) sorts every historical idea by exact match, then fuzzy score, then cosine. `analyze_submission` then:
+1. keeps the first 15 that pass the candidate filter
+2. numbers them 1 – 15 in that same order
+3. computes each verdict
+
+The verdict never affected the order, and cosine only broke ties between equal fuzzy scores.
+
+**Why it was likely written that way:**
+- **Ranking came before classification.** Ranking is a retrieval step that runs before any verdict exists, and the stored rank was simply the position in that list.
+- **Fuzzy was the stronger signal when this was written.** The code dates from the first commit (`ce596ed`), when the default embedding was `deterministic-hash-v1`. That is a hashed lexical vector, a weaker version of the same word-overlap signal fuzzy measures, so ranking by fuzzy with cosine as a tie-break was reasonable.
+- **The order sets the language-model budget.** With Ollama running, only the first 5 candidates in this order are compared by the model.
+
+### The fix
+
+After all verdicts are known, `analyze_submission` re-sorts the shown candidates and renumbers them 1 – 15 (`candidate_display_key`):
+
+1. **By verdict:** Potential Duplicate, then Insufficient Evidence, then Similar but Distinct, then No Strong Match. This is the order `headline_category` already used (`VERDICT_PRIORITY` in `classifier.py`).
+2. **Within a verdict, by cosine,** highest first. A candidate with no cosine (outside the top-20 vector search) goes after those with one.
+3. **Then by fuzzy,** highest first. Full ties keep retrieval order.
+
+What does not change:
+- **The shown set.** Selection still takes the first 15 in exact → fuzzy → cosine order.
+- **The language-model comparisons.** They still go to the first 5 candidates in retrieval order.
+- **Every verdict.** The re-sort happens after classification, so no verdict can change.
+
+The API and the interface already order candidates by their stored rank, so they follow the new order with no other change.
+
+### Method
+
+- **Command:** `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/evaluate_hard_set.py data/vave_duplicate_eval_set_v2.xlsx out.json`, with the live settings.
+- **One labelled duplicate per query.** Each of the 90 TestQueries has exactly one labelled duplicate, and all 90 are among the 15 shown both before and after the fix.
+- **Two new metrics, over those 90:**
+  - **Mean rank of the labelled duplicate:** its average rank among the shown candidates. 1 is best.
+  - **Rank@1 hit rate:** the share of queries whose labelled duplicate is ranked 1st.
+- **"Before"** is the duplicate's position among the same shown candidates in retrieval order. That is the rank the old code stored: in the earlier 0.82 cross-check, run on the previous code, it matched the stored rank for all 597 pairs. It also reproduces the 65 at rank 1 reported in [Predicted category by label](#predicted-category-by-label).
+- **"After"** is the rank the pipeline now stores.
+
+### Results
+
+| Difficulty | Mean rank, before | Mean rank, after | Rank@1, before | Rank@1, after | Worst rank, before → after |
+| --- | --- | --- | --- | --- | --- |
+| **overall** | **1.533** | **1.200** | **0.722** (65 of 90) | **0.833** (75 of 90) | 11 → 3 |
+| easy | 1.233 | 1.100 | 0.833 (25) | 0.933 (28) | 4 → 3 |
+| medium | 1.633 | 1.233 | 0.667 (20) | 0.800 (24) | 9 → 3 |
+| hard | 1.733 | 1.267 | 0.667 (20) | 0.767 (23) | 11 → 3 |
+
+**Precision, recall, and F1 are unchanged,** as expected:
+- **End to end:** precision 0.880, recall 0.811, F1 0.844 (TP 73, FP 10, FN 17, TN 497), before and after, at every difficulty.
+- **Classifier only:** 0.859 / 0.811 / 0.834 before and after.
+- **Per pair:** all 597 pairs have the same verdict and the same shown/not-shown status as in the cross-check run on the previous code.
+
+**Where the duplicates moved.** 18 duplicates moved up, 64 stayed, and 8 moved down.
+
+- **Duplicates the route catches rise.** For the 73 duplicates called Potential Duplicate, rank@1 went from 52 to 65 and mean rank from 1.60 to 1.15. A Potential Duplicate is no longer placed below an Insufficient Evidence candidate with a higher fuzzy score.
+- **5 of the 8 moved down behind an unlabelled true duplicate.** One of the 20 seeded VAVE-SYN ideas now ranks above the labelled duplicate, and each describes the same change:
+
+  | Query | Now above the labelled duplicate | Same change |
+  | --- | --- | --- |
+  | Q-0002 | VAVE-SYN-017 (cosine 0.923), VAVE-SYN-001 (0.918) | Aluminium cab bracket. SYN-001's description is word for word H-0001's. |
+  | Q-0008 | VAVE-SYN-004 | Oil pan thinning plus baffle |
+  | Q-0012 | VAVE-SYN-007 | Mirror-bracket commonisation |
+  | Q-0023 | VAVE-SYN-005 | Rib deletion |
+  | Q-0039 | VAVE-SYN-002 | Brake-pad chamfer, already noted under [Other observations](#other-observations) |
+
+  The workbook only labels its own VAVE-H ideas, so these count against the new order even though it is right. The measured rank@1 therefore understates the fix.
+- **3 of the 8 are duplicates the verdict missed.** Q-0033, Q-0036, and Q-0086 have their duplicate at Insufficient Evidence. A look-alike with the same verdict and a slightly higher cosine now ranks above it: 0.803 against 0.765, 0.712 against 0.691, and 0.799 against 0.779. Inside one verdict group, cosine is the deciding signal and is not perfect.
+- **Every duplicate is now in the top 3.** The worst rank was 11 before.
+
+### What this does not fix
+
+- **Selection is still by fuzzy score.** A Potential Duplicate whose fuzzy score is too low to make the first 15 is still not shown. In this set every duplicate is shown either way. In the reported live case, VAVE-SYN-017 was 12th, inside the 15, so the new order moves it to the top of its verdict group.
+- **The language model, when running, still compares the first 5 by fuzzy.** A semantic-route duplicate further down retrieval order gets no model comparison.
+- **The ranking metrics count only the labelled duplicate.** They ignore whether look-alike false positives now sit higher, which they do whenever the route calls them Potential Duplicate.
 
 ## Limitations
 

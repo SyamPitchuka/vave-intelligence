@@ -170,15 +170,19 @@ def classify_pair(
     )
 
 
+# Most to least actionable. Used for the headline outcome and for ordering a run's candidates.
+VERDICT_PRIORITY = (
+    "potential_duplicate",
+    "insufficient_evidence",
+    "similar_but_distinct",
+    "no_strong_match",
+)
+
+
 def headline_category(categories: list[str]) -> str:
     if not categories:
         return "no_strong_match"
-    priority = (
-        "potential_duplicate",
-        "insufficient_evidence",
-        "similar_but_distinct",
-        "no_strong_match",
-    )
+    priority = VERDICT_PRIORITY
     for item in priority:
         if item in categories:
             return item

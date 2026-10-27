@@ -159,7 +159,14 @@ def main() -> None:
                 embedder=embedder, llm_status=llm_status, warning=warning,
             )
             shown = {c.historical_idea_id: c for c in run.candidates}
-            ranked = {item["idea"].id: item for item in rank_historical(db, submission, embedder=embedder, limit=int(config["retrieval_top_k"]))}
+            retrieval = rank_historical(db, submission, embedder=embedder, limit=int(config["retrieval_top_k"]))
+            ranked = {item["idea"].id: item for item in retrieval}
+            # The rank the shown candidates had before verdict-based ordering: their retrieval (exact, fuzzy,
+            # cosine) order. The shown set is the same either way.
+            retrieval_rank = {
+                idea_id: position
+                for position, idea_id in enumerate((item["idea"].id for item in retrieval if item["idea"].id in shown), start=1)
+            }
             query_vector = np.asarray(embedder.embed(idea_embedding_text(submission)), dtype=float)
             info = {"query": code, "outcome": run.outcome_category, "shown": len(run.candidates), "llm_status": run.llm_status}
             for pair in labelled_by_query.get(code, []):
@@ -189,6 +196,7 @@ def main() -> None:
                         "difficulty": str(pair["Difficulty"]).strip(),
                         "shown": hit is not None,
                         "rank": hit.rank if hit else None,
+                        "retrieval_rank": retrieval_rank.get(candidate.id),
                         "e2e": hit.category if hit else "not_shown",
                         "classifier": heuristic.category,
                         "fuzzy": item["fuzzy"],
@@ -232,6 +240,22 @@ def main() -> None:
 
     def metrics(rows: list[dict], key: str) -> dict:
         return classification_metrics([(r["label"], r[key]) for r in rows])
+
+    def ranking(rows: list[dict], key: str) -> dict:
+        """Where the labelled duplicate sits among the shown candidates. Unshown duplicates are counted apart."""
+        ranks = [r[key] for r in rows if r["label"] == "duplicate" and r[key] is not None]
+        unshown = sum(r["label"] == "duplicate" and r[key] is None for r in rows)
+        if not ranks:
+            return {"available": False, "unshown": unshown}
+        return {
+            "available": True,
+            "duplicates_shown": len(ranks),
+            "unshown": unshown,
+            "mean_rank": statistics.fmean(ranks),
+            "rank_at_1": sum(rank == 1 for rank in ranks) / len(ranks),
+            "at_rank_1": sum(rank == 1 for rank in ranks),
+            "worst_rank": max(ranks),
+        }
 
     def summarise(rows: list[dict]) -> dict:
         return {
@@ -316,6 +340,13 @@ def main() -> None:
             for d in DIFFICULTIES
         },
         "counts": {label: dict(Counter(r["difficulty"] for r in records if r["label"] == label)) for label in LABELS},
+        "ranking": {
+            stage: {
+                "overall": ranking(records, key),
+                **{d: ranking([r for r in records if r["difficulty"] == d], key) for d in DIFFICULTIES},
+            }
+            for stage, key in (("retrieval_order", "retrieval_rank"), ("stored", "rank"))
+        },
         "distributions": {
             score: {
                 label: {
@@ -336,7 +367,7 @@ def main() -> None:
         "split": split,
     }
     out_path.write_text(json.dumps(report, indent=1, default=str), encoding="utf-8")
-    print(json.dumps({k: report[k] for k in ("config", "metrics", "confusion", "retrieval", "counts")}, indent=1, default=str))
+    print(json.dumps({k: report[k] for k in ("config", "metrics", "confusion", "retrieval", "counts", "ranking")}, indent=1, default=str))
     print(f"wrote {out_path}")
 
 
