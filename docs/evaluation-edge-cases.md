@@ -8,6 +8,8 @@ Three runs on 27 October 2026, against the hosted Neon development database with
 
 Each tier was measured on the v2 hard set first, to check for regressions, and only then on these edge cases.
 
+**Since 28 October:** the symmetric fuzzy score is off and a component subset guard is on. With these settings this set gives the same verdict on every pair as run 3. The adversarial follow-up set, the guard and a component-threshold sweep are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md).
+
 Every number here comes from `data/vave_duplicate_edge_cases.xlsx`, a synthetic workbook of 11 historical ideas, 18 queries and 18 labelled pairs. It was written without sight of the classifier's keyword lists, thresholds or code. Each case type isolates one failure mode and has only two or three pairs, so results are reported **by case type**. No overall figure is given, because it would hide which failure mode is live. Read [Limitations](#limitations) before relying on any of it.
 
 ## Summary
@@ -27,7 +29,7 @@ Every number here comes from `data/vave_duplicate_edge_cases.xlsx`, a synthetic 
 - **Two cases pass for weaker reasons than their case type suggests.** EQ-007 (negation) was never shown to the reviewer, so it scores as correct only because it was hidden. EQ-008 (negation) passes because a second action ("casting") remains once the negated one is discounted.
 - **No threshold was changed.** The cosine threshold, the fuzzy threshold of 86 and the component-match threshold of 90 are as before.
 - **On the v2 hard set, Tier 2 removed one false positive and cost nothing.** Precision went from 0.880 to 0.890, F1 from 0.844 to 0.849, and recall (0.811), mean rank (1.200) and rank@1 (0.833) were unchanged. The gain came from scope comparison. Direction extraction and the symmetric fuzzy score changed no v2 pair ([details](#v2-regression-check-tier-2)).
-- **The symmetric fuzzy score changed no labelled verdict on either set.** It matters only while the semantic route is on. With the route off, it would cost 10 v2 duplicates ([details](#symmetric-fuzzy-score)).
+- **The symmetric fuzzy score changed no labelled verdict on either set.** It matters only while the semantic route is on. With the route off, it would cost 10 v2 duplicates ([details](#symmetric-fuzzy-score)). **It was turned off on 28 October**, and that changed no labelled pair on either set.
 
 ## Tier 2 changes
 
@@ -37,7 +39,7 @@ Each rule has its own AI setting, defaults to on in `config.py`, and can be turn
 | --- | --- |
 | `direction_detection` | `state_pairs` reads before → after pairs from "from X to Y", "replace X with Y" and "substitute Y for X", within one clause and at most 8 tokens per side. Two numbers with a length unit (mm, cm, in/inch; inches converted to millimetres; a unit given only once applies to both) make a **decrease** or an **increase**. Two different materials, from a fixed list of 25 names (steel, aluminium, polypropylene/PP, polycarbonate/PC, PMMA/acrylic, PET, phenolic, rubber, urethane, and others), make a **substitution** X → Y. The pair **conflicts** when the length directions on the two sides are disjoint (only increases against only decreases), or when one side's X → Y is the other side's Y → X and not also X → Y (**flipped substitution**). A conflict counts as a different technical action. The pair is Similar but Distinct, and neither the semantic route nor the lexical rule can call it a duplicate, whatever the cosine or fuzzy score. |
 | `scope_comparison` | If the two sides share at least one detected kind of change, and the query has kinds of change the candidate lacks, that is a scope mismatch and also counts as a different technical action. It does not apply when the query proposes *fewer* kinds than the candidate, or when the candidate has no detected action. |
-| `symmetric_lexical_fuzzy` | The lexical duplicate rule (fuzzy ≥ 86, or same action and component with Jaccard ≥ 0.42 and fuzzy ≥ 68) uses RapidFuzz `token_sort_ratio` instead of `token_set_ratio`. Retrieval order, the candidate filter, the other classifier branches and the fuzzy score shown in the UI still use `token_set_ratio`. |
+| `symmetric_lexical_fuzzy` (default off since 28 October) | The lexical duplicate rule (fuzzy ≥ 86, or same action and component with Jaccard ≥ 0.42 and fuzzy ≥ 68) uses RapidFuzz `token_sort_ratio` instead of `token_set_ratio`. Retrieval order, the candidate filter, the other classifier branches and the fuzzy score shown in the UI still use `token_set_ratio`. |
 
 **Reversal is now a flipped state pair, so `reversal_detection` was removed,** along with its verb list (revert, return, restore, reinstate, roll back) and the clause-position rule added in Tier 1. That rule existed only to stop "restore bending stiffness" from reading as a reversal. A state pair needs two stated states, so that text yields no pair and the guard is no longer needed. Both reversal cases still pass (run 3, and stage A below). The trade-off: a reversal written without both states ("Revert to the original design") is no longer detected.
 
@@ -89,7 +91,7 @@ After Tier 1, EQ-001 and EQ-002 flagged five unlabelled historical ideas each as
 | EQ-002 | VAVE-H-0003 | Cab mounting bracket | 0.827 | 57.4 | Redesign the cab mounting bracket as a topology-optimised steel casting, removing material only from low-stress regions while keeping the steel grade. |
 
 - EQ-001: "Replace the steel cab mount bracket with an aluminium alloy bracket of equivalent stiffness to cut vehicle mass." EQ-002: "Cab mounting bracket to be changed from steel to aluminium alloy, section resized so stiffness is unchanged."
-- **SYN-016 was not caused by the relaxation.** Its component differs. It was flagged before Tier 1 too, through the lexical fuzzy rule (86.4), which does not require a matching component. With the symmetric fuzzy score on, it is no longer flagged.
+- **SYN-016 was not caused by the relaxation.** Its component differs. It was flagged before Tier 1 too, through the lexical fuzzy rule (86.4), which does not require a matching component. With the symmetric fuzzy score on, it was no longer flagged. Since that score was turned off on 28 October, it is flagged again.
 - **H-0003 (a steel topology casting) is flagged for EQ-002 by the semantic route at 0.827.** EQ-002's wording ("to be changed from …") contains no action keyword: "changed" is not in the verb list. So the action check is skipped and nothing compares the query's steel → aluminium pair with H-0003, which has none.
 
 ## Tier 1 changes

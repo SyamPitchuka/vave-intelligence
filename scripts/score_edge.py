@@ -13,11 +13,19 @@ Each LabelledPairs row is scored end to end (the category the pipeline gave that
 not show counts as not a duplicate) and classifier only (classify_pair on the pair, whatever retrieval did).
 A `duplicate` pair is correct only when called Potential Duplicate. A `similar_but_distinct` or
 `related_not_duplicate` pair is correct whenever it is not called Potential Duplicate, as the workbook's Cover
-sheet specifies. Results are reported per Case_Type; with two or three pairs per type there is no overall figure.
+sheet specifies. Results are reported per Case_Type (set v1) or Probe_Type (set v2), split by Polarity (from
+the sheet, or positive for a `duplicate` label), with three outcomes: correct, wrong, or not retrieved (the
+candidate was not among those shown). With two or three pairs per type there is no overall figure.
+
+Each query's other Potential Duplicate calls, on candidates the workbook does not label, are listed with their
+text, component, cosine and fuzzy score under "unlabelled_flags".
 
 Options:
 
-    --disable FLAG    run with one classifier rule off (see CLASSIFIER_FLAGS); repeat to turn off more than one
+    --disable FLAG              run with one classifier rule off (see CLASSIFIER_FLAGS); repeat to turn off more
+                                than one
+    --sweep-component LO HI     also replay classify_pair on every labelled pair with the component fuzzy threshold
+                                at each integer from LO to HI, reusing the retrieval results; written as "sweep"
 """
 
 from __future__ import annotations
@@ -36,6 +44,7 @@ import numpy as np  # noqa: E402
 from app.api.v1.router import _reindex_ids, _runtime  # noqa: E402
 from app.db.session import get_session_factory  # noqa: E402
 from app.models import EmbeddingRecord, Idea, ImportChange, User  # noqa: E402
+from app.services.duplicate_detection import classifier  # noqa: E402
 from app.services.duplicate_detection.classifier import (  # noqa: E402
     CLASSIFIER_FLAGS,
     change_types,
@@ -60,6 +69,28 @@ def correct(label: str, category: str) -> bool:
     if label in NEGATIVE_LABELS:
         return category != "potential_duplicate"
     raise ValueError(f"Unknown label {label!r}")
+
+
+def outcome(label: str, category: str) -> str:
+    if category == "not_shown":
+        return "not_retrieved"
+    return "correct" if correct(label, category) else "wrong"
+
+
+def polarity(pair: dict) -> str:
+    return str(pair.get("Polarity") or ("positive" if str(pair["Label"]).strip() == "duplicate" else "negative")).strip()
+
+
+def tally(records: list[dict], key: str) -> dict:
+    groups: dict[str, dict] = {}
+    for record in records:
+        entry = groups.setdefault(
+            f"{record['case_type']} ({record['polarity']})",
+            {"label": record["label"], "pairs": 0, "correct": 0, "wrong": 0, "not_retrieved": 0},
+        )
+        entry["pairs"] += 1
+        entry[record[key]] += 1
+    return groups
 
 
 def load_historical(db, content: bytes, filename: str, admin: User) -> list[str]:
@@ -102,11 +133,20 @@ def score(db, args, content: bytes, disabled: list[str]) -> dict:
     print(f"embedding={embedder.model} llm_status={llm_status} historical={len(historical)} (loaded {len(loaded)}) flags={flags}")
 
     records = []
+    replays = []  # (record index, classify_pair inputs, pipeline cosine, direct cosine), kept out of the report
+    unlabelled = []
     for row in queries:
         payload = hard_set.query_payload(row, mapping)
         savepoint = db.begin_nested()
         try:
-            submission = create_submission(db, payload, admin.id, submit=True)
+            refused = None
+            try:
+                submission = create_submission(db, payload, admin.id, submit=True)
+            except ValueError as exc:
+                # The submit form would refuse this query (e.g. a description under 20 characters). Analyse it as a
+                # draft so the classifier is still measured, and mark the pairs.
+                refused = str(exc)
+                submission = create_submission(db, payload, admin.id, submit=False)
             run = analyze_submission(
                 db, submission, user_id=admin.id, ai_config=config, chat_provider=chat,
                 embedder=embedder, llm_status=llm_status, warning=warning,
@@ -131,15 +171,19 @@ def score(db, args, content: bytes, disabled: list[str]) -> dict:
                 hit = shown.get(candidate.id)
                 label = str(pair["Label"]).strip()
                 e2e = hit.category if hit else "not_shown"
+                replays.append((len(records), inputs, item["cosine"], direct_cosine))
                 negation = flags.get("negation_detection", False)
                 records.append({
                     "query": payload["idea_code"],
                     "candidate": candidate.idea_code,
                     "label": label,
-                    "case_type": str(pair["Case_Type"]).strip(),
+                    "case_type": str(pair.get("Case_Type") or pair.get("Probe_Type")).strip(),
+                    "polarity": polarity(pair),
+                    "submission_refused": refused,
                     "e2e": e2e,
                     "classifier": heuristic.category,
                     "correct": correct(label, e2e),
+                    "outcome": outcome(label, e2e),
                     "shown": hit is not None,
                     "rank": hit.rank if hit else None,
                     "retrieval_position": position[candidate.id],
@@ -149,22 +193,56 @@ def score(db, args, content: bytes, disabled: list[str]) -> dict:
                     "fuzzy": item["fuzzy"],
                     "jaccard": heuristic.token_jaccard,
                     "same_component": components_match(
-                        submission.component, candidate.component, fuzzy=flags.get("component_fuzzy_match", False)
+                        submission.component, candidate.component, fuzzy=flags.get("component_fuzzy_match", False),
+                        subset_guard=flags.get("component_subset_guard", False),
                     ),
                     "query_actions": sorted(change_types(inputs["query_text"], negation=negation)),
                     "candidate_actions": sorted(change_types(inputs["candidate_text"], negation=negation)),
                     "explanation": heuristic.explanation,
                     "differences": heuristic.differences,
-                    "outcome": run.outcome_category,
+                    "run_outcome": run.outcome_category,
                     "other_potential_duplicates": [code for code in other_duplicates if code != candidate.idea_code],
+                })
+            labelled_codes = {str(pair["Candidate_ID"]).strip() for pair in labelled.get(payload["idea_code"], [])}
+            for shown_candidate in sorted(run.candidates, key=lambda c: c.rank):
+                code = code_of.get(shown_candidate.historical_idea_id)
+                if shown_candidate.category != "potential_duplicate" or code in labelled_codes:
+                    continue
+                idea = historical[code]
+                unlabelled.append({
+                    "query": payload["idea_code"],
+                    "query_component": submission.component,
+                    "query_text": submission.description,
+                    "candidate": code,
+                    "component": idea.component,
+                    "candidate_text": idea.description,
+                    "cosine": hard_set.cosine(query_vector, vectors[idea.id]),
+                    "fuzzy": ranked[idea.id]["fuzzy"],
+                    "rank": shown_candidate.rank,
                 })
         finally:
             savepoint.rollback()
-    by_type: dict[str, dict] = {}
-    for record in records:
-        entry = by_type.setdefault(record["case_type"], {"label": record["label"], "pairs": 0, "correct": 0})
-        entry["pairs"] += 1
-        entry["correct"] += record["correct"]
+    sweep = {}
+    if args.sweep_component:
+        low, high = args.sweep_component
+        semantic = config.get("semantic_duplicate_threshold")
+        saved = classifier.COMPONENT_MATCH_THRESHOLD
+        try:
+            for threshold in range(low, high + 1):
+                classifier.COMPONENT_MATCH_THRESHOLD = threshold
+                replayed = []
+                for index, inputs, pipeline_cosine, direct_cosine in replays:
+                    record = records[index]
+                    shown_as = classify_pair(**inputs, cosine=pipeline_cosine, semantic_duplicate_threshold=semantic)
+                    alone = classify_pair(**inputs, cosine=direct_cosine, semantic_duplicate_threshold=semantic)
+                    replayed.append({
+                        **record,
+                        "outcome": outcome(record["label"], shown_as.category if record["shown"] else "not_shown"),
+                        "classifier_outcome": outcome(record["label"], alone.category),
+                    })
+                sweep[threshold] = {"e2e": tally(replayed, "outcome"), "classifier": tally(replayed, "classifier_outcome")}
+        finally:
+            classifier.COMPONENT_MATCH_THRESHOLD = saved
     return {
         "config": {
             "semantic_duplicate_threshold": config.get("semantic_duplicate_threshold"),
@@ -176,8 +254,10 @@ def score(db, args, content: bytes, disabled: list[str]) -> dict:
             "fuzzy_strong_threshold": config["fuzzy_strong_threshold"],
             "historical": len(historical),
         },
-        "by_case_type": by_type,
+        "by_case_type": tally(records, "outcome"),
         "pairs": records,
+        "unlabelled_flags": unlabelled,
+        "sweep": sweep,
     }
 
 
@@ -186,6 +266,7 @@ def main() -> None:
     parser.add_argument("workbook", type=Path)
     parser.add_argument("out", type=Path)
     parser.add_argument("--disable", action="append", default=[], choices=CLASSIFIER_FLAGS)
+    parser.add_argument("--sweep-component", type=int, nargs=2, metavar=("LO", "HI"), default=None)
     args = parser.parse_args()
     content = args.workbook.read_bytes()
     for attempt in range(1, 4):
@@ -206,11 +287,14 @@ def main() -> None:
                 pass
     args.out.write_text(json.dumps(report, indent=1, default=str), encoding="utf-8")
     for case_type, entry in report["by_case_type"].items():
-        print(f"{case_type:24} {entry['label']:22} {entry['correct']}/{entry['pairs']}")
+        print(
+            f"{case_type:42} {entry['label']:22} correct {entry['correct']}/{entry['pairs']}  wrong {entry['wrong']}  "
+            f"not retrieved {entry['not_retrieved']}"
+        )
     for r in report["pairs"]:
         print(
-            f"{r['query']} {r['candidate']} {r['case_type']:22} {r['label']:22} -> {r['e2e']:22} "
-            f"{'ok ' if r['correct'] else 'FAIL'} cos={r['cosine']:.3f} fuzzy={r['fuzzy']:.1f} "
+            f"{r['query']} {r['candidate']} {r['case_type']:28} {r['polarity']:8} {r['label']:22} -> {r['e2e']:22} "
+            f"{r['outcome']:13}{' (refused at submit)' if r['submission_refused'] else ''} clf={r['classifier']:22} cos={r['cosine']:.3f} fuzzy={r['fuzzy']:.1f} "
             f"same={r['same_component']} pos={r['retrieval_position']} rank={r['rank']}"
         )
     print(f"wrote {args.out}")

@@ -206,7 +206,8 @@ def main() -> None:
                         "cosine": direct_cosine,
                         "pipeline_cosine": item["cosine"],
                         "same_component": components_match(
-                            submission.component, candidate.component, fuzzy=bool(config.get("component_fuzzy_match"))
+                            submission.component, candidate.component, fuzzy=bool(config.get("component_fuzzy_match")),
+                            subset_guard=bool(config.get("component_subset_guard")),
                         ),
                     }, inputs)
                 )

@@ -199,6 +199,16 @@ Run on 26 October 2026 on the same Neon database, MiniLM active, 20 historical a
 
 This was expected. Precision, recall, and F1 cannot change with cosine (see [How cosine is used](#how-cosine-is-used)), because the evaluation computes fuzzy and exact for every historical idea whether or not the vector search returned it. The retrieval figures could only have changed through a cosine tie-break, and no query had a fuzzy tie at the top. The fix matters for the live candidate filter and for ranking ties, not for these metrics.
 
+## v2 hard set: re-run (28 October 2026)
+
+With the Tier 2 rules, the symmetric fuzzy score off and the component subset guard on (the live defaults): precision **0.890**, recall **0.811**, F1 **0.849**, TP 73, FP 9, FN 17, TN 498, 186 abstentions, mean rank 1.200, rank@1 0.833 (75 / 90).
+
+- **What changed from the baseline below:** scope comparison removed one false positive (Q-0022 against H-0024).
+- **What changed nothing:** turning the symmetric score off and adding the guard. Each changed no pair.
+- **Database:** 111 historical ideas, with no edge-case ideas left after the edge runs.
+
+Details are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md#v2-hard-set-run-first).
+
 ## v2 hard set: clean baseline (27 October 2026)
 
 This is the reference for comparing later classifier changes on `data/vave_duplicate_eval_set_v2.xlsx`. The method and the earlier runs are in [evaluation-hard-set.md](evaluation-hard-set.md).

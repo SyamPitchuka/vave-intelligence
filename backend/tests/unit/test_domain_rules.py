@@ -3,10 +3,12 @@ from decimal import Decimal
 
 from app.core.config import Settings
 from app.domain.synthetic import SYNTHETIC_IDEAS
+from app.services.duplicate_detection import classifier
 from app.services.duplicate_detection.classifier import (
     change_types,
     classify_pair,
     components_match,
+    distinguishing_words,
     state_pairs,
 )
 from app.services.embeddings.deterministic import cosine, embed_text
@@ -188,6 +190,25 @@ def test_component_match_is_exact_when_turned_off():
     assert components_match("Cab mounting bracket", "cab  mounting bracket")
     assert not components_match("Cab Mtg Bkt", "Cab mounting bracket")
     assert not components_match("Battery tray (LV)", "Battery tray")
+
+
+def test_subset_guard_rejects_a_qualified_component_name_at_any_threshold(monkeypatch):
+    monkeypatch.setattr(classifier, "COMPONENT_MATCH_THRESHOLD", 80)
+    assert components_match("Front spring bracket rear", "Front spring bracket", fuzzy=True)
+    assert not components_match("Front spring bracket rear", "Front spring bracket", fuzzy=True, subset_guard=True)
+    assert not components_match("Door hinge bracket", "Door hinge bracket lower", fuzzy=True, subset_guard=True)
+    # Neither name contains the other, but each has a positional qualifier the other lacks.
+    assert components_match("Door hinge bracket upper", "Door hinge bracket lower", fuzzy=True)
+    assert not components_match("Door hinge bracket upper", "Door hinge bracket lower", fuzzy=True, subset_guard=True)
+    assert not components_match("LH tail lamp lens", "RH tail lamp lens", fuzzy=True, subset_guard=True)
+
+
+def test_subset_guard_keeps_abbreviations_parentheticals_and_non_distinguishing_words():
+    assert components_match("Cab Mtg Bkt", "Cab mounting bracket", fuzzy=True, subset_guard=True)
+    assert components_match("Battery tray (LV)", "Battery tray", fuzzy=True, subset_guard=True)
+    assert distinguishing_words("Steering column assembly", "Steering column") == set()
+    assert distinguishing_words("Steering column lower bracket", "Steering column bracket") == {"lower"}
+    assert distinguishing_words("Exhaust heat shield front", "Exhaust heat shield") == {"front"}
 
 
 def test_component_variant_reaches_the_semantic_route_only_with_fuzzy_matching():

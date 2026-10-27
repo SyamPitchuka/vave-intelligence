@@ -8,9 +8,10 @@ percentage. Same component, department, or benefit is not enough to call two
 ideas duplicates.
 
 Further rules can each be switched off (all off when not passed): fuzzy component
-matching after abbreviation expansion, negated action keywords ignored, opposite
-before -> after state pairs (direction, which also covers reversals), a query that
-adds kinds of change (scope), and a symmetric fuzzy score for the lexical rule.
+matching after abbreviation expansion (with a guard for qualified names such as
+"front"/"rear"), negated action keywords ignored, opposite before -> after state pairs
+(direction, which also covers reversals), a query that adds kinds of change (scope), and
+a symmetric fuzzy score for the lexical rule.
 """
 
 from __future__ import annotations
@@ -34,6 +35,14 @@ CHANGE_VERBS = {"replace", "substitute", "substitution", "change", "switch", "sw
 COMPONENT_ABBREVIATIONS = {"brkt": "bracket", "bkt": "bracket", "mtg": "mounting", "assy": "assembly"}
 COMPONENT_MATCH_THRESHOLD = 90
 _PARENTHETICAL = re.compile(r"\([^)]*\)")
+# Subset guard (component_subset_guard): "Front spring bracket rear" and "Front spring bracket" name different parts
+# although one name contains the other. A fuzzy score cannot see that (ratio gives them 88.9, token_set_ratio 100),
+# so a name whose extra words are anything but these is a different component, and a positional or ordinal
+# qualifier on either side that the other lacks always is. This is checked before the threshold, not instead of it.
+NON_DISTINGUISHING_COMPONENT_WORDS = {"assembly", "part", "component", "unit", "complete"}
+POSITIONAL_QUALIFIERS = {
+    "front", "rear", "upper", "lower", "left", "right", "lh", "rh", "inner", "outer", "first", "second",
+}
 
 # Direction (direction_detection): "from X to Y", "replace X with Y" and "substitute Y for X" give a state pair.
 # Two numbers with a length unit make a decrease or an increase; two different materials make a substitution
@@ -120,6 +129,7 @@ class StatePair:
 
 CLASSIFIER_FLAGS = (
     "component_fuzzy_match",
+    "component_subset_guard",
     "negation_detection",
     "direction_detection",
     "scope_comparison",
@@ -137,11 +147,25 @@ def component_key(value: str | None) -> str:
     return " ".join(COMPONENT_ABBREVIATIONS.get(token, token) for token in normalize_text(text).split())
 
 
-def components_match(query: str | None, candidate: str | None, *, fuzzy: bool = False) -> bool:
+def distinguishing_words(query: str | None, candidate: str | None) -> set[str]:
+    """Words that make two component names different parts: a positional qualifier only one name has, or the
+    extra words of a name that contains the other (apart from words such as "assembly")."""
+    q_words, c_words = set(component_key(query).split()), set(component_key(candidate).split())
+    found = (q_words ^ c_words) & POSITIONAL_QUALIFIERS
+    if q_words != c_words and (q_words <= c_words or c_words <= q_words):
+        found |= (q_words ^ c_words) - NON_DISTINGUISHING_COMPONENT_WORDS
+    return found
+
+
+def components_match(
+    query: str | None, candidate: str | None, *, fuzzy: bool = False, subset_guard: bool = False
+) -> bool:
     if not fuzzy:
         q_component, c_component = normalize_text(query), normalize_text(candidate)
         return bool(q_component and c_component and q_component == c_component)
     q_component, c_component = component_key(query), component_key(candidate)
+    if subset_guard and distinguishing_words(query, candidate):
+        return False
     return bool(q_component and c_component and fuzz.ratio(q_component, c_component) >= COMPONENT_MATCH_THRESHOLD)
 
 
@@ -276,6 +300,7 @@ def classify_pair(
     cosine: float | None = None,
     semantic_duplicate_threshold: float | None = None,
     component_fuzzy_match: bool = False,
+    component_subset_guard: bool = False,
     negation_detection: bool = False,
     direction_detection: bool = False,
     scope_comparison: bool = False,
@@ -289,7 +314,9 @@ def classify_pair(
     overlap = jaccard(q_norm, c_norm)
     q_component = normalize_text(query_component)
     c_component = normalize_text(candidate_component)
-    same_component = components_match(query_component, candidate_component, fuzzy=component_fuzzy_match)
+    same_component = components_match(
+        query_component, candidate_component, fuzzy=component_fuzzy_match, subset_guard=component_subset_guard
+    )
     if same_component and q_component != c_component:
         similarities.append(
             "The component names match once abbreviations and qualifiers are normalised: "

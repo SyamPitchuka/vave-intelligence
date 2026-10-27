@@ -66,12 +66,13 @@ class Settings(BaseSettings):
     semantic_duplicate_threshold: float | None = None
     # Classifier rules from the edge-case evaluation (see classify_pair); each can be turned off on its own.
     component_fuzzy_match: bool = True
+    component_subset_guard: bool = True
     negation_detection: bool = True
     direction_detection: bool = True
     scope_comparison: bool = True
-    # Changes no labelled v2 or edge-case verdict while the semantic route is on, but costs v2 recall when the route
-    # is off (docs/evaluation-edge-cases.md).
-    symmetric_lexical_fuzzy: bool = True
+    # Off: it changed no labelled v2 or edge-case verdict, and it costs v2 recall unless the semantic route is on
+    # (docs/evaluation-edge-cases.md).
+    symmetric_lexical_fuzzy: bool = False
     copilot_lexical_threshold: float = 0.45
 
     upload_max_mb: int = 20
