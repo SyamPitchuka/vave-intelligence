@@ -7,7 +7,7 @@ from app.services.duplicate_detection.classifier import (
     change_types,
     classify_pair,
     components_match,
-    read_actions,
+    state_pairs,
 )
 from app.services.embeddings.deterministic import cosine, embed_text
 from app.services.imports.mapping import suggest_mapping
@@ -198,31 +198,90 @@ def test_component_variant_reaches_the_semantic_route_only_with_fuzzy_matching()
 REVERT_TO_STEEL = "Revert the cab mounting bracket from aluminium alloy back to the original steel design after field fatigue findings."
 
 
-def test_reversal_verbs_flip_the_direction_of_an_existing_action():
-    tokens, reverses = read_actions(REVERT_TO_STEEL, reversal=True)
-    assert reverses
-    assert change_types(REVERT_TO_STEEL, reversal=True) == {"material_substitution"}
-    assert read_actions("Roll back to the previous steel bracket.", reversal=True)[1]
-    assert read_actions("Reinstate the phenolic board.", reversal=True)[1]
+def test_state_pairs_read_lengths_with_units_and_materials():
+    assert [p.describe() for p in state_pairs("Reduce pan thickness from 1.5 mm to 1.2 mm and add a baffle.")] == [
+        "decrease from 1.5 mm to 1.2 mm"
+    ]
+    # The unit may be given once, and inches convert to millimetres.
+    assert state_pairs("Widen the strap from 50 to 60 mm.")[0].direction == "increase"
+    assert state_pairs("Thin the pan from 0.059 in to 0.047 in.")[0].describe() == "decrease from 1.499 mm to 1.194 mm"
+    assert [p.describe() for p in state_pairs(SEMANTIC_ALUMINUM)] == ["steel to aluminum"]
+    assert [p.describe() for p in state_pairs("Substitute an aluminium alloy for the existing steel bracket.")] == [
+        "steel to aluminum"
+    ]
+    assert [p.describe() for p in state_pairs(REVERT_TO_STEEL)] == ["aluminum to steel"]
 
 
-def test_reversal_verbs_in_other_senses_are_not_reversals():
-    assert not read_actions("Add a rolled edge to restore bending stiffness.", reversal=True)[1]
-    assert not read_actions("Reroute the fuel return line behind the crossmember.", reversal=True)[1]
-    assert not read_actions(REVERT_TO_STEEL)[1]
+def test_state_pairs_need_two_states():
+    assert state_pairs("Remove material from low-stress regions to save mass.") == []
+    assert state_pairs("Reduce propeller shaft tube diameter by 0.2 inch.") == []
+    assert state_pairs("Carry the 5 mm crossmember across to the tractor-trailer programme.") == []
+    assert state_pairs("Change the bracket from 6 mm to 6 mm.") == []
 
 
-def test_a_reversal_of_the_candidates_change_is_similar_but_distinct():
-    on = _semantic_pair(query_text=REVERT_TO_STEEL, cosine=0.9, reversal_detection=True)
+def test_opposite_directions_are_similar_but_distinct_whatever_the_cosine():
+    reduce = "Reduce engine oil pan sheet thickness from 1.5 mm to 1.2 mm and add a baffle to control oil surge."
+    increase = "Increase engine oil pan sheet thickness from 1.2 mm to 1.5 mm to improve stone-impact resistance."
+    arguments = {"query_component": "Engine oil pan", "candidate_component": "Engine oil pan", "query_text": increase, "candidate_text": reduce}
+    on = _semantic_pair(**arguments, cosine=0.99, direction_detection=True)
+    assert on.category == "similar_but_distinct"
+    assert any("opposite directions" in difference for difference in on.differences)
+    # It also overrides a strong lexical score.
+    assert _semantic_pair(**arguments, fuzzy_score=95, direction_detection=True).category == "similar_but_distinct"
+    assert _semantic_pair(**arguments, cosine=0.99).category == "potential_duplicate"
+
+
+def test_a_reversal_is_a_flipped_substitution():
+    on = _semantic_pair(query_text=REVERT_TO_STEEL, cosine=0.9, direction_detection=True)
     assert on.category == "similar_but_distinct"
     assert any("reversed" in difference for difference in on.differences)
     assert _semantic_pair(query_text=REVERT_TO_STEEL, cosine=0.9).category == "potential_duplicate"
 
 
-def test_two_reversals_of_the_same_change_are_not_a_direction_flip():
+def test_the_same_direction_is_not_a_conflict():
     restore = "Return the cab mounting bracket from aluminium to the original steel design."
-    result = _semantic_pair(query_text=REVERT_TO_STEEL, candidate_text=restore, cosine=0.9, reversal_detection=True)
+    result = _semantic_pair(query_text=REVERT_TO_STEEL, candidate_text=restore, cosine=0.9, direction_detection=True)
     assert result.category == "potential_duplicate"
+    # Different materials on each side are not a reversal.
+    plastic = "Change the cab mounting bracket from steel to a glass-filled polypropylene moulding."
+    assert _semantic_pair(query_text=plastic, cosine=0.9, direction_detection=True).category == "potential_duplicate"
+
+
+TRAY = "Change the low-voltage battery tray from painted steel to a formed polypropylene tray with metal inserts."
+TRAY_AND_MOVE = TRAY + " Relocate the tray 40 mm rearward to clear the new AdBlue line."
+
+
+def test_a_query_with_extra_changes_is_a_scope_mismatch():
+    arguments = {"query_component": "Battery tray", "candidate_component": "Battery tray", "query_text": TRAY_AND_MOVE, "candidate_text": TRAY}
+    assert change_types(TRAY_AND_MOVE) == {"dimension", "material_substitution"}
+    on = _semantic_pair(**arguments, cosine=0.93, scope_comparison=True)
+    assert on.category == "similar_but_distinct"
+    assert any("dimension" in difference for difference in on.differences)
+    assert _semantic_pair(**arguments, cosine=0.93).category == "potential_duplicate"
+
+
+def test_scope_is_not_compared_when_the_query_proposes_less_or_the_candidate_has_no_action():
+    narrower = {"query_component": "Battery tray", "candidate_component": "Battery tray", "query_text": TRAY, "candidate_text": TRAY_AND_MOVE}
+    assert _semantic_pair(**narrower, cosine=0.93, scope_comparison=True).category == "potential_duplicate"
+    no_action = {"query_component": "Battery tray", "candidate_component": "Battery tray", "query_text": TRAY_AND_MOVE, "candidate_text": "Lighter battery tray."}
+    assert _semantic_pair(**no_action, cosine=0.93, scope_comparison=True).category == "potential_duplicate"
+
+
+def test_symmetric_fuzzy_score_replaces_the_containment_score_in_the_lexical_rule():
+    arguments = {
+        "query_component": "Battery tray",
+        "candidate_component": "Battery tray",
+        # Long enough that word overlap (Jaccard) stays under 0.62, so only the fuzzy score can decide.
+        "query_text": TRAY + " Relocate it 40 mm rearward and drop it 15 mm to clear the new AdBlue line and the revised harness routing behind the cab.",
+        "candidate_text": TRAY,
+        "fuzzy_score": 90,
+        "symmetric_fuzzy_score": 70,
+        "cosine": None,
+    }
+    assert _semantic_pair(**arguments).category == "potential_duplicate"
+    assert _semantic_pair(**arguments, symmetric_lexical_fuzzy=True).category != "potential_duplicate"
+    # Without a symmetric score the containment score is still used.
+    assert _semantic_pair(**{**arguments, "symmetric_fuzzy_score": None}, symmetric_lexical_fuzzy=True).category == "potential_duplicate"
 
 
 KEEP_HANDED = (

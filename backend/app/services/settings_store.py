@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings, get_settings
 from app.domain.constants import DETERMINISTIC_EMBEDDING_MODEL
 from app.models import ApplicationSetting
+from app.services.duplicate_detection.classifier import CLASSIFIER_FLAGS
 
 EDITABLE = {
     "mode",
@@ -24,8 +25,10 @@ EDITABLE = {
     "cosine_retrieve_threshold",
     "semantic_duplicate_threshold",
     "component_fuzzy_match",
-    "reversal_detection",
     "negation_detection",
+    "direction_detection",
+    "scope_comparison",
+    "symmetric_lexical_fuzzy",
     "copilot_lexical_threshold",
     "dataset_label",
     "display_timezone",
@@ -56,8 +59,10 @@ def _defaults(settings: Settings) -> dict[str, Any]:
         "cosine_retrieve_threshold": settings.cosine_retrieve_threshold,
         "semantic_duplicate_threshold": settings.semantic_duplicate_threshold,
         "component_fuzzy_match": settings.component_fuzzy_match,
-        "reversal_detection": settings.reversal_detection,
         "negation_detection": settings.negation_detection,
+        "direction_detection": settings.direction_detection,
+        "scope_comparison": settings.scope_comparison,
+        "symmetric_lexical_fuzzy": settings.symmetric_lexical_fuzzy,
         "copilot_lexical_threshold": settings.copilot_lexical_threshold,
         "dataset_label": settings.dataset_label,
         "display_timezone": settings.display_timezone,
@@ -137,7 +142,7 @@ def save_ai_settings(db: Session, updates: dict[str, Any], user_id: uuid.UUID | 
         if not 0 < semantic <= 1:
             raise ValueError("The semantic duplicate threshold must be above 0 and at most 1, or empty to turn it off.")
     current["semantic_duplicate_threshold"] = semantic
-    for flag in ("component_fuzzy_match", "reversal_detection", "negation_detection"):
+    for flag in CLASSIFIER_FLAGS:
         # A row saved before these settings existed has no value; leave it to the default.
         if flag in current:
             current[flag] = bool(current[flag])

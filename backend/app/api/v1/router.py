@@ -134,8 +134,10 @@ class SettingsBody(BaseModel):
     cosine_retrieve_threshold: float | None = None
     semantic_duplicate_threshold: float | None = None
     component_fuzzy_match: bool | None = None
-    reversal_detection: bool | None = None
     negation_detection: bool | None = None
+    direction_detection: bool | None = None
+    scope_comparison: bool | None = None
+    symmetric_lexical_fuzzy: bool | None = None
     copilot_lexical_threshold: float | None = None
     dataset_label: str | None = None
     display_timezone: str | None = None
@@ -1349,8 +1351,10 @@ def _status_payload(config: dict[str, Any]) -> dict[str, Any]:
         "cosine_retrieve_threshold": config.get("cosine_retrieve_threshold"),
         "semantic_duplicate_threshold": config.get("semantic_duplicate_threshold"),
         "component_fuzzy_match": config.get("component_fuzzy_match"),
-        "reversal_detection": config.get("reversal_detection"),
         "negation_detection": config.get("negation_detection"),
+        "direction_detection": config.get("direction_detection"),
+        "scope_comparison": config.get("scope_comparison"),
+        "symmetric_lexical_fuzzy": config.get("symmetric_lexical_fuzzy"),
         "copilot_lexical_threshold": config.get("copilot_lexical_threshold"),
         "llm_required": config.get("llm_required"),
         "dataset_label": config.get("dataset_label"),

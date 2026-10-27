@@ -85,16 +85,9 @@ def analyze_submission(
     for index, item in enumerate(chosen, start=1):
         historical = item["idea"]
         heuristic = classify_pair(
-            query_component=submission.component,
-            query_text=_pair_text(submission),
-            candidate_component=historical.component,
-            candidate_text=_pair_text(historical),
-            fuzzy_score=item["fuzzy"],
-            exact=item["exact"],
-            fuzzy_strong_threshold=float(ai_config["fuzzy_strong_threshold"]),
+            **pair_inputs(submission, historical, item, ai_config),
             cosine=item["cosine"],
             semantic_duplicate_threshold=ai_config.get("semantic_duplicate_threshold"),
-            **classifier_flags(ai_config),
         )
         llm_category = None
         similarities = list(heuristic.similarities)
@@ -233,8 +226,11 @@ def rank_historical(db: Session, submission: Idea, *, embedder, limit: int) -> l
         seen.add(idea.id)
         candidate_norm = idea.normalized_text or normalize_text(idea.description)
         exact = bool(query_norm and candidate_norm and query_norm == candidate_norm and len(query_norm) >= 20)
-        fuzzy = float(fuzz.token_set_ratio(query_blob, comparison_text(idea)))
-        ranked.append({"idea": idea, "exact": exact, "fuzzy": fuzzy, "cosine": cosine_by_id.get(idea.id)})
+        candidate_blob = comparison_text(idea)
+        fuzzy = float(fuzz.token_set_ratio(query_blob, candidate_blob))
+        # token_set_ratio rewards containment; the symmetric score is for the lexical duplicate rule only.
+        symmetric = float(fuzz.token_sort_ratio(query_blob, candidate_blob))
+        ranked.append({"idea": idea, "exact": exact, "fuzzy": fuzzy, "fuzzy_symmetric": symmetric, "cosine": cosine_by_id.get(idea.id)})
     ranked.sort(key=lambda item: (item["exact"], item["fuzzy"], item["cosine"] or 0), reverse=True)
     return ranked
 
@@ -243,6 +239,21 @@ def latest_decision(db: Session, run_id: uuid.UUID) -> ReviewDecision | None:
     return db.scalar(
         select(ReviewDecision).where(ReviewDecision.run_id == run_id).order_by(ReviewDecision.created_at.desc())
     )
+
+
+def pair_inputs(submission: Idea, historical: Idea, item: dict[str, Any], ai_config: dict[str, Any]) -> dict[str, Any]:
+    """classify_pair arguments for one retrieved candidate, apart from cosine and the semantic threshold."""
+    return {
+        "query_component": submission.component,
+        "query_text": _pair_text(submission),
+        "candidate_component": historical.component,
+        "candidate_text": _pair_text(historical),
+        "fuzzy_score": item["fuzzy"],
+        "exact": item["exact"],
+        "fuzzy_strong_threshold": float(ai_config["fuzzy_strong_threshold"]),
+        "symmetric_fuzzy_score": item.get("fuzzy_symmetric"),
+        **classifier_flags(ai_config),
+    }
 
 
 def _pair_text(idea: Idea) -> str:

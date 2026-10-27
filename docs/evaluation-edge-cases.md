@@ -1,169 +1,200 @@
 # Evaluation results: edge-case set
 
-Two runs on 27 October 2026, against the hosted Neon development database with the live stored settings:
+Three runs on 27 October 2026, against the hosted Neon development database with the live stored settings:
 
 - **Run 1, before any fix.** A measurement only, with no code changed.
-- **Run 2, with the three Tier 1 classifier rules turned on** (see [Tier 1 changes](#tier-1-changes)). Before this run, the v2 hard set was re-run to check for regressions ([v2 regression check](#v2-regression-check)).
+- **Run 2, Tier 1:** component matching, reversal verbs, and negation ([Tier 1 changes](#tier-1-changes)).
+- **Run 3, Tier 2:** direction extraction, scope comparison, and a symmetric fuzzy score ([Tier 2 changes](#tier-2-changes)). Direction extraction replaced Tier 1's reversal verbs.
+
+Each tier was measured on the v2 hard set first, to check for regressions, and only then on these edge cases.
 
 Every number here comes from `data/vave_duplicate_edge_cases.xlsx`, a synthetic workbook of 11 historical ideas, 18 queries and 18 labelled pairs. It was written without sight of the classifier's keyword lists, thresholds or code. Each case type isolates one failure mode and has only two or three pairs, so results are reported **by case type**. No overall figure is given, because it would hide which failure mode is live. Read [Limitations](#limitations) before relying on any of it.
 
 ## Summary
 
-| Case type | Label | Pairs | Run 1 correct | Run 2 correct | Layer still responsible |
-| --- | --- | --- | --- | --- | --- |
-| component_name_variant | duplicate | 3 | 0 | **3** | — (fixed by component matching) |
-| opposite_direction | similar_but_distinct | 3 | 0 | 0 | Keyword action detection (no direction); the cosine threshold lets them through |
-| negation | similar_but_distinct | 2 | 1 | 2 | EQ-008 fixed by negation detection. EQ-007 is still "correct" only because candidate selection never showed it |
-| sparse_description | duplicate | 2 | 2 | 2 | — |
-| superset | similar_but_distinct | 2 | 0 | 0 | Fuzzy strong threshold; action detection treats a superset as the same action |
-| reversal | similar_but_distinct | 2 | 0 | **2** | — (fixed by reversal detection) |
-| different_programme | related_not_duplicate | 2 | 0 | 0 | Cosine threshold: the semantic route fires, and no layer compares vehicle programmes |
-| unit_variation | duplicate | 2 | 2 | 2 | — |
+| Case type | Label | Pairs | Run 1 | Run 2 (Tier 1) | Run 3 (Tier 2) | What decides it now |
+| --- | --- | --- | --- | --- | --- | --- |
+| component_name_variant | duplicate | 3 | 0 | 3 | 3 | Component matching |
+| opposite_direction | similar_but_distinct | 3 | 0 | 0 | **3** | Direction extraction: opposite length changes |
+| negation | similar_but_distinct | 2 | 1 | 2 | 2 | EQ-008: negation detection. EQ-007: never shown (candidate selection) |
+| sparse_description | duplicate | 2 | 2 | 2 | 2 | Semantic route on cosine alone |
+| superset | similar_but_distinct | 2 | 0 | 0 | **2** | Scope comparison |
+| reversal | similar_but_distinct | 2 | 0 | 2 | 2 | Direction extraction: flipped material pair (in run 2: reversal verbs) |
+| different_programme | related_not_duplicate | 2 | 0 | 0 | 0 | **Still failing.** Not addressed: the workbook gives every row identical vehicle volumes and will be fixed separately |
+| unit_variation | duplicate | 2 | 2 | 2 | 2 | Lexical fuzzy rule |
 
-- **Tier 1 fixed six pairs**, each through the rule aimed at it: three component variants, both reversals, and the negation pair EQ-008. No pair that passed in run 1 failed in run 2.
-- **Three failure modes are still live: opposite_direction (0 of 3), superset (0 of 2) and different_programme (0 of 2).** None of the Tier 1 rules addresses them. No threshold was changed to make them pass.
-- **The negation fix only works when the query names some other action.** EQ-008 now passes because, once "do not commonise" is discounted, the query's remaining action ("casting" gives `topology`) is disjoint from the candidate's `commonisation`. A query that only ruled out the candidate's change, and named nothing else, would have no detected action, so the semantic route would still accept it.
-- **EQ-007 has not changed.** It was never shown (18th in retrieval order), so it is scored correct without the reviewer ever seeing the idea it rules out.
-- **The v2 hard set is unchanged on every pair**, with precision 0.890, recall 0.811, F1 0.849 and rank@1 0.756 before and after. This shows no regression, but it is weak evidence of safety: none of the three rules changes a single action set or component match in the v2 texts ([details](#v2-regression-check)).
+- **Every case type except different_programme now passes.** No pair that passed in an earlier run failed in a later one.
+- **Two cases pass for weaker reasons than their case type suggests.** EQ-007 (negation) was never shown to the reviewer, so it scores as correct only because it was hidden. EQ-008 (negation) passes because a second action ("casting") remains once the negated one is discounted.
+- **No threshold was changed.** The cosine threshold, the fuzzy threshold of 86 and the component-match threshold of 90 are as before.
+- **On the v2 hard set, Tier 2 removed one false positive and cost nothing.** Precision went from 0.880 to 0.890, F1 from 0.844 to 0.849, and recall (0.811), mean rank (1.200) and rank@1 (0.833) were unchanged. The gain came from scope comparison. Direction extraction and the symmetric fuzzy score changed no v2 pair ([details](#v2-regression-check-tier-2)).
+- **The symmetric fuzzy score changed no labelled verdict on either set.** It matters only while the semantic route is on. With the route off, it would cost 10 v2 duplicates ([details](#symmetric-fuzzy-score)).
 
-## Tier 1 changes
+## Tier 2 changes
 
-All three rules live in `classify_pair` (`backend/app/services/duplicate_detection/classifier.py`). Each has its own setting in the AI settings, defaults to on in `config.py`, and can be turned off with `PUT /api/v1/ai/settings`. The dev database's stored row has none of the three keys, so the defaults (on) apply there. `scripts/evaluate_hard_set.py --disable <setting>` turns one off for an evaluation run.
+Each rule has its own AI setting, defaults to on in `config.py`, and can be turned off with `PUT /api/v1/ai/settings` (or `--disable` in `scripts/evaluate_hard_set.py` and `scripts/score_edge.py`). The dev database's stored row has none of these keys, so the defaults apply there.
 
 | Setting | Rule |
 | --- | --- |
-| `component_fuzzy_match` | Both component names are normalised (lowercase, punctuation removed), parenthetical qualifiers are dropped, and `brkt`/`bkt` → bracket, `mtg` → mounting, `assy` → assembly are expanded. The names match if RapidFuzz `ratio` is **≥ 90**. When off, normalised names must be identical, as before. |
-| `reversal_detection` | `revert`, `return`, `restore`, `reinstate` and `roll back` count as a change verb and mark the text as undoing an earlier change. If both ideas share an action kind and only one of them is a reversal, the pair has a **direction flip**. That counts as a different technical action, so the pair is Similar but Distinct and neither the lexical nor the semantic route can call it a duplicate. |
-| `negation_detection` | An action keyword counts as not proposed if it falls within **5 tokens after** a negation cue (`do not`, `don't`, `never`, `without`, `instead of`, `rather than`, `keep`, `retain`, `no change to`) in the same clause. The cue's own words are discounted too, so the "change" in "no change to" is not read as a change verb. Clauses end at `. , ; : ! ?` followed by a space, and at a line break, so "1.5 mm" is not split. |
+| `direction_detection` | `state_pairs` reads before → after pairs from "from X to Y", "replace X with Y" and "substitute Y for X", within one clause and at most 8 tokens per side. Two numbers with a length unit (mm, cm, in/inch; inches converted to millimetres; a unit given only once applies to both) make a **decrease** or an **increase**. Two different materials, from a fixed list of 25 names (steel, aluminium, polypropylene/PP, polycarbonate/PC, PMMA/acrylic, PET, phenolic, rubber, urethane, and others), make a **substitution** X → Y. The pair **conflicts** when the length directions on the two sides are disjoint (only increases against only decreases), or when one side's X → Y is the other side's Y → X and not also X → Y (**flipped substitution**). A conflict counts as a different technical action. The pair is Similar but Distinct, and neither the semantic route nor the lexical rule can call it a duplicate, whatever the cosine or fuzzy score. |
+| `scope_comparison` | If the two sides share at least one detected kind of change, and the query has kinds of change the candidate lacks, that is a scope mismatch and also counts as a different technical action. It does not apply when the query proposes *fewer* kinds than the candidate, or when the candidate has no detected action. |
+| `symmetric_lexical_fuzzy` | The lexical duplicate rule (fuzzy ≥ 86, or same action and component with Jaccard ≥ 0.42 and fuzzy ≥ 68) uses RapidFuzz `token_sort_ratio` instead of `token_set_ratio`. Retrieval order, the candidate filter, the other classifier branches and the fuzzy score shown in the UI still use `token_set_ratio`. |
 
-Two choices go beyond the brief, and both make the rules stricter, not looser:
+**Reversal is now a flipped state pair, so `reversal_detection` was removed,** along with its verb list (revert, return, restore, reinstate, roll back) and the clause-position rule added in Tier 1. That rule existed only to stop "restore bending stiffness" from reading as a reversal. A state pair needs two stated states, so that text yields no pair and the guard is no longer needed. Both reversal cases still pass (run 3, and stage A below). The trade-off: a reversal written without both states ("Revert to the original design") is no longer detected.
 
-- **Reversal verbs need context.** A reversal verb counts only when it opens a clause, or when a back-reference (`back`, `original`, `originally`, `previous`, `previously`, `earlier`, `former`) follows it in the same clause. Without this, the edge-case candidate EH-005 ("add a rolled edge to **restore** bending stiffness") would read as a reversal. EQ-006 (opposite_direction) would then have passed for the wrong reason, and every "restore stiffness" or "fuel return line" text would risk the same.
-- **Negation stops at the clause end.** Otherwise "Keep the steel grade, and replace the bracket with aluminium" would discount "replace".
+**The fuzzy scorer is containment-friendly, as suspected.** `rank_historical` scores with `token_set_ratio`, which compares the shared tokens with each side. A text that contains the other scores near 100 by construction: the superset queries scored 90.2 and 90.6. `token_sort_ratio` compares the two full token lists, so it is symmetric.
 
-The threshold of 90 is the one given in the brief. It was not tuned. Across all 38 distinct component names in the seed data, the v2 set and this set, the only pairs that reach 90 are the intended variants. The closest pair of different components is "Alternator mounting bracket" and "Radiator mounting bracket" at 84.6.
+New unit tests in `backend/tests/unit/test_domain_rules.py` cover state-pair parsing (units, inches, a unit given once, "substitute … for", reversal, no pair without two states), opposite directions overriding both a cosine of 0.99 and a fuzzy score of 95, a flipped substitution, same-direction and different-material pairs that are not conflicts, scope mismatch and its two exclusions, and the symmetric score replacing the containment score only when enabled. The full backend suite passes: 34 unit and 11 integration tests.
 
-Unit tests in `backend/tests/unit/test_domain_rules.py` cover each rule on its own and with its setting off. The full backend suite passes: 30 unit and 11 integration tests.
+## v2 regression check (Tier 2)
 
-## v2 regression check
+All runs used the clean 111-idea database ([baseline](evaluation-results.md#v2-hard-set-clean-baseline-27-october-2026)) and the same live settings. Each stage turned the Tier 2 rules on one at a time with `--disable`.
 
-The v2 hard set was run on the old code and on the new code, against the same database. That database now has 122 historical ideas, because these 11 edge-case ideas were added in run 1. The numbers recorded in [evaluation-hard-set.md](evaluation-hard-set.md) were measured with 111, so they are not the baseline here.
+| Stage (end to end, 597 pairs) | Precision | Recall | F1 | TP | FP | FN | Mean rank | rank@1 | Pairs changed from baseline |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Clean baseline (code before Tier 2) | 0.880 | 0.811 | 0.844 | 73 | 10 | 17 | 1.200 | 0.833 | — |
+| Z: Tier 2 code, all three off | 0.880 | 0.811 | 0.844 | 73 | 10 | 17 | 1.200 | 0.833 | 0 |
+| A: + direction | 0.880 | 0.811 | 0.844 | 73 | 10 | 17 | 1.200 | 0.833 | 0 |
+| B: + scope | **0.890** | 0.811 | **0.849** | 73 | **9** | 17 | 1.200 | 0.833 | 3 |
+| C: + symmetric fuzzy (live) | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.200 | 0.833 | 3 (same as B) |
 
-| Run (end to end, 597 pairs) | Precision | Recall | F1 | TP | FP | FN | Mean rank | rank@1 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Old code, 122 historical | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.322 | 0.756 (68 / 90) |
-| Tier 1 on, 122 historical | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.322 | 0.756 (68 / 90) |
+- **No regression.** Recall, mean rank and rank@1 are unchanged at every stage, and no duplicate lost its verdict. Stage Z reproduces the baseline exactly, which confirms that the refactoring (one shared `pair_inputs` helper for the service and both scripts) changed nothing.
+- **Direction extraction changed nothing on v2.** 42 of the 181 v2 texts yield a state pair. All of the length pairs are decreases, and no material pair is the reverse of another, so v2 has no opposite-direction pair to catch.
+- **Scope comparison removed one false positive.** VAVE-Q-0022 ("Remove two longitudinal ribs from the rear axle banjo casting") was called a Potential Duplicate of VAVE-H-0024 ("from a two-piece welded fabrication to a single casting"). The label is similar_but_distinct. Both texts contain "casting", so both read as `topology`. The query also has `deletion` ("remove"), so it is now a scope mismatch: Similar but Distinct, moved from shown rank 3 to 10. Two other candidates of the same query moved one place as a result (H-0025: 12 → 11; H-0071: 5 → 4). The verdict is right, but the shared `topology` comes from the word "casting", not from a shared action.
+- **By difficulty** (precision / recall), stages B and C: easy 1.000 / 1.000, medium 1.000 / 0.800, hard 0.679 / 0.633 (baseline hard 0.655 / 0.633). Classifier only: precision 0.859 → 0.869, 12 → 11 false positives.
 
-- **No pair changed.** Across all 597 pairs, the end-to-end verdict, the classifier-only verdict, the shown rank and the component match are identical in both runs. By difficulty (precision/recall): easy 1.000/1.000, medium 1.000/0.800, hard 0.679/0.633, in both runs.
-- **Why nothing changed.** Of the 181 v2 texts (Ideas and TestQueries), none changes its detected action set under negation or reversal detection, and none is read as a reversal. The v2 component names are all written canonically. The v2 texts do contain the cues ("instead of" 15 times, "rather than" 11, "keep"/"keeps"/"keeping" 14, "restores" 4), but never in a way that removes a detected action. So this check shows the rules do no harm on v2. It cannot show they are safe on wording that v2 does not contain.
-- **The 11 edge-case ideas cost v2 some rank.** With 111 historical ideas, [evaluation-hard-set.md](evaluation-hard-set.md#candidate-ordering-by-verdict) recorded precision 0.880, recall 0.811, F1 0.844, mean rank 1.200 and rank@1 0.833. The code is the same, so the drop to rank@1 0.756 comes from the added ideas, several of which are close variants of v2 components (cab mounting bracket, battery tray, engine oil pan and others).
+### Symmetric fuzzy score
+
+- **Effect on v2 precision: none.** No v2 similar-but-distinct or unrelated pair ever reached `token_set_ratio` 86, so the containment score was not producing v2 false positives.
+- **It removes the lexical route from most duplicates.** Of the 23 v2 duplicates at `token_set_ratio` ≥ 86, 21 fall below 86 under `token_sort_ratio` (76.4 – 85.5). They keep their Potential Duplicate verdict only because the semantic route also accepts them.
+- **With the semantic route off, it would cost recall.** A classifier-only replay of all 597 pairs with the run's own scores reproduced the live run exactly (73 TP, 11 FP), so it was used for this. With the route off: 29 TP, 0 FP, recall 0.322 using `token_set_ratio`, and 19 TP, 0 FP, recall 0.211 using `token_sort_ratio`. That is 10 duplicates lost for no precision gain. If the semantic route is ever turned off, turn this setting off too.
+- **On the edge set it changed no labelled verdict.** On its own, without scope comparison, it does not fix the superset cases, because the semantic route still accepts them (cosine 0.927 and 0.876). It did change two **unlabelled** verdicts:
+  - **EQ-001 no longer flags VAVE-SYN-016,** a steering column lower bracket. That is a different component, flagged before Tier 1 only on a containment score of 86.4. Probably a false positive removed.
+  - **EQ-003 no longer flags VAVE-SYN-015,** "Low-voltage battery tray". That is the same proposal as the query (painted steel to a formed polypropylene tray with inserts), under a component name that does not reach 90 against "Battery tray (LV)". Probably a true duplicate lost.
+
+## Pairs flagged after component relaxation
+
+After Tier 1, EQ-001 and EQ-002 flagged five unlabelled historical ideas each as Potential Duplicate (measured with the 11 edge-case ideas loaded and Tier 1 rules on). They are listed for review. No change was made on the strength of them.
+
+| Query | Candidate | Candidate component | Cosine | Fuzzy | Candidate text (description) |
+| --- | --- | --- | --- | --- | --- |
+| EQ-001 | VAVE-SYN-001 | Cab mounting bracket | 0.904 | 84.1 | Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness to reduce vehicle mass. |
+| EQ-001 | VAVE-H-0001 | Cab mounting bracket | 0.902 | 84.1 | (same text as SYN-001) |
+| EQ-001 | VAVE-SYN-018 | Cab mounting bracket | 0.899 | 84.1 | (same text as SYN-001) |
+| EQ-001 | VAVE-SYN-017 | Cab mounting bracket | 0.897 | 72.6 | Substitute an aluminium alloy for the existing steel bracket that mounts the cab, keeping stiffness unchanged so that mass and cost fall. |
+| EQ-001 | VAVE-SYN-016 | Steering column lower bracket | 0.717 | 86.4 | Replace the steel steering column lower bracket with an aluminium alloy bracket of equivalent stiffness. |
+| EQ-002 | VAVE-SYN-017 | Cab mounting bracket | 0.904 | 68.1 | (as above) |
+| EQ-002 | VAVE-SYN-001 | Cab mounting bracket | 0.892 | 62.2 | (as above) |
+| EQ-002 | VAVE-H-0001 | Cab mounting bracket | 0.889 | 62.2 | (as above) |
+| EQ-002 | VAVE-SYN-018 | Cab mounting bracket | 0.885 | 62.2 | (as above) |
+| EQ-002 | VAVE-H-0003 | Cab mounting bracket | 0.827 | 57.4 | Redesign the cab mounting bracket as a topology-optimised steel casting, removing material only from low-stress regions while keeping the steel grade. |
+
+- EQ-001: "Replace the steel cab mount bracket with an aluminium alloy bracket of equivalent stiffness to cut vehicle mass." EQ-002: "Cab mounting bracket to be changed from steel to aluminium alloy, section resized so stiffness is unchanged."
+- **SYN-016 was not caused by the relaxation.** Its component differs. It was flagged before Tier 1 too, through the lexical fuzzy rule (86.4), which does not require a matching component. With the symmetric fuzzy score on, it is no longer flagged.
+- **H-0003 (a steel topology casting) is flagged for EQ-002 by the semantic route at 0.827.** EQ-002's wording ("to be changed from …") contains no action keyword: "changed" is not in the verb list. So the action check is skipped and nothing compares the query's steel → aluminium pair with H-0003, which has none.
+
+## Tier 1 changes
+
+| Setting | Rule |
+| --- | --- |
+| `component_fuzzy_match` | Both component names are normalised, parenthetical qualifiers are dropped, and `brkt`/`bkt` → bracket, `mtg` → mounting, `assy` → assembly are expanded. The names match if RapidFuzz `ratio` is **≥ 90**. When off, normalised names must be identical. |
+| `negation_detection` | An action keyword counts as not proposed if it falls within **5 tokens after** a negation cue (`do not`, `don't`, `never`, `without`, `instead of`, `rather than`, `keep`, `retain`, `no change to`) in the same clause. The cue's own words are discounted too. Clauses end at `. , ; : ! ?` followed by a space, and at a line break. |
+| `reversal_detection` | *Removed in Tier 2* (see above). It read revert / return / restore / reinstate / roll back as a direction flip of a shared action kind, but only when the verb opened a clause or a back-reference followed it. |
+
+Across all 38 distinct component names in the seed data, the v2 set and this set, the only pairs that reach 90 are the intended variants. The closest pair of different components is "Alternator mounting bracket" and "Radiator mounting bracket" at 84.6. Note that "Low-voltage battery tray" and "Battery tray (LV)" do not match.
+
+**Tier 1 on v2:** no pair changed. None of the 181 v2 texts changes its action set under negation or reversal detection, and all v2 component names are written in full. That shows no harm on v2, not general safety. (Measured on 122 ideas at the time; the clean 111-idea baseline confirms the same figures.)
 
 ## Setup
 
 ### Database state
 
-- **Before run 1:** 111 historical ideas (VAVE-SYN-001 to -020 and the 91 v2 hard-set ideas), as recorded in [evaluation-hard-set.md](evaluation-hard-set.md#database-state).
-- **Imported:** the workbook's Ideas sheet, 11 rows (VAVE-EH-001 to -011), through the same preview → commit → re-index steps as `POST /ideas/import/preview` and `/ideas/import/commit` (batch `e4762c9e-ff9e-4f15-9f2a-031596d67f76`, marked synthetic, 0 errors, 5 warnings). An `import.commit.requested` audit entry was written.
-- **Evaluated against:** 122 historical ideas, each with an `all-MiniLM-L6-v2` vector, in both runs.
-
-These 11 ideas **stay in the development database**. Import rollback still fails for inserted rows ([evaluation-hard-set.md](evaluation-hard-set.md#defect-found-while-loading)), so they would have to be deleted by hand.
+- **Runs 1 and 2:** the Ideas sheet was imported for real (batch `e4762c9e`), giving 122 historical ideas.
+- **Since run 3:** those 11 ideas were deleted ([evaluation-results.md](evaluation-results.md#v2-hard-set-clean-baseline-27-october-2026)), and the database has 111. `scripts/score_edge.py` loads the Ideas sheet inside a transaction (preview, commit and re-index, as the import endpoints do), scores each query in a savepoint, and rolls everything back. Every edge-case run still sees 122 historical ideas, and the database is left at 111.
 
 ### Pipeline (live stored settings)
 
-| Setting | Run 1 | Run 2 |
-| --- | --- | --- |
-| AI mode | offline | offline |
-| Embedding | `sentence-transformers/all-MiniLM-L6-v2` | same |
-| Language model | Ollama not reachable, so every verdict comes from `classify_pair` | same |
-| `semantic_duplicate_threshold` | 0.82 | 0.82 |
-| `retrieval_top_k` | 15 | 15 |
-| `cosine_retrieve_threshold` | 0.40 | 0.40 |
-| `fuzzy_strong_threshold` | 86 | 86 |
-| `component_fuzzy_match`, `reversal_detection`, `negation_detection` | did not exist | on |
+| Setting | Run 1 | Run 2 | Run 3 |
+| --- | --- | --- | --- |
+| AI mode, embedding, language model | offline, `all-MiniLM-L6-v2`, Ollama not reachable (every verdict from `classify_pair`) | same | same |
+| `semantic_duplicate_threshold` | 0.82 | 0.82 | 0.82 |
+| `retrieval_top_k`, `cosine_retrieve_threshold`, `fuzzy_strong_threshold` | 15, 0.40, 86 | same | same |
+| `component_fuzzy_match`, `negation_detection` | — | on | on |
+| `reversal_detection` | — | on | removed |
+| `direction_detection`, `scope_comparison`, `symmetric_lexical_fuzzy` | — | — | on |
 
 ### Method
 
-A driver kept outside the repository runs the same per-query steps as `score_query` in `scripts/evaluate_hard_set.py` and reuses that script's `query_payload` and `cosine` helpers. That script does not know the `related_not_duplicate` label or the `Case_Type` column. In run 2 the driver passes the same classifier settings the pipeline uses.
+Command: `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/score_edge.py data/vave_duplicate_edge_cases.xlsx out.json [--disable SETTING …]`. Runs 1 and 2 used an earlier copy of this script, kept outside the repository, that ran the same steps against the imported ideas.
 
-- **Each of the 18 TestQueries** is created as a submission with `create_submission` and analysed with `analyze_submission`, using the application's own runtime. The transaction is then rolled back, so no submission or run is stored.
+- **Each of the 18 TestQueries** is created as a submission with `create_submission` and analysed with `analyze_submission`, using the application's own runtime.
 - **End to end:** the category the pipeline gave the labelled candidate. A candidate that was not shown counts as not a duplicate.
-- **Classifier only:** `classify_pair` on the labelled pair, whatever retrieval did. In both runs it agrees with end to end on every pair except EQ-007.
+- **Classifier only:** `classify_pair` on the labelled pair, whatever retrieval did. It agrees with end to end on every pair except EQ-007, in every run.
 - **Scoring.** A pair labelled `duplicate` is correct only if it was called Potential Duplicate. A pair labelled `similar_but_distinct` or `related_not_duplicate` is correct whenever it was **not** called Potential Duplicate, as the workbook's Cover sheet specifies. Insufficient Evidence counts as not a duplicate.
-- **Cosine** is computed directly between the query's vector and the candidate's stored vector. On all 18 pairs it equals the pipeline's vector-search score to three decimals.
-- **Route** is the classifier branch that produced Potential Duplicate. *Lexical* means fuzzy ≥ 86, or Jaccard ≥ 0.62, or (same action, same component, Jaccard ≥ 0.42 and fuzzy ≥ 68). *Semantic* means same component and cosine ≥ 0.82.
-- Run 1 was repeated once and gave identical verdicts and scores.
+- **Cosine** is computed directly between the query's vector and the candidate's stored vector. It equals the pipeline's vector-search score to three decimals.
 
 ## Per-pair results
 
-Fuzzy is RapidFuzz `token_set_ratio` on the comparison text (0–100). Jaccard is word overlap of the pair text. Cosine, fuzzy, Jaccard and retrieval position are the same in both runs. "Retr. pos." is the candidate's position in retrieval order (exact, then fuzzy, then cosine) among all 122 historical ideas; only the first 15 are shown. Columns marked (2) are from run 2. "Actions" are the detected action sets for the query and the candidate.
+Fuzzy is RapidFuzz `token_set_ratio` on the comparison text (0–100). Jaccard is word overlap of the pair text. Cosine, fuzzy, Jaccard and retrieval position are the same in every run. "Retr. pos." is the candidate's position in retrieval order (exact, then fuzzy, then cosine) among the 122 historical ideas; only the first 15 are shown. "Shown rank" is after the display re-sort by verdict, in run 3.
 
-| Query | Candidate | Case type | Label | Run 1 verdict | Run 2 verdict | Correct (2) | Cosine | Fuzzy | Jaccard | Same comp. (2) | Actions (2), query / candidate | Retr. pos. | Shown rank (2) | Route or reason (2) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| EQ-001 | EH-001 | component_name_variant | duplicate | Insufficient Evidence | **Potential Duplicate** | yes | 0.920 | 84.7 | 0.552 | yes (was no) | material / material | 2 | 1 | lexical (same action and component, Jaccard ≥ 0.42, fuzzy ≥ 68); also semantic |
-| EQ-002 | EH-001 | component_name_variant | duplicate | Insufficient Evidence | **Potential Duplicate** | yes | 0.902 | 65.2 | 0.242 | yes (was no) | — / material | 3 | 2 | semantic |
-| EQ-003 | EH-002 | component_name_variant | duplicate | Insufficient Evidence | **Potential Duplicate** | yes | 0.938 | 84.3 | 0.567 | yes (was no) | material / material | 2 | 2 | lexical (same action and component, Jaccard ≥ 0.42, fuzzy ≥ 68); also semantic |
-| EQ-004 | EH-003 | opposite_direction | similar_but_distinct | Potential Duplicate | Potential Duplicate | no | 0.827 | 67.6 | 0.351 | yes | dimension / dimension | 1 | 1 | semantic |
-| EQ-005 | EH-004 | opposite_direction | similar_but_distinct | Potential Duplicate | Potential Duplicate | no | 0.847 | 67.3 | 0.316 | yes | dimension / dimension | 1 | 1 | semantic |
-| EQ-006 | EH-005 | opposite_direction | similar_but_distinct | Potential Duplicate | Potential Duplicate | no | 0.912 | 64.5 | 0.294 | yes | dimension / dimension | 1 | 2 | semantic |
-| EQ-007 | EH-006 | negation | similar_but_distinct | not shown | not shown | yes | 0.896 | 58.8 | 0.186 | yes | deletion / material | 18 | — | not shown |
-| EQ-008 | EH-007 | negation | similar_but_distinct | Potential Duplicate | **Similar but Distinct** | yes | 0.856 | 74.7 | 0.222 | yes | topology / commonisation (query was commonisation, topology) | 1 | 11 | different action |
-| EQ-009 | EH-001 | sparse_description | duplicate | Potential Duplicate | Potential Duplicate | yes | 0.883 | 77.2 | 0.185 | yes | — / material | 2 | 2 | semantic |
-| EQ-010 | EH-008 | sparse_description | duplicate | Potential Duplicate | Potential Duplicate | yes | 0.845 | 71.4 | 0.167 | yes | — / material | 1 | 1 | semantic |
-| EQ-011 | EH-002 | superset | similar_but_distinct | Potential Duplicate | Potential Duplicate | no | 0.927 | 90.2 | 0.442 | yes | dimension, material / material | 1 | 1 | lexical (fuzzy ≥ 86); also semantic |
-| EQ-012 | EH-009 | superset | similar_but_distinct | Potential Duplicate | Potential Duplicate | no | 0.876 | 90.6 | 0.450 | yes | dimension, material / material | 2 | 2 | lexical (fuzzy ≥ 86); also semantic |
-| EQ-013 | EH-001 | reversal | similar_but_distinct | Potential Duplicate | **Similar but Distinct** | yes | 0.857 | 59.8 | 0.195 | yes | material (reversal) / material (query was —) | 1 | 10 | direction flip |
-| EQ-014 | EH-010 | reversal | similar_but_distinct | Potential Duplicate | **Similar but Distinct** | yes | 0.889 | 64.0 | 0.275 | yes | material (reversal) / dimension, material (query was —) | 2 | 12 | direction flip |
-| EQ-015 | EH-001 | different_programme | related_not_duplicate | Potential Duplicate | Potential Duplicate | no | 0.859 | 65.2 | 0.250 | yes | — / material | 1 | 2 | semantic |
-| EQ-016 | EH-004 | different_programme | related_not_duplicate | Potential Duplicate | Potential Duplicate | no | 0.886 | 65.0 | 0.244 | yes | dimension / dimension | 1 | 1 | semantic |
-| EQ-017 | EH-003 | unit_variation | duplicate | Potential Duplicate | Potential Duplicate | yes | 0.969 | 94.5 | 0.656 | yes | dimension / dimension | 1 | 1 | lexical (fuzzy ≥ 86); also semantic |
-| EQ-018 | EH-011 | unit_variation | duplicate | Potential Duplicate | Potential Duplicate | yes | 0.981 | 94.4 | 0.676 | yes | dimension / dimension | 2 | 1 | lexical (fuzzy ≥ 86); also semantic |
-
-"material" is `material_substitution`. "—" means no action keyword was found. In run 1, EQ-001 to EQ-003 had same component "no". Every other column not marked (2) is the same in both runs.
+| Query | Candidate | Case type | Label | Run 1 | Run 2 | Run 3 | Correct (3) | Cosine | Fuzzy | Jaccard | Retr. pos. | Shown rank (3) | Reason (run 3) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| EQ-001 | EH-001 | component_name_variant | duplicate | Insufficient | **Potential Dup.** | Potential Dup. | yes | 0.920 | 84.7 | 0.552 | 2 | 1 | components match (91.9); cosine ≥ 0.82; same steel → aluminium pair |
+| EQ-002 | EH-001 | component_name_variant | duplicate | Insufficient | **Potential Dup.** | Potential Dup. | yes | 0.902 | 65.2 | 0.242 | 3 | 2 | components match; cosine ≥ 0.82 |
+| EQ-003 | EH-002 | component_name_variant | duplicate | Insufficient | **Potential Dup.** | Potential Dup. | yes | 0.938 | 84.3 | 0.567 | 2 | 1 | components match; cosine ≥ 0.82 |
+| EQ-004 | EH-003 | opposite_direction | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.827 | 67.6 | 0.351 | 1 | 7 | increase 1.2 → 1.5 mm against decrease 1.5 → 1.2 mm |
+| EQ-005 | EH-004 | opposite_direction | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.847 | 67.3 | 0.316 | 1 | 9 | increase 5 → 6 mm against decrease 6 → 5 mm |
+| EQ-006 | EH-005 | opposite_direction | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.912 | 64.5 | 0.294 | 1 | 13 | increase 50 → 60 mm against decrease 60 → 50 mm |
+| EQ-007 | EH-006 | negation | similar_but_distinct | not shown | not shown | not shown | yes | 0.896 | 58.8 | 0.186 | 18 | — | not shown (classifier alone: deletion against material substitution) |
+| EQ-008 | EH-007 | negation | similar_but_distinct | Potential Dup. | **Similar but Distinct** | Similar but Distinct | yes | 0.856 | 74.7 | 0.222 | 1 | 11 | "do not commonise" discounted; topology against commonisation |
+| EQ-009 | EH-001 | sparse_description | duplicate | Potential Dup. | Potential Dup. | Potential Dup. | yes | 0.883 | 77.2 | 0.185 | 2 | 2 | same component; cosine ≥ 0.82; no action or state pair in query |
+| EQ-010 | EH-008 | sparse_description | duplicate | Potential Dup. | Potential Dup. | Potential Dup. | yes | 0.845 | 71.4 | 0.167 | 1 | 1 | same component; cosine ≥ 0.82; no action or state pair in query |
+| EQ-011 | EH-002 | superset | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.927 | 90.2 | 0.442 | 1 | 12 | scope: query adds `dimension` ("relocate 40 mm rearward") |
+| EQ-012 | EH-009 | superset | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.876 | 90.6 | 0.450 | 2 | 7 | scope: query adds `dimension` ("extend 40 mm rearward") |
+| EQ-013 | EH-001 | reversal | similar_but_distinct | Potential Dup. | **Similar but Distinct** | Similar but Distinct | yes | 0.857 | 59.8 | 0.195 | 1 | 14 | flipped: aluminium → steel against steel → aluminium |
+| EQ-014 | EH-010 | reversal | similar_but_distinct | Potential Dup. | **Similar but Distinct** | Similar but Distinct | yes | 0.889 | 64.0 | 0.275 | 2 | 13 | flipped: PET → phenolic against phenolic → PET |
+| EQ-015 | EH-001 | different_programme | related_not_duplicate | Potential Dup. | Potential Dup. | Potential Dup. | no | 0.859 | 65.2 | 0.250 | 1 | 2 | same component; cosine ≥ 0.82 (programme not compared) |
+| EQ-016 | EH-004 | different_programme | related_not_duplicate | Potential Dup. | Potential Dup. | Potential Dup. | no | 0.886 | 65.0 | 0.244 | 1 | 1 | same component; cosine ≥ 0.82 (programme not compared) |
+| EQ-017 | EH-003 | unit_variation | duplicate | Potential Dup. | Potential Dup. | Potential Dup. | yes | 0.969 | 94.5 | 0.656 | 1 | 1 | lexical and semantic; both sides decrease (0.059 in = 1.499 mm) |
+| EQ-018 | EH-011 | unit_variation | duplicate | Potential Dup. | Potential Dup. | Potential Dup. | yes | 0.981 | 94.4 | 0.676 | 2 | 1 | lexical and semantic; no state pair ("by 0.2 inch") |
 
 ## By case type
 
-### component_name_variant: 0 → 3 of 3 (fixed)
+### component_name_variant: 3 of 3 since Tier 1
 
-**Run 1 layer: component exact match.** "Cab mount brkt", "Cab Mtg Bkt" and "Battery tray (LV)" did not equal "Cab mounting bracket" or "Battery tray". That blocked the semantic route and the third lexical clause, both of which need a matching component. Cosine was already 0.902 – 0.938.
+Component matching makes "Cab mount brkt" (91.9, clearing 90 by 1.9 points), "Cab Mtg Bkt" and "Battery tray (LV)" match. Cosine was already 0.902 – 0.938. EQ-001 and EQ-002 also reach the same steel → aluminium state pair as the candidate, so direction extraction agrees with the verdict. The relaxation also lets these queries reach other cab-bracket ideas (see [Pairs flagged after component relaxation](#pairs-flagged-after-component-relaxation)).
 
-**Run 2:** the components match ("Cab mount brkt" → "cab mount bracket", ratio 91.9 against "cab mounting bracket"; the other two match exactly once expanded or stripped). EQ-001 and EQ-003 now pass on the lexical rule that needs a matching component, and EQ-002 passes on the semantic route. The EQ-001 match clears 90 by 1.9 points.
+### opposite_direction: 0 → 3 of 3 with direction extraction
 
-The same rule also lets these queries reach other historical ideas for the same component. EQ-001 and EQ-002 now have five unlabelled Potential Duplicates each (aluminium cab mounting bracket ideas such as VAVE-SYN-001, SYN-017 and H-0001), up from 1 and 0. Those pairs are not labelled, so they are not scored here.
+**Run 1 and 2 layer: keyword action detection.** Both sides map to `{dimension}`, so the action check saw the same kind of change, and the semantic route accepted the pairs at 0.827 – 0.912. **Run 3:** each side states its change as "from X mm to Y mm", the directions are opposite, and the pair is Similar but Distinct whatever the cosine. Stage A (direction only) already gives 3 of 3.
 
-### opposite_direction: 0 of 3 (still failing)
+### negation: 2 of 2 since Tier 1
 
-**Layer: keyword action detection, with the cosine threshold letting the pairs through.** Both sides of each pair map to `{dimension}` (from "thickness" or "mm"). The detector records the kind of change, not its direction, so "reduce … from 1.5 mm to 1.2 mm" and "increase … from 1.2 mm to 1.5 mm" are the same action, and the semantic route accepts them. Margins over 0.82: +0.007 (EQ-004), +0.027 (EQ-005), +0.092 (EQ-006). Reversal detection does not apply: these queries propose a change in the other direction; they do not undo an earlier one.
-
-### negation: 1 → 2 of 2
-
-- **EQ-008 (fixed by negation detection).** "Do not commonise them" is discounted, so the query's action set drops from `{commonisation, topology}` to `{topology}`, which is disjoint from the candidate's `{commonisation}`. The verdict is Similar but Distinct and the candidate drops from shown rank 3 to 11. The rule depends on that remaining `topology` ("casting"). Without another detected action, the query would have had none at all, and the semantic route (cosine 0.856) would still have called it a duplicate.
-- **EQ-007 (unchanged; candidate selection).** Still 18th in retrieval order: its fuzzy score (58.75) is 0.85 below the 15th candidate's (59.6), although its cosine (0.896) is higher than every candidate shown. It is scored correct only because it was not shown. The classifier alone says Similar but Distinct, from "remove material" (`deletion`) against `material_substitution`, which was already true before negation detection.
+- **EQ-008** passes because "do not commonise" is discounted and the remaining `topology` ("casting") is disjoint from the candidate's `commonisation`. A query that only ruled out the candidate's change, with no other action, would still be accepted by the semantic route.
+- **EQ-007** is unchanged: 18th in retrieval order (fuzzy 58.75, 0.85 below the 15th candidate), although its cosine (0.896) is higher than every candidate shown. It scores as correct only because it was not shown. **Layer: candidate selection.**
 
 ### sparse_description: 2 of 2
 
-Both still pass through the semantic route (0.883, 0.845). Neither query yields an action keyword, so the action guard is skipped and the verdict rests on cosine alone.
+Neither query has an action keyword or a state pair, so no check applies and the semantic route decides on cosine alone (0.883, 0.845). This is the same mechanism that produced the run 1 false positives. It passes here because these queries are duplicates.
 
-### superset: 0 of 2 (still failing)
+### superset: 0 → 2 of 2 with scope comparison
 
-**Layer: the fuzzy strong threshold (lexical route); keyword action detection is secondary.** `token_set_ratio` scores 90.2 and 90.6, because the query contains the candidate's whole text. Action detection does find the extra change (`dimension`), but the guard only rejects disjoint sets, and `{dimension, material}` overlaps `{material}`. The semantic route would also accept both (0.927, 0.876).
+**Run 1 and 2 layer: the containment-friendly fuzzy score (90.2, 90.6 against 86); action detection was secondary.** **Run 3:** both queries add a second kind of change (`dimension`, from "40 mm rearward") to the candidate's `material_substitution`, so they are scope mismatches. The symmetric fuzzy score on its own does not fix them (stage D: direction and symmetric score on, scope off, still 0 of 2), because the semantic route still accepts them. The scope rule depends on the added change being detectable. Here it is detected because the text contains "mm". A relocation described without a measurement would not be.
 
-### reversal: 0 → 2 of 2 (fixed)
+### reversal: 2 of 2 since Tier 1, now through direction extraction
 
-**Run 1 layer: keyword action detection.** "Revert" and "return" were not change verbs, so the queries had no detected action and the guard was skipped.
+Run 2 used reversal verbs. Run 3 reads the reversal as a flipped material pair: "from aluminium alloy back to the original steel" (aluminium → steel) against "replace the steel … with an aluminium alloy bracket" (steel → aluminium), and PET → phenolic against phenolic → PET. With direction extraction off (stage Z), both fail again, because the verb rule no longer exists.
 
-**Run 2:** "Revert … back to the original steel" and "Return the headliner substrate …" open their clauses, so both queries are read as `material_substitution`, reversed. The candidates make the forward change, so the pair is a direction flip: Similar but Distinct, with the difference "The technical action is reversed". The headline outcome of both queries changed from Potential Duplicate to Insufficient Evidence. EQ-013 had also called five unlabelled aluminium cab-bracket ideas Potential Duplicate in run 1; in run 2 it calls none.
+### different_programme: 0 of 2 (still failing, not addressed)
 
-### different_programme: 0 of 2 (still failing)
-
-**Layer: cosine threshold, with no layer that compares programmes.** These are same-component, same-change pairs, so the semantic route fires as designed (0.859, 0.886). The programme appears only in free text ("to the tipper programme"), and every row of this workbook carries the same vehicle volumes, so the structured applicability cannot separate them either. None of the Tier 1 rules applies.
+The semantic route fires (0.859, 0.886), and nothing compares vehicle programmes. Per the brief, this was not worked on: every row of the workbook has identical vehicle volumes, so the test data cannot exercise a programme check.
 
 ### unit_variation: 2 of 2
 
-Both still pass on fuzzy score (94.5, 94.4), because the rest of the wording is nearly identical. This shows nothing about handling units.
+Both pass on fuzzy score (94.5, 94.4). EQ-017's inches are converted, so its decrease matches the candidate's. EQ-018 has no state pair ("by 0.2 inch"), so nothing checked its units.
 
 ## Route off, for comparison (run 1)
 
-This table was derived from run 1's recorded scores using `classify_pair`'s branch order. It was not re-run, and it predates Tier 1. With `semantic_duplicate_threshold` = `null`, the eight pairs the semantic route accepted in run 1 would have fallen to Insufficient Evidence:
+This table was derived from run 1's recorded scores. It was not re-run, and it predates both tiers. With `semantic_duplicate_threshold` = `null`, the eight pairs the semantic route accepted in run 1 would have fallen to Insufficient Evidence:
 
 | Case type | Correct, route on (run 1) | Correct, route off (run 1 code) |
 | --- | --- | --- |
@@ -176,13 +207,13 @@ This table was derived from run 1's recorded scores using `classify_pair`'s bran
 | different_programme | 0 / 2 | 2 / 2 |
 | unit_variation | 2 / 2 | 2 / 2 |
 
-In run 1, no single threshold separated these labels: the two duplicates the semantic route accepted scored 0.845 and 0.883, and the eight false positives it accepted scored 0.827 – 0.912. In run 2, the route's remaining false positives are the three opposite_direction and two different_programme pairs (0.827 – 0.912). The two sparse duplicates (0.845, 0.883) still sit inside that range.
+In run 1, no single threshold separated these labels: the two duplicates the semantic route accepted scored 0.845 and 0.883, and the eight false positives scored 0.827 – 0.912. After Tier 2, the only negatives the route still accepts are the two different_programme pairs.
 
 ## Limitations
 
-- Each case type has two or three pairs, and each query has one labelled candidate. A case type that passed has only shown that it *can* pass. A failure, though, identifies a mechanism, and each one above is traced to a specific rule.
-- The fixed cases were fixed by rules written after reading these failures. The rules were not tuned on these pairs (the thresholds and cue lists are the ones in the brief), but this set is no longer independent evidence for them. A fresh set is needed to measure them.
+- Each case type has two or three pairs, and each query has one labelled candidate. A case type that passed has only shown that it *can* pass.
+- **This set is no longer independent evidence for the rules.** Every Tier 1 and Tier 2 rule was written after reading these failures. No threshold or cue list was tuned on them, but a fresh set is needed to measure the rules fairly. On v2, which none of the rules was written against, Tier 1 and direction extraction never fire, and scope comparison fires once.
+- **The rules are keyword- and pattern-based.** Direction needs "from X to Y", "replace X with Y" or "substitute Y for X", with a listed material or a length unit. Scope needs both sides to have a detected kind of change. Wording outside those patterns falls back to cosine.
 - The workbook is synthetic, and every historical idea in it uses the same vehicle volumes.
 - Ollama was not reachable, so the optional language-model rerank played no part. Every verdict is heuristic.
-- Only the labelled pair per query is scored. Retrieval competition comes from the 111 other historical ideas already in the development database.
-- The edge-case driver is not in the repository. It runs the same steps as `scripts/evaluate_hard_set.py`, with case-type grouping and the third label added.
+- Only the labelled pair per query is scored. Retrieval competition comes from the 111 other historical ideas.

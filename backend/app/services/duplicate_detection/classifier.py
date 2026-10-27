@@ -7,19 +7,21 @@ unless a threshold is passed. This classifier does not emit a confidence
 percentage. Same component, department, or benefit is not enough to call two
 ideas duplicates.
 
-Three rules can each be switched off (all off when not passed): fuzzy component
-matching after abbreviation expansion, reversal verbs read as a direction flip of
-an existing action, and negated action keywords ignored.
+Further rules can each be switched off (all off when not passed): fuzzy component
+matching after abbreviation expansion, negated action keywords ignored, opposite
+before -> after state pairs (direction, which also covers reversals), a query that
+adds kinds of change (scope), and a symmetric fuzzy score for the lexical rule.
 """
 
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 from rapidfuzz import fuzz
 
-from app.services.text import jaccard, normalize_text
+from app.services.text import SYNONYMS, jaccard, normalize_text
 
 MATERIAL_TERMS = {"aluminum", "aluminium", "plastic", "polypropylene", "pmma", "acrylic", "pet", "titanium"}
 TOPOLOGY_TERMS = {"topology", "optimized", "optimisation", "casting"}
@@ -33,13 +35,40 @@ COMPONENT_ABBREVIATIONS = {"brkt": "bracket", "bkt": "bracket", "mtg": "mounting
 COMPONENT_MATCH_THRESHOLD = 90
 _PARENTHETICAL = re.compile(r"\([^)]*\)")
 
-# Reversal (reversal_detection): these verbs undo an earlier change, so they flip the direction of an existing
-# action instead of adding a new one. "return" and "restore" are common in other senses ("restore bending
-# stiffness", "fuel return line"), so a verb counts only when it opens a clause or a back-reference follows it
-# in the same clause.
-REVERSAL_VERBS = {"revert", "return", "restore", "reinstate", "rollback"}
-BACK_REFERENCES = {"back", "original", "originally", "previous", "previously", "earlier", "former"}
-REVERSAL_MARKER = "rollback"
+# Direction (direction_detection): "from X to Y", "replace X with Y" and "substitute Y for X" give a state pair.
+# Two numbers with a length unit make a decrease or an increase; two different materials make a substitution
+# X -> Y. A reversal ("revert from aluminium back to steel") is a substitution pair that runs the other way, so
+# it needs no verb list of its own.
+LENGTH_UNITS = {"mm": 1.0, "cm": 10.0, "in": 25.4, "inch": 25.4, "inches": 25.4}
+MATERIALS = {
+    "steel": "steel",
+    "aluminum": "aluminum",
+    "polypropylene": "polypropylene",
+    "pp": "polypropylene",
+    "polycarbonate": "polycarbonate",
+    "pc": "polycarbonate",
+    "pmma": "pmma",
+    "acrylic": "pmma",
+    "pet": "pet",
+    "phenolic": "phenolic",
+    "rubber": "rubber",
+    "urethane": "urethane",
+    "polyurethane": "urethane",
+    "titanium": "titanium",
+    "magnesium": "magnesium",
+    "nylon": "nylon",
+    "polyamide": "nylon",
+    "abs": "abs",
+    "iron": "iron",
+    "copper": "copper",
+    "brass": "brass",
+    "zinc": "zinc",
+    "vinyl": "vinyl",
+    "fleece": "fleece",
+    "composite": "composite",
+}
+STATE_SPAN = 8
+_STATE_TOKEN = re.compile(r"\d+(?:\.\d+)?|[a-z]+")
 
 # Negation (negation_detection): an action keyword within this many tokens after a cue is ruled out, not proposed.
 NEGATION_CUES = (
@@ -71,7 +100,31 @@ class HeuristicResult:
     change_types_candidate: list[str] = field(default_factory=list)
 
 
-CLASSIFIER_FLAGS = ("component_fuzzy_match", "reversal_detection", "negation_detection")
+@dataclass(frozen=True)
+class StatePair:
+    kind: str  # "length" (values in mm) or "material"
+    before: str | float
+    after: str | float
+
+    @property
+    def direction(self) -> str:
+        if self.kind == "length":
+            return "decrease" if self.after < self.before else "increase"
+        return "substitute"
+
+    def describe(self) -> str:
+        if self.kind == "length":
+            return f"{self.direction} from {self.before:g} mm to {self.after:g} mm"
+        return f"{self.before} to {self.after}"
+
+
+CLASSIFIER_FLAGS = (
+    "component_fuzzy_match",
+    "negation_detection",
+    "direction_detection",
+    "scope_comparison",
+    "symmetric_lexical_fuzzy",
+)
 
 
 def classifier_flags(ai_config: dict) -> dict[str, bool]:
@@ -103,43 +156,100 @@ def _negated_positions(words: list[str]) -> set[int]:
     return negated
 
 
-def read_actions(text: str, *, negation: bool = False, reversal: bool = False) -> tuple[set[str], bool]:
-    """The tokens that count as proposed, and whether the text undoes an earlier change."""
-    if not negation and not reversal:
-        return set(normalize_text(text).split()), False
+def read_actions(text: str, *, negation: bool = False) -> set[str]:
+    """The tokens that count as proposed."""
+    if not negation:
+        return set(normalize_text(text).split())
     tokens: set[str] = set()
-    reverses = False
     for clause in _CLAUSE_END.split(text or ""):
         words = normalize_text(clause).split()
-        if reversal:
-            merged: list[str] = []
-            for word in words:
-                if word == "back" and merged and merged[-1] == "roll":
-                    merged[-1] = "rollback"
-                else:
-                    merged.append(word)
-            words = merged
-        negated = _negated_positions(words) if negation else set()
+        negated = _negated_positions(words)
+        tokens.update(word for index, word in enumerate(words) if index not in negated)
+    return tokens
+
+
+def change_types(text: str, *, negation: bool = False) -> set[str]:
+    return _change_types(read_actions(text, negation=negation))
+
+
+def _state_tokens(clause: str) -> list[str]:
+    # Not normalize_text: it splits "1.5" into "1" and "5".
+    text = unicodedata.normalize("NFKC", clause).lower().replace("-", " ")
+    return [SYNONYMS.get(token, token) for token in _STATE_TOKEN.findall(text)]
+
+
+def _length(span: list[str]) -> tuple[float, str | None] | None:
+    for index, token in enumerate(span):
+        if token[0].isdigit():
+            unit = span[index + 1] if index + 1 < len(span) and span[index + 1] in LENGTH_UNITS else None
+            return float(token), unit
+    return None
+
+
+def _material(span: list[str]) -> str | None:
+    return next((MATERIALS[token] for token in span if token in MATERIALS), None)
+
+
+def _state_pair(before: list[str], after: list[str]) -> StatePair | None:
+    old, new = _length(before), _length(after)
+    if old and new:
+        old_unit, new_unit = old[1] or new[1], new[1] or old[1]
+        if old_unit and new_unit:
+            old_mm, new_mm = old[0] * LENGTH_UNITS[old_unit], new[0] * LENGTH_UNITS[new_unit]
+            return StatePair("length", round(old_mm, 3), round(new_mm, 3)) if old_mm != new_mm else None
+    old_material, new_material = _material(before), _material(after)
+    if old_material and new_material and old_material != new_material:
+        return StatePair("material", old_material, new_material)
+    return None
+
+
+def state_pairs(text: str) -> list[StatePair]:
+    """Before -> after state pairs stated in the text."""
+    found: list[StatePair] = []
+    for clause in _CLAUSE_END.split(text or ""):
+        words = _state_tokens(clause)
         for index, word in enumerate(words):
-            if index in negated:
+            if word == "from":
+                link, swapped = "to", False
+            elif word in {"replace", "replaced", "replacing"}:
+                link, swapped = "with", False
+            elif word in {"substitute", "substituted", "substituting"}:
+                link, swapped = "for", True  # "substitute Y for X": X is the old state
+            else:
                 continue
-            if reversal and word in REVERSAL_VERBS:
-                if index == 0 or BACK_REFERENCES.intersection(words[index + 1 :]):
-                    reverses = True
-                    tokens.add(REVERSAL_MARKER)
+            window = words[index + 1 : index + 1 + STATE_SPAN]
+            if link not in window:
                 continue
-            tokens.add(word)
-    return tokens, reverses
+            split = index + 1 + window.index(link)
+            first, second = words[index + 1 : split], words[split + 1 : split + 1 + STATE_SPAN]
+            pair = _state_pair(second, first) if swapped else _state_pair(first, second)
+            if pair and pair not in found:
+                found.append(pair)
+    return found
 
 
-def change_types(text: str, *, negation: bool = False, reversal: bool = False) -> set[str]:
-    return _change_types(read_actions(text, negation=negation, reversal=reversal)[0])
+def direction_conflict(query: list[StatePair], candidate: list[StatePair]) -> str | None:
+    """Why the two ideas change the same thing in opposite directions, or None if they do not."""
+    q_lengths = {pair.direction for pair in query if pair.kind == "length"}
+    c_lengths = {pair.direction for pair in candidate if pair.kind == "length"}
+    if q_lengths and c_lengths and q_lengths.isdisjoint(c_lengths):
+        return (
+            "The proposed changes run in opposite directions: "
+            f"{'; '.join(p.describe() for p in query if p.kind == 'length')} compared with "
+            f"{'; '.join(p.describe() for p in candidate if p.kind == 'length')}."
+        )
+    q_materials = {(p.before, p.after) for p in query if p.kind == "material"}
+    c_materials = {(p.before, p.after) for p in candidate if p.kind == "material"}
+    flipped = sorted((old, new) for old, new in q_materials if (new, old) in c_materials and (old, new) not in c_materials)
+    if flipped:
+        old, new = flipped[0]
+        return f"The material change is reversed: {old} to {new} compared with {new} to {old}."
+    return None
 
 
 def _change_types(tokens: set[str]) -> set[str]:
     found: set[str] = set()
-    # A reversal verb counts as a change verb: "revert to steel" is still a material change, in reverse.
-    if tokens & MATERIAL_TERMS and tokens & (CHANGE_VERBS | {REVERSAL_MARKER}):
+    if tokens & MATERIAL_TERMS and tokens & CHANGE_VERBS:
         found.add("material_substitution")
     if tokens & TOPOLOGY_TERMS:
         found.add("topology")
@@ -166,8 +276,11 @@ def classify_pair(
     cosine: float | None = None,
     semantic_duplicate_threshold: float | None = None,
     component_fuzzy_match: bool = False,
-    reversal_detection: bool = False,
     negation_detection: bool = False,
+    direction_detection: bool = False,
+    scope_comparison: bool = False,
+    symmetric_lexical_fuzzy: bool = False,
+    symmetric_fuzzy_score: float | None = None,
 ) -> HeuristicResult:
     similarities: list[str] = []
     differences: list[str] = []
@@ -189,18 +302,21 @@ def classify_pair(
             f"Component differs: '{query_component}' compared with '{candidate_component}'."
         )
 
-    q_tokens, q_reverses = read_actions(query_text, negation=negation_detection, reversal=reversal_detection)
-    c_tokens, c_reverses = read_actions(candidate_text, negation=negation_detection, reversal=reversal_detection)
-    q_types = _change_types(q_tokens)
-    c_types = _change_types(c_tokens)
-    # One side undoes a change of a kind the other side makes: the same action in the opposite direction.
-    direction_flip = bool(q_types & c_types) and q_reverses != c_reverses
-    if direction_flip:
+    q_types = change_types(query_text, negation=negation_detection)
+    c_types = change_types(candidate_text, negation=negation_detection)
+    # The same quantity or material changed in opposite directions. Cosine cannot see this: the wording is
+    # nearly the same either way.
+    conflict = direction_conflict(state_pairs(query_text), state_pairs(candidate_text)) if direction_detection else None
+    if conflict:
+        differences.append(conflict)
+    # The query proposes kinds of change the historical idea does not: a larger scope, not the same idea.
+    extra_scope = q_types - c_types if scope_comparison and c_types and not q_types.isdisjoint(c_types) else set()
+    if extra_scope:
         differences.append(
-            "The technical action is reversed: one idea undoes a change of the kind the other proposes "
-            f"({', '.join(sorted(q_types & c_types))})."
+            "The query proposes more than the historical idea: it also includes "
+            f"{', '.join(sorted(extra_scope))}, which the historical idea does not."
         )
-    elif q_types and c_types and q_types == c_types:
+    if q_types and c_types and q_types == c_types:
         similarities.append(f"The recorded technical action is the same kind of change ({', '.join(sorted(q_types))}).")
     elif q_types and c_types and q_types.isdisjoint(c_types):
         differences.append(
@@ -225,10 +341,13 @@ def classify_pair(
             change_types_candidate=sorted(c_types),
         )
 
-    different_mechanism = bool(q_types and c_types and q_types.isdisjoint(c_types)) or direction_flip
-    same_action = bool(q_types and c_types and q_types == c_types) and not direction_flip
-    lexical_duplicate = (fuzzy_score >= fuzzy_strong_threshold or overlap >= 0.62) or (
-        same_action and same_component and overlap >= 0.42 and fuzzy_score >= 68
+    different_mechanism = bool(q_types and c_types and q_types.isdisjoint(c_types)) or bool(conflict) or bool(extra_scope)
+    same_action = bool(q_types and c_types and q_types == c_types) and not conflict
+    # token_set_ratio scores a text that contains the other near 100, so a superset passes the fuzzy rule by
+    # construction. A symmetric score (token_sort_ratio) is used for the duplicate call when enabled.
+    lexical_fuzzy = symmetric_fuzzy_score if symmetric_lexical_fuzzy and symmetric_fuzzy_score is not None else fuzzy_score
+    lexical_duplicate = (lexical_fuzzy >= fuzzy_strong_threshold or overlap >= 0.62) or (
+        same_action and same_component and overlap >= 0.42 and lexical_fuzzy >= 68
     )
     # Off unless a threshold is given. A paraphrase keeps the meaning but not the words, so it fails every
     # lexical rule; this route accepts it on embedding similarity when nothing shows a different action.

@@ -199,6 +199,27 @@ Run on 26 October 2026 on the same Neon database, MiniLM active, 20 historical a
 
 This was expected. Precision, recall, and F1 cannot change with cosine (see [How cosine is used](#how-cosine-is-used)), because the evaluation computes fuzzy and exact for every historical idea whether or not the vector search returned it. The retrieval figures could only have changed through a cosine tie-break, and no query had a fuzzy tie at the top. The fix matters for the live candidate filter and for ranking ties, not for these metrics.
 
+## v2 hard set: clean baseline (27 October 2026)
+
+This is the reference for comparing later classifier changes on `data/vave_duplicate_eval_set_v2.xlsx`. The method and the earlier runs are in [evaluation-hard-set.md](evaluation-hard-set.md).
+
+- **Database:** 111 historical ideas (VAVE-SYN-001 to -020 and the 91 v2 ideas), each with an `all-MiniLM-L6-v2` vector. The 11 edge-case ideas VAVE-EH-001 to -011 (import batch `e4762c9e`), which had been loaded for [evaluation-edge-cases.md](evaluation-edge-cases.md), were deleted first: 11 ideas, their 55 vehicle rows, 11 vectors and 11 import-change rows. The batch was marked `rolled_back`, and the deletion was recorded in the audit log as `idea.delete_evaluation_ideas`. The edge-case scorer, `scripts/score_edge.py`, now loads those ideas inside a transaction and rolls them back, so they no longer stay in the database.
+- **Settings:** offline, MiniLM, Ollama not reachable, `semantic_duplicate_threshold` 0.82, `retrieval_top_k` 15, `cosine_retrieve_threshold` 0.40, `fuzzy_strong_threshold` 86, `component_fuzzy_match` and `negation_detection` on. Any classifier rule added after this baseline must be turned off to reproduce it: with the Tier 2 code, `--disable direction_detection --disable scope_comparison --disable symmetric_lexical_fuzzy` reproduces every pair exactly ([evaluation-edge-cases.md](evaluation-edge-cases.md#v2-regression-check-tier-2)).
+- **Command:** `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/evaluate_hard_set.py data/vave_duplicate_eval_set_v2.xlsx out.json`
+
+End to end, 597 pairs, 90 duplicates:
+
+| | Precision | Recall | F1 | TP | FP | FN | TN | Abstentions | Mean rank | rank@1 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **overall** | **0.880** | **0.811** | **0.844** | 73 | 10 | 17 | 497 | 186 | 1.200 | 0.833 (75 / 90) |
+| easy | 1.000 | 1.000 | 1.000 | 30 | 0 | 0 | | | | |
+| medium | 1.000 | 0.800 | 0.889 | 24 | 0 | 6 | | | | |
+| hard | 0.655 | 0.633 | 0.644 | 19 | 10 | 11 | | | | |
+
+- Classifier only: precision 0.859, recall 0.811, F1 0.834 (12 false positives).
+- All 90 duplicates were shown; the worst rank was 3.
+- These figures match the ones recorded with 111 historical ideas before the edge-case rules existed ([evaluation-hard-set.md](evaluation-hard-set.md#candidate-ordering-by-verdict)). Component matching and negation detection change no v2 verdict ([evaluation-edge-cases.md](evaluation-edge-cases.md#v2-regression-check)).
+
 ## Limitations
 
 - **The sample is small and synthetic.**

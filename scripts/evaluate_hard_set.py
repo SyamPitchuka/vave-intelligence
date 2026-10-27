@@ -22,8 +22,8 @@ Options:
                                reusing the retrieval results; written to the report as "sweep"
     --split-families N         score the sweep separately on the first N component families (tuning)
                                and the rest (held out), and choose thresholds on the tuning families only
-    --disable FLAG             run with one classifier rule off (component_fuzzy_match, reversal_detection,
-                               negation_detection); repeat to turn off more than one
+    --disable FLAG             run with one classifier rule off (any of CLASSIFIER_FLAGS in classifier.py);
+                               repeat to turn off more than one
 
 In the sweep, end-to-end verdicts use the cosine the pipeline itself saw (the vector search score),
 and classifier-only verdicts use the directly computed cosine. Which candidates are shown does not
@@ -52,7 +52,7 @@ from app.services.duplicate_detection.classifier import (  # noqa: E402
     classify_pair,
     components_match,
 )
-from app.services.duplicate_detection.service import _pair_text, analyze_submission, rank_historical  # noqa: E402
+from app.services.duplicate_detection.service import analyze_submission, pair_inputs, rank_historical  # noqa: E402
 from app.services.embeddings.index import idea_embedding_text  # noqa: E402
 from app.services.evaluation_service import classification_metrics  # noqa: E402
 from app.services.ideas.service import create_submission  # noqa: E402
@@ -156,7 +156,7 @@ def main() -> None:
     print(f"embedding={embedder.model} chat={getattr(chat, 'name', None)} llm_status={llm_status} historical={len(historical)}")
 
     records = []
-    pair_inputs = []  # classify_pair arguments per record, kept out of the JSON report
+    replay_inputs = []  # classify_pair arguments per record, kept out of the JSON report
     query_info = []
     def score_query(db, admin, historical, payload):
         code = payload["idea_code"]
@@ -182,16 +182,7 @@ def main() -> None:
                 candidate = historical[str(pair["Candidate_ID"]).strip()]
                 item = ranked[candidate.id]
                 direct_cosine = cosine(query_vector, vectors[candidate.id]) if candidate.id in vectors else None
-                inputs = {
-                    "query_component": submission.component,
-                    "query_text": _pair_text(submission),
-                    "candidate_component": candidate.component,
-                    "candidate_text": _pair_text(candidate),
-                    "fuzzy_score": item["fuzzy"],
-                    "exact": item["exact"],
-                    "fuzzy_strong_threshold": float(config["fuzzy_strong_threshold"]),
-                    **classifier_flags(config),
-                }
+                inputs = pair_inputs(submission, candidate, item, config)
                 heuristic = classify_pair(
                     **inputs,
                     cosine=direct_cosine,
@@ -244,7 +235,7 @@ def main() -> None:
         query_info.append(info)
         for record, inputs in scored:
             records.append(record)
-            pair_inputs.append(inputs)
+            replay_inputs.append(inputs)
         if number % 10 == 0:
             print(f"  {number}/{len(queries)} queries")
     db.close()
@@ -294,7 +285,7 @@ def main() -> None:
     if args.sweep:
         for threshold in sweep_thresholds(*args.sweep):
             rows = []
-            for record, inputs in zip(records, pair_inputs, strict=True):
+            for record, inputs in zip(records, replay_inputs, strict=True):
                 e2e = (
                     classify_pair(**inputs, cosine=record["pipeline_cosine"], semantic_duplicate_threshold=threshold).category
                     if record["shown"]
