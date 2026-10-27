@@ -11,7 +11,7 @@ Every number here comes from `data/vave_duplicate_eval_set_v2.xlsx`, a synthetic
 - **Retrieval is not the cause.** All 90 labelled duplicates were among the 15 candidates shown, 65 of them at rank 1. Scoring end to end and scoring the classifier alone give identical precision, recall, and F1.
 - **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 – 0.34. That rule has since been removed. Those 53 now go to manual review, recall is unchanged, and 127 correct look-alike verdicts went to manual review with them ([details](#after-removing-the-low-overlap-rule)).
 - **The embedding separates the labels better than the verdict does,** but not cleanly. Within each query, the labelled duplicate has the highest MiniLM cosine of its labelled candidates in 83 of 90 queries. Across queries, 28 similar-but-distinct pairs score above 0.80, where 77 of the 90 duplicates sit.
-- **A semantic route to Potential Duplicate** (same component, cosine ≥ threshold, no detected different action) was added on 27 October 2026, off by default. On the 15 held-out component families, a threshold of 0.82 chosen on the other 15 gives **precision 0.857, recall 0.800, F1 0.828**, against recall 0.333 and F1 0.500 without the route. At 0.91, the lowest threshold with precision 1.0 on the tuning families, held-out precision stays 1.0 but recall is only 0.378. See [Semantic Potential Duplicate route](#semantic-potential-duplicate-route).
+- **A semantic route to Potential Duplicate** (same component, cosine ≥ threshold, no detected different action) was added on 27 October 2026. It is off by default in code, and was then turned on at 0.82 in the development database. Every measurement here was taken with it off ([how to revert](#live-setting-and-how-to-revert-it)). On the 15 held-out component families, a threshold of 0.82 chosen on the other 15 gives **precision 0.857, recall 0.800, F1 0.828**, against recall 0.333 and F1 0.500 without the route. At 0.91, the lowest threshold with precision 1.0 on the tuning families, held-out precision stays 1.0 but recall is only 0.378. See [Semantic Potential Duplicate route](#semantic-potential-duplicate-route).
 
 ## Setup
 
@@ -251,6 +251,31 @@ The route is **off by default**:
 - An administrator can set it with `PUT /api/v1/ai/settings`, and an explicit `null` turns it off again. It is not on the AI settings page yet.
 
 A verdict reached this way says so in its explanation, including the cosine and the threshold.
+
+### Live setting and how to revert it
+
+**The route is on in the development database.** On 27 October 2026, after this evaluation, `semantic_duplicate_threshold` was changed from `null` to **0.82** with `PUT /api/v1/ai/settings` as `admin@vave.local`, and read back as 0.82. Mode, embedding model, and `cosine_retrieve_threshold` (0.40) were unchanged.
+
+**Every measurement in this document was taken with the route off.** That covers:
+- the route-off rows
+- every section before this one
+- the pipeline runs behind the sweep, which replays each threshold explicitly on top of route-off results
+- the 0.82 cross-check, which turned the route on for that run only (`--semantic-threshold 0.82`), not through the stored setting
+
+**To revert,** as an administrator:
+
+```bash
+curl -s -X PUT http://127.0.0.1:8000/api/v1/ai/settings \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"semantic_duplicate_threshold": null}'
+```
+
+An explicit `null` turns the route off. Leaving the field out of the request leaves it unchanged. No re-index is needed in either direction.
+
+Two things to know while it is on:
+
+- **The audit log does not record the value.** The `ai.settings` audit entry stores the mode, the embedding model, and whether a re-index is needed, but not this threshold. The change is recorded here instead.
+- **`scripts/evaluate_hard_set.py` now runs with the route on by default.** It reads the stored settings, so its headline `metrics` would include the route at 0.82. The `--sweep` results are unaffected, because each threshold is set explicitly. To reproduce the route-off baseline in [Precision, recall, and F1](#precision-recall-and-f1), set the threshold back to `null` first. `scripts/evaluate.py` is unaffected, because it passes no cosine.
 
 ### Method
 
