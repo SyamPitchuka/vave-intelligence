@@ -132,6 +132,7 @@ class SettingsBody(BaseModel):
     comparison_timeout_seconds: int | None = None
     fuzzy_strong_threshold: float | None = None
     cosine_retrieve_threshold: float | None = None
+    semantic_duplicate_threshold: float | None = None
     copilot_lexical_threshold: float | None = None
     dataset_label: str | None = None
     display_timezone: str | None = None
@@ -821,6 +822,9 @@ def update_ai_settings(body: SettingsBody, request: Request, db: Session = Depen
 
         raise HTTPException(status_code=403, detail={"code": "forbidden", "message": "Only a system administrator can change AI settings."})
     updates = {key: value for key, value in body.model_dump().items() if value is not None}
+    if "semantic_duplicate_threshold" in body.model_fields_set:
+        # An explicit null turns the semantic route off, so it is not dropped with the other unset fields.
+        updates["semantic_duplicate_threshold"] = body.semantic_duplicate_threshold
     config, reindex = save_ai_settings(db, updates, user.id)
     add_audit(db, user_id=user.id, action="ai.settings", entity_type="application_settings", entity_id="ai", details={"mode": config["mode"], "embedding_model": config["embedding_model"], "reindex_required": reindex}, ip_address=client_ip(request))
     db.commit()
@@ -1340,6 +1344,7 @@ def _status_payload(config: dict[str, Any]) -> dict[str, Any]:
         "comparison_timeout_seconds": config.get("comparison_timeout_seconds"),
         "fuzzy_strong_threshold": config.get("fuzzy_strong_threshold"),
         "cosine_retrieve_threshold": config.get("cosine_retrieve_threshold"),
+        "semantic_duplicate_threshold": config.get("semantic_duplicate_threshold"),
         "copilot_lexical_threshold": config.get("copilot_lexical_threshold"),
         "llm_required": config.get("llm_required"),
         "dataset_label": config.get("dataset_label"),

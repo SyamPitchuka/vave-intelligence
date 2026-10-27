@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+<title id="t">Semantic duplicate threshold sweep, v2 hard set</title>
+<desc id="d">Precision, recall and F1 end to end for semantic_duplicate_threshold from 0.70 to 0.95. F1 peaks at 0.82 (0.844). Precision first reaches 1.0 at 0.91.</desc>
+<style>svg{--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a}@media (prefers-color-scheme: dark){svg{--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--s3:#199e70}}.bg{fill:var(--surface)}.grid{stroke:var(--grid);stroke-width:1}.axis{stroke:var(--axis);stroke-width:1}.tick{fill:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}.title{fill:var(--ink);font-size:15px;font-weight:600}.sub{fill:var(--ink2);font-size:12px}.lab{fill:var(--ink);font-size:12px}.note{fill:var(--ink2);font-size:11px}.ref{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}</style>
+<rect class="bg" width="760" height="420" rx="8"/>
+<text class="title" x="64" y="24">Semantic Potential Duplicate route: threshold sweep</text>
+<text class="sub" x="64" y="42">v2 hard set, end to end, 597 labelled pairs (90 duplicates). Higher threshold = route fires less.</text>
+<line class="grid" x1="64" x2="640" y1="356.0" y2="356.0"/>
+<text class="tick" x="56" y="360.0" text-anchor="end">0.0</text>
+<line class="grid" x1="64" x2="640" y1="326.0" y2="326.0"/>
+<line class="grid" x1="64" x2="640" y1="296.0" y2="296.0"/>
+<text class="tick" x="56" y="300.0" text-anchor="end">0.2</text>
+<line class="grid" x1="64" x2="640" y1="266.0" y2="266.0"/>
+<line class="grid" x1="64" x2="640" y1="236.0" y2="236.0"/>
+<text class="tick" x="56" y="240.0" text-anchor="end">0.4</text>
+<line class="grid" x1="64" x2="640" y1="206.0" y2="206.0"/>
+<line class="grid" x1="64" x2="640" y1="176.0" y2="176.0"/>
+<text class="tick" x="56" y="180.0" text-anchor="end">0.6</text>
+<line class="grid" x1="64" x2="640" y1="146.0" y2="146.0"/>
+<line class="grid" x1="64" x2="640" y1="116.0" y2="116.0"/>
+<text class="tick" x="56" y="120.0" text-anchor="end">0.8</text>
+<line class="grid" x1="64" x2="640" y1="86.0" y2="86.0"/>
+<line class="grid" x1="64" x2="640" y1="56.0" y2="56.0"/>
+<text class="tick" x="56" y="60.0" text-anchor="end">1.0</text>
+<line class="axis" x1="64" x2="640" y1="356.0" y2="356.0"/>
+<text class="tick" x="64.0" y="374.0" text-anchor="middle">0.70</text>
+<text class="tick" x="179.2" y="374.0" text-anchor="middle">0.75</text>
+<text class="tick" x="294.4" y="374.0" text-anchor="middle">0.80</text>
+<text class="tick" x="409.6" y="374.0" text-anchor="middle">0.85</text>
+<text class="tick" x="524.8" y="374.0" text-anchor="middle">0.90</text>
+<text class="tick" x="640.0" y="374.0" text-anchor="middle">0.95</text>
+<text class="sub" x="352.0" y="404" text-anchor="middle">semantic_duplicate_threshold (MiniLM cosine)</text>
+<line class="ref" x1="340.5" x2="340.5" y1="56" y2="356.0"/>
+<text class="note" x="344.5" y="346.0" text-anchor="start">max F1 0.82</text>
+<line class="ref" x1="547.8" x2="547.8" y1="56" y2="356.0"/>
+<text class="note" x="543.8" y="332.0" text-anchor="end">precision 1.0 from 0.91</text>
+<path d="M64.0,210.1 L87.0,205.1 L110.1,197.9 L133.1,187.8 L156.2,177.2 L179.2,164.3 L202.2,156.8 L225.3,148.3 L248.3,137.8 L271.4,126.6 L294.4,112.8 L317.4,107.6 L340.5,92.1 L363.5,76.5 L386.6,73.9 L409.6,70.5 L432.6,71.8 L455.7,72.7 L478.7,74.8 L501.8,69.6 L524.8,63.1 L547.8,56.0 L570.9,56.0 L593.9,56.0 L617.0,56.0 L640.0,56.0" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M64.0,59.3 L87.0,62.7 L110.1,62.7 L133.1,62.7 L156.2,66.0 L179.2,72.7 L202.2,79.3 L225.3,86.0 L248.3,89.3 L271.4,96.0 L294.4,99.3 L317.4,99.3 L340.5,112.7 L363.5,129.3 L386.6,146.0 L409.6,159.3 L432.6,176.0 L455.7,186.0 L478.7,206.0 L501.8,216.0 L524.8,219.3 L547.8,239.3 L570.9,246.0 L593.9,249.3 L617.0,249.3 L640.0,252.7" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M64.0,160.4 L87.0,156.8 L110.1,150.6 L133.1,142.2 L156.2,134.8 L179.2,127.3 L202.2,124.4 L225.3,121.2 L248.3,116.0 L271.4,112.2 L294.4,106.3 L317.4,103.5 L340.5,102.8 L363.5,105.7 L386.6,115.2 L409.6,123.1 L432.6,135.6 L455.7,143.5 L478.7,160.3 L501.8,167.9 L524.8,169.6 L547.8,188.0 L570.9,195.0 L593.9,198.6 L617.0,198.6 L640.0,202.3" fill="none" stroke="var(--s3)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="644" x2="656" y1="56.0" y2="56.0" stroke="var(--s1)" stroke-width="2"/>
+<text class="lab" x="660" y="60.0">Precision 1.000</text>
+<line x1="644" x2="656" y1="202.3" y2="202.3" stroke="var(--s3)" stroke-width="2"/>
+<text class="lab" x="660" y="206.3">F1 0.512</text>
+<line x1="644" x2="656" y1="252.7" y2="252.7" stroke="var(--s2)" stroke-width="2"/>
+<text class="lab" x="660" y="256.7">Recall 0.344</text>
+</svg>

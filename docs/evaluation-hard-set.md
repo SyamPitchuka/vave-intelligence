@@ -11,6 +11,7 @@ Every number here comes from `data/vave_duplicate_eval_set_v2.xlsx`, a synthetic
 - **Retrieval is not the cause.** All 90 labelled duplicates were among the 15 candidates shown, 65 of them at rank 1. Scoring end to end and scoring the classifier alone give identical precision, recall, and F1.
 - **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 – 0.34. That rule has since been removed. Those 53 now go to manual review, recall is unchanged, and 127 correct look-alike verdicts went to manual review with them ([details](#after-removing-the-low-overlap-rule)).
 - **The embedding separates the labels better than the verdict does,** but not cleanly. Within each query, the labelled duplicate has the highest MiniLM cosine of its labelled candidates in 83 of 90 queries. Across queries, 28 similar-but-distinct pairs score above 0.80, where 77 of the 90 duplicates sit.
+- **A semantic route to Potential Duplicate** (same component, cosine ≥ threshold, no detected different action) was added on 27 October 2026, off by default. On the 15 held-out component families, a threshold of 0.82 chosen on the other 15 gives **precision 0.857, recall 0.800, F1 0.828**, against recall 0.333 and F1 0.500 without the route. At 0.91, the lowest threshold with precision 1.0 on the tuning families, held-out precision stays 1.0 but recall is only 0.378. See [Semantic Potential Duplicate route](#semantic-potential-duplicate-route).
 
 ## Setup
 
@@ -233,6 +234,182 @@ Raising medium and hard recall needs a positive signal that the action is the sa
 
 Rollback also leaves the idea's embedding vectors behind.
 
+## Semantic Potential Duplicate route
+
+Run on 27 October 2026, same database, data, and settings as above.
+
+### The rule
+
+`classify_pair` (`duplicate_detection/classifier.py`) has a second route to Potential Duplicate, checked after the lexical one. It fires when all of these hold:
+
+- **The component matches** (normalised component names are equal).
+- **Cosine ≥ `semantic_duplicate_threshold`.** In the app this is the vector-search score that `rank_historical` passes in.
+- **No positive evidence of a different action:** `change_types()` did not detect disjoint kinds of change in the two texts. If either text has no detected change, nothing blocks the route.
+
+The route is **off by default**:
+- `semantic_duplicate_threshold` is `None` in `config.py` and in the stored AI settings, so the live app and every existing test behave exactly as before.
+- An administrator can set it with `PUT /api/v1/ai/settings`, and an explicit `null` turns it off again. It is not on the AI settings page yet.
+
+A verdict reached this way says so in its explanation, including the cosine and the threshold.
+
+### Method
+
+- **Command:**
+  ```bash
+  HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/evaluate_hard_set.py data/vave_duplicate_eval_set_v2.xlsx out.json --sweep 0.70 0.95 0.01 --split-families 15
+  ```
+- **One pipeline run, then a replay.** The pipeline runs once per query with the route off. `classify_pair` is then re-run for every labelled pair at each threshold, from 0.70 to 0.95 in steps of 0.01. Which candidates are shown does not depend on the verdict, so the shown set is the same at every threshold.
+  - **End to end** uses the cosine the pipeline saw.
+  - **Classifier only** uses the directly computed cosine. The two agree to within 3 × 10⁻⁷ wherever both exist.
+- **Metrics:** end to end, as in the tables above. A pair the pipeline did not show counts as not a duplicate.
+- **Cross-check.** The full pipeline was also run with `--semantic-threshold 0.82`, so the route ran inside `analyze_submission` itself. It gave exactly the replayed result:
+  - end to end: TP 73, FP 10, FN 17, TN 497
+  - classifier only: TP 73, FP 12, FN 17, TN 495
+- **Coverage.** All 90 labelled duplicates are same-component pairs, and all have a pipeline cosine, so every one can reach the route.
+  - 41 shown negative pairs have no pipeline cosine, because they fell outside the top-20 vector search.
+  - Their direct cosines are at most 0.614, below the sweep range, so the missing score changes nothing here.
+- **Connection drops.** The hosted database dropped the connection 3 times in the sweep run, once in the cross-check run and once in the split run. Each query runs in a rolled-back transaction, so the script retries it on a new session. Every retry succeeded on its first attempt.
+
+### Sweep on all 30 families
+
+![Precision, recall and F1 against semantic_duplicate_threshold from 0.70 to 0.95. F1 peaks at 0.82; precision reaches 1.0 at 0.91.](images/semantic-threshold-sweep.svg)
+
+All 597 pairs, end to end. The route is off at baseline: precision 1.000, recall 0.322, F1 0.487. Each threshold picked in this table is chosen and scored on the same data, so it is optimistic. The [held-out split](#held-out-split-by-component-family) below is the fair measure.
+
+| Threshold | Precision | Recall | F1 | TP | FP | FN | Recall easy | Recall medium | Recall hard |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.70 | 0.486 | 0.989 | 0.652 | 89 | 94 | 1 | 1.000 | 1.000 | 0.967 |
+| 0.71 | 0.503 | 0.978 | 0.664 | 88 | 87 | 2 | 1.000 | 0.967 | 0.967 |
+| 0.72 | 0.527 | 0.978 | 0.685 | 88 | 79 | 2 | 1.000 | 0.967 | 0.967 |
+| 0.73 | 0.561 | 0.978 | 0.713 | 88 | 69 | 2 | 1.000 | 0.967 | 0.967 |
+| 0.74 | 0.596 | 0.967 | 0.737 | 87 | 59 | 3 | 1.000 | 0.933 | 0.967 |
+| 0.75 | 0.639 | 0.944 | 0.762 | 85 | 48 | 5 | 1.000 | 0.900 | 0.933 |
+| 0.76 | 0.664 | 0.922 | 0.772 | 83 | 42 | 7 | 1.000 | 0.900 | 0.867 |
+| 0.77 | 0.692 | 0.900 | 0.783 | 81 | 36 | 9 | 1.000 | 0.900 | 0.800 |
+| 0.78 | 0.727 | 0.889 | 0.800 | 80 | 30 | 10 | 1.000 | 0.867 | 0.800 |
+| 0.79 | 0.765 | 0.867 | 0.812 | 78 | 24 | 12 | 1.000 | 0.833 | 0.767 |
+| 0.80 | 0.811 | 0.856 | 0.832 | 77 | 18 | 13 | 1.000 | 0.833 | 0.733 |
+| 0.81 | 0.828 | 0.856 | 0.842 | 77 | 16 | 13 | 1.000 | 0.833 | 0.733 |
+| **0.82** | 0.880 | 0.811 | 0.844 | 73 | 10 | 17 | 1.000 | 0.800 | 0.633 |
+| 0.83 | 0.932 | 0.756 | 0.834 | 68 | 5 | 22 | 1.000 | 0.733 | 0.533 |
+| 0.84 | 0.940 | 0.700 | 0.803 | 63 | 4 | 27 | 1.000 | 0.700 | 0.400 |
+| 0.85 | 0.952 | 0.656 | 0.776 | 59 | 3 | 31 | 1.000 | 0.633 | 0.333 |
+| 0.86 | 0.947 | 0.600 | 0.735 | 54 | 3 | 36 | 1.000 | 0.467 | 0.333 |
+| 0.87 | 0.944 | 0.567 | 0.708 | 51 | 3 | 39 | 1.000 | 0.467 | 0.233 |
+| 0.88 | 0.938 | 0.500 | 0.652 | 45 | 3 | 45 | 1.000 | 0.400 | 0.100 |
+| 0.89 | 0.955 | 0.467 | 0.627 | 42 | 2 | 48 | 1.000 | 0.367 | 0.033 |
+| 0.90 | 0.976 | 0.456 | 0.621 | 41 | 1 | 49 | 1.000 | 0.333 | 0.033 |
+| **0.91** | 1.000 | 0.389 | 0.560 | 35 | 0 | 55 | 1.000 | 0.133 | 0.033 |
+| 0.92 | 1.000 | 0.367 | 0.537 | 33 | 0 | 57 | 1.000 | 0.067 | 0.033 |
+| 0.93 | 1.000 | 0.356 | 0.525 | 32 | 0 | 58 | 1.000 | 0.067 | 0.000 |
+| 0.94 | 1.000 | 0.356 | 0.525 | 32 | 0 | 58 | 1.000 | 0.067 | 0.000 |
+| 0.95 | 1.000 | 0.344 | 0.512 | 31 | 0 | 59 | 1.000 | 0.033 | 0.000 |
+
+On all 597 pairs:
+
+- **Highest F1: 0.82**, F1 0.844. 10 similar-but-distinct pairs are called Potential Duplicate.
+- **Lowest threshold with precision 1.0: 0.91.** Recall 0.389, F1 0.560. Precision stays 1.0 at every higher threshold.
+- **Every false positive is a same-component look-alike.** No unrelated pair is ever called a duplicate, because unrelated pairs never share the component.
+- **The keyword check still does part of the work.** At 0.82, 16 same-component look-alikes reach the threshold:
+  - 4 are blocked by a detected different action
+  - 2 are not shown
+  - 10 become false positives
+
+Classifier only, the numbers match end to end from 0.84 upwards. Below that, classifier only has more false positives, because it also judges look-alikes that retrieval never showed.
+
+### Held-out split by component family
+
+**Families.** A family is the query component. Each of the 30 components has exactly 3 TestQueries, easy, medium and hard, which reword the same idea. A split by query would put rewordings of one idea on both sides, so the split is by family, in the order families first appear in TestQueries:
+
+- **Tuning:** families 1 – 15, queries VAVE-Q-0001 – 0045. Cab mounting bracket, Battery tray, Engine oil pan, Exterior mirror bracket, Frame intermediate crossmember, Cab wiring harness, Tail lamp lens, Rear axle banjo housing, Air intake duct, Steering column lower bracket, Propeller shaft tube, Headliner substrate, Disc brake pad, Fuel tank mounting strap, Radiator mounting bracket. 301 pairs, 45 duplicates.
+- **Held out:** families 16 – 30, queries VAVE-Q-0046 – 0090. Cab door inner panel, Suspension bump stop, Instrument panel bracket, Exhaust heat shield, Air tank mounting bracket, Seat frame rail, Front fender bracket, Washer fluid reservoir, Alternator mounting bracket, Spring hanger bracket, Front grille mesh, Clutch pedal assembly, Fuel filter head, Cab step assembly, Gear shift lever knob. 296 pairs, 45 duplicates.
+
+**Leakage through other pairs.** A pair belongs to its query's family. A tuning query's unrelated pairs point at ideas from other families, but the route needs the same component, so those pairs can never fire it.
+
+**Selection rule, fixed before any held-out number was read:**
+- Use the threshold with the highest F1 on the tuning families, breaking ties toward the higher threshold.
+- Also report the lowest threshold with precision 1.0 on the tuning families.
+
+The held-out numbers were only read off at those two thresholds.
+
+**Chosen thresholds:** **0.82** (highest tuning F1) and **0.91** (lowest tuning threshold with precision 1.0). Both are the same as on all 30 families.
+
+#### Tuning set and held-out set, side by side
+
+| Threshold | Set | Precision | Recall | F1 | TP | FP | FN | Recall easy | Recall medium | Recall hard |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| route off | Tuning | 1.000 | 0.311 | 0.475 | 14 | 0 | 31 | 0.933 | 0.000 | 0.000 |
+| route off | **Held-out** | **1.000** | **0.333** | **0.500** | 15 | 0 | 30 | 1.000 | 0.000 | 0.000 |
+| **0.82** (max tuning F1) | Tuning | 0.902 | 0.822 | 0.860 | 37 | 4 | 8 | 1.000 | 0.867 | 0.600 |
+| **0.82** (max tuning F1) | **Held-out** | **0.857** | **0.800** | **0.828** | 36 | 6 | 9 | 1.000 | 0.733 | 0.667 |
+| **0.91** (precision 1.0 on tuning) | Tuning | 1.000 | 0.400 | 0.571 | 18 | 0 | 27 | 1.000 | 0.200 | 0.000 |
+| **0.91** (precision 1.0 on tuning) | **Held-out** | **1.000** | **0.378** | **0.548** | 17 | 0 | 28 | 1.000 | 0.067 | 0.067 |
+
+Each difficulty has 15 held-out duplicates, so one pair moves a per-difficulty recall by 0.067.
+
+**The tuning-to-held-out gap:**
+
+| Threshold | Precision | Recall | F1 |
+| --- | --- | --- | --- |
+| 0.82 | −0.045 (0.902 → 0.857) | −0.022 (0.822 → 0.800) | −0.032 (0.860 → 0.828) |
+| 0.91 | 0.000 (1.000 → 1.000) | −0.022 (0.400 → 0.378) | −0.023 (0.571 → 0.548) |
+
+What the split shows:
+
+- **At 0.82 the route generalises with a small loss.**
+  - Held-out F1 is 0.828, against 0.860 on the tuning families. Without the route it is 0.500.
+  - Held-out recall more than doubles, from 0.333 to 0.800, and the gain is entirely medium and hard duplicates.
+  - The cost is 6 held-out look-alikes called Potential Duplicate, against none without the route.
+- **0.91 buys precision with almost no recall.** Held-out precision stays 1.0, but recall is 0.378, only 2 duplicates more than the route-off 0.333. Medium and hard recall is 0.067 each, which is one pair.
+- **Precision 1.0 is set by one tuning pair, not by the data as a whole.**
+  - The highest-cosine same-component look-alike in the tuning families scores 0.910, which pushes the tuning precision-1.0 threshold up to 0.91.
+  - In the held-out families the highest scores 0.838. Held-out precision is already 1.0 from 0.84, at recall 0.733.
+  - A threshold aimed at "no false positives" is therefore decided by the single worst look-alike in the tuning data, and will not carry over to other data.
+- **Held-out F1 would peak at 0.83 (0.850), not 0.82.** This is reported only to show how flat the top of the curve is. Choosing 0.83 because of it would be tuning on the held-out set.
+
+#### Full split sweep
+
+End to end. FP is the number of look-alikes called Potential Duplicate.
+
+| Threshold | Tuning P | Tuning R | Tuning F1 | Tuning FP | Held-out P | Held-out R | Held-out F1 | Held-out FP |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.70 | 0.484 | 0.978 | 0.647 | 47 | 0.489 | 1.000 | 0.657 | 47 |
+| 0.71 | 0.506 | 0.956 | 0.662 | 42 | 0.500 | 1.000 | 0.667 | 45 |
+| 0.72 | 0.524 | 0.956 | 0.677 | 39 | 0.529 | 1.000 | 0.692 | 40 |
+| 0.73 | 0.558 | 0.956 | 0.705 | 34 | 0.562 | 1.000 | 0.720 | 35 |
+| 0.74 | 0.600 | 0.933 | 0.730 | 28 | 0.592 | 1.000 | 0.744 | 31 |
+| 0.75 | 0.656 | 0.933 | 0.771 | 22 | 0.623 | 0.956 | 0.754 | 26 |
+| 0.76 | 0.702 | 0.889 | 0.784 | 17 | 0.632 | 0.956 | 0.761 | 25 |
+| 0.77 | 0.736 | 0.867 | 0.796 | 14 | 0.656 | 0.933 | 0.771 | 22 |
+| 0.78 | 0.780 | 0.867 | 0.821 | 11 | 0.683 | 0.911 | 0.781 | 19 |
+| 0.79 | 0.812 | 0.867 | 0.839 | 9 | 0.722 | 0.867 | 0.788 | 15 |
+| 0.80 | 0.844 | 0.844 | 0.844 | 7 | 0.780 | 0.867 | 0.821 | 11 |
+| 0.81 | 0.864 | 0.844 | 0.854 | 6 | 0.796 | 0.867 | 0.830 | 10 |
+| **0.82** | 0.902 | 0.822 | 0.860 | 4 | 0.857 | 0.800 | 0.828 | 6 |
+| 0.83 | 0.895 | 0.756 | 0.819 | 4 | 0.971 | 0.756 | 0.850 | 1 |
+| 0.84 | 0.882 | 0.667 | 0.759 | 4 | 1.000 | 0.733 | 0.846 | 0 |
+| 0.85 | 0.903 | 0.622 | 0.737 | 3 | 1.000 | 0.689 | 0.816 | 0 |
+| 0.86 | 0.893 | 0.556 | 0.685 | 3 | 1.000 | 0.644 | 0.784 | 0 |
+| 0.87 | 0.889 | 0.533 | 0.667 | 3 | 1.000 | 0.600 | 0.750 | 0 |
+| 0.88 | 0.880 | 0.489 | 0.629 | 3 | 1.000 | 0.511 | 0.676 | 0 |
+| 0.89 | 0.917 | 0.489 | 0.638 | 2 | 1.000 | 0.444 | 0.615 | 0 |
+| 0.90 | 0.955 | 0.467 | 0.627 | 1 | 1.000 | 0.444 | 0.615 | 0 |
+| **0.91** | 1.000 | 0.400 | 0.571 | 0 | 1.000 | 0.378 | 0.548 | 0 |
+| 0.92 | 1.000 | 0.378 | 0.548 | 0 | 1.000 | 0.356 | 0.525 | 0 |
+| 0.93 | 1.000 | 0.378 | 0.548 | 0 | 1.000 | 0.333 | 0.500 | 0 |
+| 0.94 | 1.000 | 0.378 | 0.548 | 0 | 1.000 | 0.333 | 0.500 | 0 |
+| 0.95 | 1.000 | 0.356 | 0.525 | 0 | 1.000 | 0.333 | 0.500 | 0 |
+
+### Data issue found in the workbook
+
+Three query–candidate pairs appear twice in LabelledPairs, each time with conflicting labels (unrelated/easy and similar-but-distinct/hard):
+
+- VAVE-Q-0052 → VAVE-H-0071
+- VAVE-Q-0064 → VAVE-H-0001
+- VAVE-Q-0079 → VAVE-H-0011
+
+All three are in the held-out families, and none is a same-component pair. They count as negatives under either label and can never fire the route, so the figures above are unaffected. The total is 597 rows, but only 594 distinct pairs.
+
 ## Limitations
 
 - **Synthetic, from one generator.** The 91 ideas, 90 queries, and 597 labels come from one generated workbook, and the labels encode its author's view of what counts as a duplicate. None of this is a production accuracy claim.
@@ -240,3 +417,8 @@ Rollback also leaves the idea's embedding vectors behind.
 - **20 VAVE-SYN ideas were also present and are unlabelled.** They can be shown as candidates and take slots among the 15, but they never count in the metrics. One of them was a genuine duplicate of Q-0037.
 - **No language model was involved.** With Ollama running, `analyze_submission` asks the model about up to 5 candidates per query. Where the model and the heuristic disagree on a non-exact match, the result becomes Insufficient Evidence. That could turn some of the 53 wrong Similar but Distinct verdicts into manual reviews, but it cannot produce a Potential Duplicate that the heuristic rejects. This was not measured.
 - **Nothing was stored as an evaluation run.** The script is read-only, so this run does not appear on the Evaluation page.
+- **One split, and a small held-out set.** The held-out set is 15 families, 45 duplicates, and 251 negatives.
+  - Its false positives at 0.82 number 6, so one look-alike more or fewer moves held-out precision by about 0.02.
+  - The split is the first 15 families against the last 15, in workbook order. It was not repeated with other partitions, so the size of the gap is one draw.
+- **Held-out families come from the same generator,** with the same phrasing habits. They are unseen components, not unseen writing, so the held-out numbers are still likely to be better than real submissions written by different engineers.
+- **Every look-alike false positive needs the same component,** and so does every duplicate here. A real history with inconsistent component names, such as "Cab mount bracket" against "Cab mounting bracket", would block the route for true duplicates. The route compares normalised names exactly.

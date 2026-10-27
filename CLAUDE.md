@@ -37,7 +37,7 @@ npm run build          # tsc + vite build
 Other:
 
 - `sh scripts/start-local.sh` sets up `.env`, the venv, migrations, and starts both servers.
-- `backend/.venv/bin/python scripts/evaluate.py` runs the labelled duplicate/copilot evaluation against the dev DB with the **active** embedding model (`--deterministic` for the hashed baseline). It stores evaluation runs. Precision, recall, and F1 come from `classify_pair`, which ignores cosine, so they don't change with the embedding model; only the retrieval metrics can.
+- `backend/.venv/bin/python scripts/evaluate.py` runs the labelled duplicate/copilot evaluation against the dev DB with the **active** embedding model (`--deterministic` for the hashed baseline). It stores evaluation runs. Precision, recall, and F1 come from `classify_pair`, called without a cosine or a query component, so they don't change with the embedding model; only the retrieval metrics can. For the v2 hard set (end to end, threshold sweeps, family split), use `scripts/evaluate_hard_set.py`; see its docstring.
 - Seeding (every API start and `evaluate.py`) rewrites `data/synthetic/vave_synthetic_ideas.xlsx` with new timestamps. Don't commit that file unless the synthetic data actually changed.
 - `docker compose up --build` (UI on 8080, API on 8000; `--profile offline` adds Ollama). Not verified in the original environment.
 
@@ -71,7 +71,12 @@ Duplicate pipeline (`services/duplicate_detection`): normalise → exact match �
 
 Embeddings: vectors are fixed at **384 dimensions** in the schema. Idea and document-chunk vectors share one table, told apart by `entity_type` and filtered by embedding model name. Old models' vectors are kept. Changing the model requires an admin re-index. A different dimension requires a new migration (so `nomic-embed-text`, at 768, is rejected). The seed always writes deterministic vectors (`seed.py`), so a fresh database needs one re-index before MiniLM search works. `rank_historical` swallows embedding errors and returns no cosine scores, so a broken embedder fails silently. Check that the `cosine_similarity` values aren't null.
 
-Cosine is used in only two places: as the final tie-breaker in candidate ranking (after exact match and fuzzy score), and in the candidate filter `exact OR fuzzy >= 40 OR cosine >= cosine_retrieve_threshold` (`duplicate_detection/service.py`). The evaluation records `cosine_retrieve_threshold` but never applies it. The threshold is 0.40 in `.env.example` and in the dev database's stored settings, and 0.22 in `config.py`, which the tests use. `docs/evaluation-results.md` has the measurements behind it. Update that file if you re-run the evaluation.
+Cosine is used in three places:
+- as the final tie-breaker in candidate ranking (after exact match and fuzzy score)
+- in the candidate filter `exact OR fuzzy >= 40 OR cosine >= cosine_retrieve_threshold` (`duplicate_detection/service.py`)
+- in the optional semantic route to Potential Duplicate in `classify_pair`: same component AND cosine >= `semantic_duplicate_threshold` AND no detected different action
+
+The semantic route is off unless `semantic_duplicate_threshold` is set. It defaults to `None` in `config.py` and the stored settings, and is set with `PUT /api/v1/ai/settings`, where an explicit `null` turns it off. Its held-out evaluation (0.82 chosen on 15 component families, F1 0.828 on the other 15) is in `docs/evaluation-hard-set.md`. The evaluation records `cosine_retrieve_threshold` but never applies it. The threshold is 0.40 in `.env.example` and in the dev database's stored settings, and 0.22 in `config.py`, which the tests use. `docs/evaluation-results.md` has the measurements behind it. Update that file if you re-run the evaluation.
 
 Savings (`services/savings.py`) is the authoritative calculation: saving per vehicle × the sum of annual volumes across *unique* vehicle families, in INR (projected, not realised). A missing saving stays `None` and is never treated as 0. The spreadsheet figure is never trusted. The frontend must not calculate official savings or rejection status.
 

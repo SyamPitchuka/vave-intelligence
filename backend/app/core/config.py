@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     comparison_timeout_seconds: int = 60
     fuzzy_strong_threshold: float = 86
     cosine_retrieve_threshold: float = 0.22
+    # None keeps the semantic Potential Duplicate route off (see classify_pair).
+    semantic_duplicate_threshold: float | None = None
     copilot_lexical_threshold: float = 0.45
 
     upload_max_mb: int = 20

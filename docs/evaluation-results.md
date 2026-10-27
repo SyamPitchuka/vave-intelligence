@@ -11,7 +11,7 @@ Every number here comes from 12 labelled synthetic cases. Read [Limitations](#li
 
 ## How cosine is used
 
-Cosine similarity never decides whether an idea is a duplicate.
+Cosine similarity never decides whether an idea is a duplicate. (This describes the code on 26 October 2026. An optional semantic route added on 27 October lets cosine decide when an administrator turns it on; see [evaluation-hard-set.md](evaluation-hard-set.md#semantic-potential-duplicate-route).)
 
 - **The duplicate verdict.**
   - In the evaluation, the category comes from `classify_pair` in `duplicate_detection/classifier.py`. Its inputs are the two texts, the components, the fuzzy score, and the exact-match flag. Cosine is not an input.

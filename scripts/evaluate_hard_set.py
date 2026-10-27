@@ -14,10 +14,23 @@ active runtime, then rolled back, so nothing is stored. Every LabelledPairs row 
 
 Cosine is computed directly between the query and each candidate's stored vector, so it does not
 depend on the vector search limit.
+
+Options:
+
+    --semantic-threshold T     run the pipeline with semantic_duplicate_threshold = T
+    --sweep START STOP STEP    also replay classify_pair with each semantic threshold in the range,
+                               reusing the retrieval results; written to the report as "sweep"
+    --split-families N         score the sweep separately on the first N component families (tuning)
+                               and the rest (held out), and choose thresholds on the tuning families only
+
+In the sweep, end-to-end verdicts use the cosine the pipeline itself saw (the vector search score),
+and classifier-only verdicts use the directly computed cosine. Which candidates are shown does not
+depend on the verdict, so it is the same at every threshold.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import statistics
 import sys
@@ -38,7 +51,9 @@ from app.services.evaluation_service import classification_metrics  # noqa: E402
 from app.services.ideas.service import create_submission  # noqa: E402
 from app.services.imports.mapping import VOLUME_FIELDS, suggest_mapping  # noqa: E402
 from app.services.imports.reader import read_tabular  # noqa: E402
+from app.services.text import normalize_text  # noqa: E402
 from sqlalchemy import select  # noqa: E402
+from sqlalchemy.exc import OperationalError  # noqa: E402
 
 CONTENT_FIELDS = (
     "component",
@@ -86,8 +101,20 @@ def summary(values: list[float]) -> dict:
     return {"n": len(values), "min": min(values), "p25": q[0], "median": q[1], "p75": q[2], "max": max(values), "mean": statistics.fmean(values)}
 
 
+def sweep_thresholds(start: float, stop: float, step: float) -> list[float]:
+    count = int(round((stop - start) / step))
+    return [round(start + index * step, 4) for index in range(count + 1)]
+
+
 def main() -> None:
-    workbook, out_path = Path(sys.argv[1]), Path(sys.argv[2])
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("workbook", type=Path)
+    parser.add_argument("out", type=Path)
+    parser.add_argument("--semantic-threshold", type=float, default=None)
+    parser.add_argument("--sweep", type=float, nargs=3, metavar=("START", "STOP", "STEP"), default=None)
+    parser.add_argument("--split-families", type=int, default=None, metavar="N")
+    args = parser.parse_args()
+    workbook, out_path = args.workbook, args.out
     content = workbook.read_bytes()
     queries = sheet(content, "TestQueries")
     pairs = sheet(content, "LabelledPairs")
@@ -95,8 +122,16 @@ def main() -> None:
 
     db = get_session_factory()()
     config, chat, embedder, llm_status, warning = _runtime(db)
-    admin = db.scalar(select(User).where(User.email == "admin@vave.local"))
-    historical = {idea.idea_code: idea for idea in db.scalars(select(Idea).where(Idea.origin == "historical")).all()}
+    if args.semantic_threshold is not None:
+        config = {**config, "semantic_duplicate_threshold": args.semantic_threshold}
+
+    def load_records(session):
+        # Rollback expires loaded rows, so they must belong to the session in use.
+        admin_user = session.scalar(select(User).where(User.email == "admin@vave.local"))
+        ideas = {idea.idea_code: idea for idea in session.scalars(select(Idea).where(Idea.origin == "historical")).all()}
+        return admin_user, ideas
+
+    admin, historical = load_records(db)
     vectors = {
         row.entity_id: np.asarray(row.embedding, dtype=float)
         for row in db.scalars(
@@ -112,10 +147,11 @@ def main() -> None:
     print(f"embedding={embedder.model} chat={getattr(chat, 'name', None)} llm_status={llm_status} historical={len(historical)}")
 
     records = []
+    pair_inputs = []  # classify_pair arguments per record, kept out of the JSON report
     query_info = []
-    for number, row in enumerate(queries, start=1):
-        payload = query_payload(row, mapping)
+    def score_query(db, admin, historical, payload):
         code = payload["idea_code"]
+        scored = []
         try:
             submission = create_submission(db, payload, admin.id, submit=True)
             run = analyze_submission(
@@ -125,22 +161,28 @@ def main() -> None:
             shown = {c.historical_idea_id: c for c in run.candidates}
             ranked = {item["idea"].id: item for item in rank_historical(db, submission, embedder=embedder, limit=int(config["retrieval_top_k"]))}
             query_vector = np.asarray(embedder.embed(idea_embedding_text(submission)), dtype=float)
-            query_info.append({"query": code, "outcome": run.outcome_category, "shown": len(run.candidates), "llm_status": run.llm_status})
+            info = {"query": code, "outcome": run.outcome_category, "shown": len(run.candidates), "llm_status": run.llm_status}
             for pair in labelled_by_query.get(code, []):
                 candidate = historical[str(pair["Candidate_ID"]).strip()]
                 item = ranked[candidate.id]
+                direct_cosine = cosine(query_vector, vectors[candidate.id]) if candidate.id in vectors else None
+                inputs = {
+                    "query_component": submission.component,
+                    "query_text": _pair_text(submission),
+                    "candidate_component": candidate.component,
+                    "candidate_text": _pair_text(candidate),
+                    "fuzzy_score": item["fuzzy"],
+                    "exact": item["exact"],
+                    "fuzzy_strong_threshold": float(config["fuzzy_strong_threshold"]),
+                }
                 heuristic = classify_pair(
-                    query_component=submission.component,
-                    query_text=_pair_text(submission),
-                    candidate_component=candidate.component,
-                    candidate_text=_pair_text(candidate),
-                    fuzzy_score=item["fuzzy"],
-                    exact=item["exact"],
-                    fuzzy_strong_threshold=float(config["fuzzy_strong_threshold"]),
+                    **inputs,
+                    cosine=direct_cosine,
+                    semantic_duplicate_threshold=config.get("semantic_duplicate_threshold"),
                 )
                 hit = shown.get(candidate.id)
-                records.append(
-                    {
+                scored.append(
+                    ({
                         "query": code,
                         "candidate": candidate.idea_code,
                         "label": str(pair["Label"]).strip(),
@@ -152,11 +194,38 @@ def main() -> None:
                         "fuzzy": item["fuzzy"],
                         "exact": item["exact"],
                         "jaccard": heuristic.token_jaccard,
-                        "cosine": cosine(query_vector, vectors[candidate.id]) if candidate.id in vectors else None,
-                    }
+                        "cosine": direct_cosine,
+                        "pipeline_cosine": item["cosine"],
+                        "same_component": bool(normalize_text(submission.component))
+                        and normalize_text(submission.component) == normalize_text(candidate.component),
+                    }, inputs)
                 )
         finally:
             db.rollback()
+        return info, scored
+
+    for number, row in enumerate(queries, start=1):
+        payload = query_payload(row, mapping)
+        for attempt in range(1, 4):
+            try:
+                info, scored = score_query(db, admin, historical, payload)
+                break
+            except OperationalError as exc:
+                # The hosted database can drop the connection mid-run. Each query is rolled back, so it is
+                # safe to retry on a fresh session.
+                print(f"  {payload['idea_code']}: connection lost (attempt {attempt}): {str(exc).splitlines()[0][:120]}")
+                try:
+                    db.close()
+                except Exception:  # noqa: BLE001 — the connection is already gone
+                    pass
+                if attempt == 3:
+                    raise
+                db = get_session_factory()()
+                admin, historical = load_records(db)
+        query_info.append(info)
+        for record, inputs in scored:
+            records.append(record)
+            pair_inputs.append(inputs)
         if number % 10 == 0:
             print(f"  {number}/{len(queries)} queries")
     db.close()
@@ -164,8 +233,63 @@ def main() -> None:
     def metrics(rows: list[dict], key: str) -> dict:
         return classification_metrics([(r["label"], r[key]) for r in rows])
 
+    def summarise(rows: list[dict]) -> dict:
+        return {
+            mode: {
+                "overall": metrics(rows, mode),
+                **{d: metrics([r for r in rows if r["difficulty"] == d], mode) for d in DIFFICULTIES},
+                "false_positives": dict(
+                    Counter(r["label"] for r in rows if r[mode] == "potential_duplicate" and r["label"] != "duplicate")
+                ),
+                "pairs": len(rows),
+                "duplicates": sum(r["label"] == "duplicate" for r in rows),
+            }
+            for mode in ("e2e", "classifier")
+        }
+
+    # A family is the query component. The three queries of a family paraphrase one idea, so splitting by query
+    # would leak; the split is by family, in the order families first appear in TestQueries.
+    family_order = list(dict.fromkeys(str(row.get("Component", "")).strip() for row in queries))
+    family_of_query = {str(row["Idea_ID"]).strip(): str(row.get("Component", "")).strip() for row in queries}
+    for record in records:
+        record["family"] = family_of_query[record["query"]]
+    tune_families = set(family_order[: args.split_families]) if args.split_families else None
+
+    sweep = []
+    if args.sweep:
+        for threshold in sweep_thresholds(*args.sweep):
+            rows = []
+            for record, inputs in zip(records, pair_inputs, strict=True):
+                e2e = (
+                    classify_pair(**inputs, cosine=record["pipeline_cosine"], semantic_duplicate_threshold=threshold).category
+                    if record["shown"]
+                    else "not_shown"
+                )
+                classifier = classify_pair(**inputs, cosine=record["cosine"], semantic_duplicate_threshold=threshold).category
+                rows.append({**record, "e2e": e2e, "classifier": classifier})
+            entry = {"threshold": threshold, **summarise(rows)}
+            if tune_families is not None:
+                entry["tune"] = summarise([r for r in rows if r["family"] in tune_families])
+                entry["holdout"] = summarise([r for r in rows if r["family"] not in tune_families])
+            sweep.append(entry)
+
+    split = None
+    if tune_families is not None and sweep:
+        # Chosen on the tuning families only: highest F1 (ties go to the higher, more conservative threshold),
+        # and the lowest threshold with precision 1.0. Held-out numbers are read off afterwards, never compared.
+        best = max(sweep, key=lambda e: (e["tune"]["e2e"]["overall"]["f1"] or 0, e["threshold"]))
+        precise = [e for e in sweep if e["tune"]["e2e"]["overall"]["precision"] == 1.0]
+        split = {
+            "rule": "family = query component, in workbook order; first families tune, the rest are held out",
+            "tune_families": sorted(tune_families, key=family_order.index),
+            "holdout_families": [f for f in family_order if f not in tune_families],
+            "max_f1_threshold": best["threshold"],
+            "lowest_precision_1_threshold": precise[0]["threshold"] if precise else None,
+        }
+
     report = {
         "config": {
+            "semantic_duplicate_threshold": config.get("semantic_duplicate_threshold"),
             "embedding_model": embedder.model,
             "chat": getattr(chat, "name", None),
             "llm_status": llm_status,
@@ -208,6 +332,8 @@ def main() -> None:
         },
         "queries": query_info,
         "pairs": records,
+        "sweep": sweep,
+        "split": split,
     }
     out_path.write_text(json.dumps(report, indent=1, default=str), encoding="utf-8")
     print(json.dumps({k: report[k] for k in ("config", "metrics", "confusion", "retrieval", "counts")}, indent=1, default=str))

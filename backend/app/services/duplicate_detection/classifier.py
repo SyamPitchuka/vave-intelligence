@@ -1,8 +1,11 @@
 """Deterministic engineering comparison.
 
-Embedding similarity is a retrieval signal. This classifier does not emit a
-confidence percentage. Same component, department, or benefit is not enough
-to call two ideas duplicates.
+Embedding similarity is a retrieval signal. It reaches the verdict only through
+the optional semantic route (same component, cosine at or above
+semantic_duplicate_threshold, no detected difference in action), which is off
+unless a threshold is passed. This classifier does not emit a confidence
+percentage. Same component, department, or benefit is not enough to call two
+ideas duplicates.
 """
 
 from __future__ import annotations
@@ -57,6 +60,8 @@ def classify_pair(
     fuzzy_score: float,
     exact: bool,
     fuzzy_strong_threshold: float = 86,
+    cosine: float | None = None,
+    semantic_duplicate_threshold: float | None = None,
 ) -> HeuristicResult:
     similarities: list[str] = []
     differences: list[str] = []
@@ -105,6 +110,14 @@ def classify_pair(
     lexical_duplicate = (fuzzy_score >= fuzzy_strong_threshold or overlap >= 0.62) or (
         same_action and same_component and overlap >= 0.42 and fuzzy_score >= 68
     )
+    # Off unless a threshold is given. A paraphrase keeps the meaning but not the words, so it fails every
+    # lexical rule; this route accepts it on embedding similarity when nothing shows a different action.
+    semantic_duplicate = (
+        semantic_duplicate_threshold is not None
+        and cosine is not None
+        and same_component
+        and cosine >= semantic_duplicate_threshold
+    )
     if lexical_duplicate and not different_mechanism:
         category = "potential_duplicate"
         explanation = (
@@ -112,6 +125,14 @@ def classify_pair(
             "This is a retrieval result for an engineer to confirm."
         )
         similarities.append("Wording and technical action overlap strongly.")
+    elif semantic_duplicate and not different_mechanism:
+        category = "potential_duplicate"
+        explanation = (
+            f"The component matches and the embedding similarity ({cosine:.3f}) is at or above the configured "
+            f"threshold ({semantic_duplicate_threshold:.2f}), and no different technical action was detected. "
+            "The wording differs, so this rests on meaning rather than shared words. An engineer must confirm it."
+        )
+        similarities.append("Same component, and the descriptions are close in meaning although worded differently.")
     elif different_mechanism and (same_component or overlap >= 0.2 or fuzzy_score >= 55):
         category = "similar_but_distinct"
         explanation = (

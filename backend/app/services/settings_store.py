@@ -22,6 +22,7 @@ EDITABLE = {
     "comparison_timeout_seconds",
     "fuzzy_strong_threshold",
     "cosine_retrieve_threshold",
+    "semantic_duplicate_threshold",
     "copilot_lexical_threshold",
     "dataset_label",
     "display_timezone",
@@ -50,6 +51,7 @@ def _defaults(settings: Settings) -> dict[str, Any]:
         "comparison_timeout_seconds": settings.comparison_timeout_seconds,
         "fuzzy_strong_threshold": settings.fuzzy_strong_threshold,
         "cosine_retrieve_threshold": settings.cosine_retrieve_threshold,
+        "semantic_duplicate_threshold": settings.semantic_duplicate_threshold,
         "copilot_lexical_threshold": settings.copilot_lexical_threshold,
         "dataset_label": settings.dataset_label,
         "display_timezone": settings.display_timezone,
@@ -123,6 +125,12 @@ def save_ai_settings(db: Session, updates: dict[str, Any], user_id: uuid.UUID | 
     current["retrieval_top_k"] = top_k
     current["fuzzy_strong_threshold"] = float(current.get("fuzzy_strong_threshold") or 86)
     current["cosine_retrieve_threshold"] = float(current.get("cosine_retrieve_threshold") or 0.22)
+    semantic = current.get("semantic_duplicate_threshold")
+    if semantic is not None:
+        semantic = float(semantic)
+        if not 0 < semantic <= 1:
+            raise ValueError("The semantic duplicate threshold must be above 0 and at most 1, or empty to turn it off.")
+    current["semantic_duplicate_threshold"] = semantic
     current["comparison_timeout_seconds"] = int(current.get("comparison_timeout_seconds") or 60)
     current["llm_required"] = bool(current.get("llm_required"))
     row.value = current

@@ -123,6 +123,53 @@ def test_detected_different_action_is_similar_but_distinct():
     assert result.category == "similar_but_distinct"
 
 
+SEMANTIC_PARAPHRASE = (
+    "Lighter cab anchorage: move away from the current ferrous part to a light-alloy design, "
+    "geometry adjusted so rigidity is not lost."
+)
+SEMANTIC_ALUMINUM = (
+    "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness "
+    "to reduce vehicle mass."
+)
+
+
+def _semantic_pair(**overrides):
+    arguments = {
+        "query_component": "Cab mounting bracket",
+        "query_text": SEMANTIC_PARAPHRASE,
+        "candidate_component": "Cab mounting bracket",
+        "candidate_text": SEMANTIC_ALUMINUM,
+        "fuzzy_score": 58,
+        "exact": False,
+        "cosine": 0.85,
+        "semantic_duplicate_threshold": 0.80,
+    }
+    arguments.update(overrides)
+    return classify_pair(**arguments)
+
+
+def test_semantic_route_accepts_a_same_component_paraphrase():
+    assert _semantic_pair().category == "potential_duplicate"
+    assert _semantic_pair(cosine=0.80).category == "potential_duplicate"
+
+
+def test_semantic_route_is_off_without_a_threshold_or_cosine():
+    assert _semantic_pair(semantic_duplicate_threshold=None).category == "insufficient_evidence"
+    assert _semantic_pair(cosine=None).category == "insufficient_evidence"
+    assert _semantic_pair(cosine=0.79).category == "insufficient_evidence"
+
+
+def test_semantic_route_needs_the_same_component():
+    result = _semantic_pair(query_component="Steering column lower bracket")
+    assert result.category != "potential_duplicate"
+
+
+def test_semantic_route_respects_a_detected_different_action():
+    topology = "Redesign the cab mounting bracket as a topology-optimised steel casting, retaining the steel grade."
+    result = _semantic_pair(query_text=topology, cosine=0.95)
+    assert result.category == "similar_but_distinct"
+
+
 def test_exact_text_is_a_potential_duplicate():
     text = "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness to reduce vehicle mass."
     result = classify_pair(

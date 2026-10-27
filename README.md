@@ -228,7 +228,7 @@ Cosine similarity affects two things in the live app:
 - the order of candidates, where it breaks ties after exact match and fuzzy score
 - the candidate filter: a historical idea is shown if it is an exact match, or has fuzzy ≥ 40, or has cosine ≥ `cosine_retrieve_threshold`
 
-The duplicate category comes from the heuristic comparison and, when available, the language model. Cosine never decides it.
+The duplicate category comes from the heuristic comparison and, when available, the language model. Cosine decides it only through the optional semantic route: same component, cosine ≥ `semantic_duplicate_threshold`, and no detected different action. That route is off unless an administrator sets the threshold with `PUT /api/v1/ai/settings`. Its evaluation, including a held-out split, is in [docs/evaluation-hard-set.md](docs/evaluation-hard-set.md#semantic-potential-duplicate-route).
 
 ## Tests and evaluation
 
@@ -241,7 +241,7 @@ backend/.venv/bin/python scripts/evaluate.py --deterministic     # deterministic
 
 On Windows, use `.\.venv\Scripts\python.exe -m pytest -q`.
 
-`scripts/evaluate.py` evaluates the embedding model active in AI settings, so that model must already be indexed. It stores a run in the database, as the Evaluation page does. Its precision, recall, and F1 come from the heuristic comparison, which does not use cosine, so they are the same for every embedding model. Only the retrieval figures can differ.
+`scripts/evaluate.py` evaluates the embedding model active in AI settings, so that model must already be indexed. It stores a run in the database, as the Evaluation page does. Its precision, recall, and F1 come from the heuristic comparison. The script passes no cosine and no query component, so the semantic route never fires there, and those figures are the same for every embedding model. Only the retrieval figures can differ.
 
 Pytest uses `vave_intelligence_test`, not the development database. The suite applies migrations and seeds synthetic data into that database. To create it, the test setup connects to a database named `postgres` on the same server. On a hosted provider, create `vave_intelligence_test` in the provider's console first, and point `TEST_DATABASE_URL` at it. On Neon the owner role can create databases, so the test setup creates `vave_intelligence_test` itself; set `TEST_DATABASE_URL` in the shell (conftest reads the environment, not `.env`). The unit tests need no database: `pytest tests/unit -q`.
 

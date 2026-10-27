@@ -87,6 +87,8 @@ def analyze_submission(
             fuzzy_score=item["fuzzy"],
             exact=item["exact"],
             fuzzy_strong_threshold=float(ai_config["fuzzy_strong_threshold"]),
+            cosine=item["cosine"],
+            semantic_duplicate_threshold=ai_config.get("semantic_duplicate_threshold"),
         )
         llm_category = None
         similarities = list(heuristic.similarities)
