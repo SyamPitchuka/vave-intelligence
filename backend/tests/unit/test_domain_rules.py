@@ -3,7 +3,12 @@ from decimal import Decimal
 
 from app.core.config import Settings
 from app.domain.synthetic import SYNTHETIC_IDEAS
-from app.services.duplicate_detection.classifier import classify_pair
+from app.services.duplicate_detection.classifier import (
+    change_types,
+    classify_pair,
+    components_match,
+    read_actions,
+)
 from app.services.embeddings.deterministic import cosine, embed_text
 from app.services.imports.mapping import suggest_mapping
 from app.services.llm_providers.base import OfflineModeBlocked
@@ -168,6 +173,89 @@ def test_semantic_route_respects_a_detected_different_action():
     topology = "Redesign the cab mounting bracket as a topology-optimised steel casting, retaining the steel grade."
     result = _semantic_pair(query_text=topology, cosine=0.95)
     assert result.category == "similar_but_distinct"
+
+
+def test_component_match_expands_abbreviations_and_drops_qualifiers():
+    assert components_match("Cab Mtg Bkt", "Cab mounting bracket", fuzzy=True)
+    assert components_match("Cab mount brkt", "Cab mounting bracket", fuzzy=True)
+    assert components_match("Battery tray (LV)", "Battery tray", fuzzy=True)
+    assert components_match("Steering column assy", "Steering column assembly", fuzzy=True)
+    assert not components_match("Steering column lower bracket", "Cab mounting bracket", fuzzy=True)
+    assert not components_match("Cab mounting bracket", None, fuzzy=True)
+
+
+def test_component_match_is_exact_when_turned_off():
+    assert components_match("Cab mounting bracket", "cab  mounting bracket")
+    assert not components_match("Cab Mtg Bkt", "Cab mounting bracket")
+    assert not components_match("Battery tray (LV)", "Battery tray")
+
+
+def test_component_variant_reaches_the_semantic_route_only_with_fuzzy_matching():
+    assert _semantic_pair(query_component="Cab Mtg Bkt", component_fuzzy_match=True).category == "potential_duplicate"
+    assert _semantic_pair(query_component="Cab Mtg Bkt").category == "insufficient_evidence"
+
+
+REVERT_TO_STEEL = "Revert the cab mounting bracket from aluminium alloy back to the original steel design after field fatigue findings."
+
+
+def test_reversal_verbs_flip_the_direction_of_an_existing_action():
+    tokens, reverses = read_actions(REVERT_TO_STEEL, reversal=True)
+    assert reverses
+    assert change_types(REVERT_TO_STEEL, reversal=True) == {"material_substitution"}
+    assert read_actions("Roll back to the previous steel bracket.", reversal=True)[1]
+    assert read_actions("Reinstate the phenolic board.", reversal=True)[1]
+
+
+def test_reversal_verbs_in_other_senses_are_not_reversals():
+    assert not read_actions("Add a rolled edge to restore bending stiffness.", reversal=True)[1]
+    assert not read_actions("Reroute the fuel return line behind the crossmember.", reversal=True)[1]
+    assert not read_actions(REVERT_TO_STEEL)[1]
+
+
+def test_a_reversal_of_the_candidates_change_is_similar_but_distinct():
+    on = _semantic_pair(query_text=REVERT_TO_STEEL, cosine=0.9, reversal_detection=True)
+    assert on.category == "similar_but_distinct"
+    assert any("reversed" in difference for difference in on.differences)
+    assert _semantic_pair(query_text=REVERT_TO_STEEL, cosine=0.9).category == "potential_duplicate"
+
+
+def test_two_reversals_of_the_same_change_are_not_a_direction_flip():
+    restore = "Return the cab mounting bracket from aluminium to the original steel design."
+    result = _semantic_pair(query_text=REVERT_TO_STEEL, candidate_text=restore, cosine=0.9, reversal_detection=True)
+    assert result.category == "potential_duplicate"
+
+
+KEEP_HANDED = (
+    "Keep the left and right mirror brackets as separate handed parts. Do not commonise them. "
+    "Reduce cost instead by deleting two webs from each casting."
+)
+COMMONISE = "Commonise the left and right exterior mirror brackets into one handed bracket with a reversible insert."
+
+
+def test_negated_action_keywords_are_not_counted():
+    assert change_types(KEEP_HANDED) == {"commonisation", "topology"}
+    assert change_types(KEEP_HANDED, negation=True) == {"topology"}
+    assert change_types("A urethane bumper with no change to the 40 mm fitted length.", negation=True) == set()
+    assert change_types("Never use aluminium here.", negation=True) == set()
+
+
+def test_negation_does_not_cross_a_clause_or_reach_past_the_window():
+    assert change_types("Keep the steel grade, and replace the bracket with aluminium.", negation=True) == {"material_substitution"}
+    assert change_types("Keep the bracket on the current steel supplier for now and reduce thickness.", negation=True) == {"dimension"}
+    # A decimal point is not a sentence end.
+    assert change_types("Do not reduce the 1.5 mm wall.", negation=True) == set()
+
+
+def test_a_query_that_rules_out_the_candidates_change_is_similar_but_distinct():
+    arguments = {
+        "query_component": "Exterior mirror bracket",
+        "query_text": KEEP_HANDED,
+        "candidate_component": "Exterior mirror bracket",
+        "candidate_text": COMMONISE,
+        "cosine": 0.86,
+    }
+    assert _semantic_pair(**arguments, negation_detection=True).category == "similar_but_distinct"
+    assert _semantic_pair(**arguments).category == "potential_duplicate"
 
 
 def test_candidates_are_ordered_by_verdict_then_cosine():

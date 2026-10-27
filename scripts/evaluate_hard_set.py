@@ -22,6 +22,8 @@ Options:
                                reusing the retrieval results; written to the report as "sweep"
     --split-families N         score the sweep separately on the first N component families (tuning)
                                and the rest (held out), and choose thresholds on the tuning families only
+    --disable FLAG             run with one classifier rule off (component_fuzzy_match, reversal_detection,
+                               negation_detection); repeat to turn off more than one
 
 In the sweep, end-to-end verdicts use the cosine the pipeline itself saw (the vector search score),
 and classifier-only verdicts use the directly computed cosine. Which candidates are shown does not
@@ -44,14 +46,18 @@ import numpy as np  # noqa: E402
 from app.api.v1.router import _runtime  # noqa: E402
 from app.db.session import get_session_factory  # noqa: E402
 from app.models import EmbeddingRecord, Idea, User  # noqa: E402
-from app.services.duplicate_detection.classifier import classify_pair  # noqa: E402
+from app.services.duplicate_detection.classifier import (  # noqa: E402
+    CLASSIFIER_FLAGS,
+    classifier_flags,
+    classify_pair,
+    components_match,
+)
 from app.services.duplicate_detection.service import _pair_text, analyze_submission, rank_historical  # noqa: E402
 from app.services.embeddings.index import idea_embedding_text  # noqa: E402
 from app.services.evaluation_service import classification_metrics  # noqa: E402
 from app.services.ideas.service import create_submission  # noqa: E402
 from app.services.imports.mapping import VOLUME_FIELDS, suggest_mapping  # noqa: E402
 from app.services.imports.reader import read_tabular  # noqa: E402
-from app.services.text import normalize_text  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 from sqlalchemy.exc import OperationalError  # noqa: E402
 
@@ -113,6 +119,7 @@ def main() -> None:
     parser.add_argument("--semantic-threshold", type=float, default=None)
     parser.add_argument("--sweep", type=float, nargs=3, metavar=("START", "STOP", "STEP"), default=None)
     parser.add_argument("--split-families", type=int, default=None, metavar="N")
+    parser.add_argument("--disable", action="append", default=[], choices=CLASSIFIER_FLAGS)
     args = parser.parse_args()
     workbook, out_path = args.workbook, args.out
     content = workbook.read_bytes()
@@ -124,6 +131,8 @@ def main() -> None:
     config, chat, embedder, llm_status, warning = _runtime(db)
     if args.semantic_threshold is not None:
         config = {**config, "semantic_duplicate_threshold": args.semantic_threshold}
+    for flag in args.disable:
+        config = {**config, flag: False}
 
     def load_records(session):
         # Rollback expires loaded rows, so they must belong to the session in use.
@@ -181,6 +190,7 @@ def main() -> None:
                     "fuzzy_score": item["fuzzy"],
                     "exact": item["exact"],
                     "fuzzy_strong_threshold": float(config["fuzzy_strong_threshold"]),
+                    **classifier_flags(config),
                 }
                 heuristic = classify_pair(
                     **inputs,
@@ -204,8 +214,9 @@ def main() -> None:
                         "jaccard": heuristic.token_jaccard,
                         "cosine": direct_cosine,
                         "pipeline_cosine": item["cosine"],
-                        "same_component": bool(normalize_text(submission.component))
-                        and normalize_text(submission.component) == normalize_text(candidate.component),
+                        "same_component": components_match(
+                            submission.component, candidate.component, fuzzy=bool(config.get("component_fuzzy_match"))
+                        ),
                     }, inputs)
                 )
         finally:
@@ -314,6 +325,7 @@ def main() -> None:
     report = {
         "config": {
             "semantic_duplicate_threshold": config.get("semantic_duplicate_threshold"),
+            **classifier_flags(config),
             "embedding_model": embedder.model,
             "chat": getattr(chat, "name", None),
             "llm_status": llm_status,

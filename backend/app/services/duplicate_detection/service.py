@@ -21,7 +21,12 @@ from app.models import (
     IdeaVehicleApplicability,
     ReviewDecision,
 )
-from app.services.duplicate_detection.classifier import VERDICT_PRIORITY, classify_pair, headline_category
+from app.services.duplicate_detection.classifier import (
+    VERDICT_PRIORITY,
+    classifier_flags,
+    classify_pair,
+    headline_category,
+)
 from app.services.embeddings.index import (
     comparison_text,
     idea_embedding_text,
@@ -89,6 +94,7 @@ def analyze_submission(
             fuzzy_strong_threshold=float(ai_config["fuzzy_strong_threshold"]),
             cosine=item["cosine"],
             semantic_duplicate_threshold=ai_config.get("semantic_duplicate_threshold"),
+            **classifier_flags(ai_config),
         )
         llm_category = None
         similarities = list(heuristic.similarities)

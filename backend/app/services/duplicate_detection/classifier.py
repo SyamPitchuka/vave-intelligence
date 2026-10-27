@@ -6,11 +6,18 @@ semantic_duplicate_threshold, no detected difference in action), which is off
 unless a threshold is passed. This classifier does not emit a confidence
 percentage. Same component, department, or benefit is not enough to call two
 ideas duplicates.
+
+Three rules can each be switched off (all off when not passed): fuzzy component
+matching after abbreviation expansion, reversal verbs read as a direction flip of
+an existing action, and negated action keywords ignored.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+
+from rapidfuzz import fuzz
 
 from app.services.text import jaccard, normalize_text
 
@@ -18,6 +25,37 @@ MATERIAL_TERMS = {"aluminum", "aluminium", "plastic", "polypropylene", "pmma", "
 TOPOLOGY_TERMS = {"topology", "optimized", "optimisation", "casting"}
 DELETE_TERMS = {"delete", "remove", "depopulate"}
 DIMENSION_TERMS = {"thickness", "gauge", "diameter", "mm"}
+CHANGE_VERBS = {"replace", "substitute", "substitution", "change", "switch", "swap", "use", "using", "adopt"}
+
+# Component matching (component_fuzzy_match): abbreviations are expanded and parenthetical qualifiers dropped
+# before a fuzzy comparison, so "Cab Mtg Bkt" and "Battery tray (LV)" match their full names.
+COMPONENT_ABBREVIATIONS = {"brkt": "bracket", "bkt": "bracket", "mtg": "mounting", "assy": "assembly"}
+COMPONENT_MATCH_THRESHOLD = 90
+_PARENTHETICAL = re.compile(r"\([^)]*\)")
+
+# Reversal (reversal_detection): these verbs undo an earlier change, so they flip the direction of an existing
+# action instead of adding a new one. "return" and "restore" are common in other senses ("restore bending
+# stiffness", "fuel return line"), so a verb counts only when it opens a clause or a back-reference follows it
+# in the same clause.
+REVERSAL_VERBS = {"revert", "return", "restore", "reinstate", "rollback"}
+BACK_REFERENCES = {"back", "original", "originally", "previous", "previously", "earlier", "former"}
+REVERSAL_MARKER = "rollback"
+
+# Negation (negation_detection): an action keyword within this many tokens after a cue is ruled out, not proposed.
+NEGATION_CUES = (
+    ("do", "not"),
+    ("don", "t"),
+    ("never",),
+    ("without",),
+    ("instead", "of"),
+    ("rather", "than"),
+    ("keep",),
+    ("retain",),
+    ("no", "change", "to"),
+)
+NEGATION_WINDOW = 5
+# Sentence and clause ends. A full stop or comma between digits ("1.5 mm", "1,200") is not one.
+_CLAUSE_END = re.compile(r"[.,;:!?](?=\s|$)|\n")
 
 
 @dataclass
@@ -33,10 +71,75 @@ class HeuristicResult:
     change_types_candidate: list[str] = field(default_factory=list)
 
 
-def change_types(text: str) -> set[str]:
-    tokens = set(normalize_text(text).split())
+CLASSIFIER_FLAGS = ("component_fuzzy_match", "reversal_detection", "negation_detection")
+
+
+def classifier_flags(ai_config: dict) -> dict[str, bool]:
+    """The classify_pair switches, from the effective AI settings."""
+    return {flag: bool(ai_config.get(flag)) for flag in CLASSIFIER_FLAGS}
+
+
+def component_key(value: str | None) -> str:
+    text = _PARENTHETICAL.sub(" ", value or "")
+    return " ".join(COMPONENT_ABBREVIATIONS.get(token, token) for token in normalize_text(text).split())
+
+
+def components_match(query: str | None, candidate: str | None, *, fuzzy: bool = False) -> bool:
+    if not fuzzy:
+        q_component, c_component = normalize_text(query), normalize_text(candidate)
+        return bool(q_component and c_component and q_component == c_component)
+    q_component, c_component = component_key(query), component_key(candidate)
+    return bool(q_component and c_component and fuzz.ratio(q_component, c_component) >= COMPONENT_MATCH_THRESHOLD)
+
+
+def _negated_positions(words: list[str]) -> set[int]:
+    negated: set[int] = set()
+    for start in range(len(words)):
+        for cue in NEGATION_CUES:
+            end = start + len(cue)
+            if tuple(words[start:end]) == cue:
+                # The cue's own words are not proposals either ("change" in "no change to").
+                negated.update(range(start, min(end + NEGATION_WINDOW, len(words))))
+    return negated
+
+
+def read_actions(text: str, *, negation: bool = False, reversal: bool = False) -> tuple[set[str], bool]:
+    """The tokens that count as proposed, and whether the text undoes an earlier change."""
+    if not negation and not reversal:
+        return set(normalize_text(text).split()), False
+    tokens: set[str] = set()
+    reverses = False
+    for clause in _CLAUSE_END.split(text or ""):
+        words = normalize_text(clause).split()
+        if reversal:
+            merged: list[str] = []
+            for word in words:
+                if word == "back" and merged and merged[-1] == "roll":
+                    merged[-1] = "rollback"
+                else:
+                    merged.append(word)
+            words = merged
+        negated = _negated_positions(words) if negation else set()
+        for index, word in enumerate(words):
+            if index in negated:
+                continue
+            if reversal and word in REVERSAL_VERBS:
+                if index == 0 or BACK_REFERENCES.intersection(words[index + 1 :]):
+                    reverses = True
+                    tokens.add(REVERSAL_MARKER)
+                continue
+            tokens.add(word)
+    return tokens, reverses
+
+
+def change_types(text: str, *, negation: bool = False, reversal: bool = False) -> set[str]:
+    return _change_types(read_actions(text, negation=negation, reversal=reversal)[0])
+
+
+def _change_types(tokens: set[str]) -> set[str]:
     found: set[str] = set()
-    if tokens & MATERIAL_TERMS and tokens & {"replace", "substitute", "substitution", "change", "switch", "swap", "use", "using", "adopt"}:
+    # A reversal verb counts as a change verb: "revert to steel" is still a material change, in reverse.
+    if tokens & MATERIAL_TERMS and tokens & (CHANGE_VERBS | {REVERSAL_MARKER}):
         found.add("material_substitution")
     if tokens & TOPOLOGY_TERMS:
         found.add("topology")
@@ -62,6 +165,9 @@ def classify_pair(
     fuzzy_strong_threshold: float = 86,
     cosine: float | None = None,
     semantic_duplicate_threshold: float | None = None,
+    component_fuzzy_match: bool = False,
+    reversal_detection: bool = False,
+    negation_detection: bool = False,
 ) -> HeuristicResult:
     similarities: list[str] = []
     differences: list[str] = []
@@ -70,17 +176,31 @@ def classify_pair(
     overlap = jaccard(q_norm, c_norm)
     q_component = normalize_text(query_component)
     c_component = normalize_text(candidate_component)
-    same_component = bool(q_component and c_component and q_component == c_component)
-    if same_component:
+    same_component = components_match(query_component, candidate_component, fuzzy=component_fuzzy_match)
+    if same_component and q_component != c_component:
+        similarities.append(
+            "The component names match once abbreviations and qualifiers are normalised: "
+            f"'{query_component}' and '{candidate_component}'."
+        )
+    elif same_component:
         similarities.append("The component or assembly name matches.")
     elif q_component and c_component:
         differences.append(
             f"Component differs: '{query_component}' compared with '{candidate_component}'."
         )
 
-    q_types = change_types(query_text)
-    c_types = change_types(candidate_text)
-    if q_types and c_types and q_types == c_types:
+    q_tokens, q_reverses = read_actions(query_text, negation=negation_detection, reversal=reversal_detection)
+    c_tokens, c_reverses = read_actions(candidate_text, negation=negation_detection, reversal=reversal_detection)
+    q_types = _change_types(q_tokens)
+    c_types = _change_types(c_tokens)
+    # One side undoes a change of a kind the other side makes: the same action in the opposite direction.
+    direction_flip = bool(q_types & c_types) and q_reverses != c_reverses
+    if direction_flip:
+        differences.append(
+            "The technical action is reversed: one idea undoes a change of the kind the other proposes "
+            f"({', '.join(sorted(q_types & c_types))})."
+        )
+    elif q_types and c_types and q_types == c_types:
         similarities.append(f"The recorded technical action is the same kind of change ({', '.join(sorted(q_types))}).")
     elif q_types and c_types and q_types.isdisjoint(c_types):
         differences.append(
@@ -105,8 +225,8 @@ def classify_pair(
             change_types_candidate=sorted(c_types),
         )
 
-    different_mechanism = bool(q_types and c_types and q_types.isdisjoint(c_types))
-    same_action = bool(q_types and c_types and q_types == c_types)
+    different_mechanism = bool(q_types and c_types and q_types.isdisjoint(c_types)) or direction_flip
+    same_action = bool(q_types and c_types and q_types == c_types) and not direction_flip
     lexical_duplicate = (fuzzy_score >= fuzzy_strong_threshold or overlap >= 0.62) or (
         same_action and same_component and overlap >= 0.42 and fuzzy_score >= 68
     )

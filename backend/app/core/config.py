@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     cosine_retrieve_threshold: float = 0.22
     # None keeps the semantic Potential Duplicate route off (see classify_pair).
     semantic_duplicate_threshold: float | None = None
+    # Classifier rules from the edge-case evaluation (see classify_pair); each can be turned off on its own.
+    component_fuzzy_match: bool = True
+    reversal_detection: bool = True
+    negation_detection: bool = True
     copilot_lexical_threshold: float = 0.45
 
     upload_max_mb: int = 20
