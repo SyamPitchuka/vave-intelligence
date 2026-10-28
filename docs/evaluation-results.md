@@ -33,14 +33,14 @@ Command: `scripts/evaluate.py --deterministic` for the baseline, and `HF_HUB_OFF
 | deterministic-hash-v1 | 1.0 | 0.8 | 0.889 | 0 | 4 | 0 | 1 | 7 | 2 | 1.0 | **0.9** (was 1.0) | 1.0 |
 | all-MiniLM-L6-v2 | 1.0 | 0.8 | 0.889 | 0 | 4 | 0 | 1 | 7 | 2 | 1.0 | 1.0 | 1.0 |
 
-Precision, recall and F1 are identical by construction, for the reasons in [How cosine is used](#how-cosine-is-used). The hashed model's MRR fell from 1.0 to 0.9: one retrieval target is no longer ranked first. It can't be separated whether that comes from the corpus growing from 20 to 111 ideas or from the vectors changing. MiniLM's MRR stays at 1.0.
+Precision, recall and F1 are identical by construction, for the reasons in [How cosine is used](#how-cosine-is-used). The hashed model's MRR fell from 1.0 to 0.9: one retrieval target is no longer ranked first. It can't be separated whether that comes from the corpus growing from 20 to 111 ideas or from the vectors changing. **This is bounded to the hashed baseline:** `deterministic-hash-v1` is the superseded fallback, not the evaluated system. The drop doesn't touch any MiniLM figure, and MiniLM's MRR stays at 1.0. Precision, recall and F1 don't depend on cosine for either model.
 
 - **Retrieval figures:** 5 cases with labelled retrieval targets.
 - **Copilot figures:** 3 cases. The copilot ranks document chunks by lexical coverage, not by embeddings.
 
 ## Cosine by label
 
-Cosine between each labelled query and its labelled historical candidate. The query is embedded from its text only, as `scripts/evaluate.py` does. Re-measured on 28 October from the re-indexed vectors.
+Cosine between each labelled query and its labelled historical candidate. The query is embedded from its text only, as `scripts/evaluate.py` does. Re-measured on 28 October from the re-indexed vectors. Every value is a direct cosine and none is missing. **Reporting convention for all the evaluation pages:** where a table reports a vector-search score, a candidate the search did not return is printed "not retrieved", never 0.000. A missing score and a zero cosine mean opposite things.
 
 | Label | Cases | deterministic-hash-v1 | all-MiniLM-L6-v2 |
 | --- | --- | --- | --- |
@@ -65,7 +65,22 @@ Per case:
 | UNREL-CHIME | unrelated | VAVE-SYN-001 | 0.189 | 0.277 | 39.3 |
 | UNREL-PAD | unrelated | VAVE-SYN-002 | 0.399 | 0.426 | 45.3 |
 
-**One discrepancy is unexplained.** The 26 October run recorded the hashed model's UNREL-BEZEL and UNREL-CHIME at 0.000. The re-measurement gives 0.225 and 0.189. Both texts carry the same field labels ("Component:", "Description:" and so on), so an exact 0 shouldn't be possible with the method as documented. The earlier figures were probably computed differently. The other hashed values agree to within 0.002.
+**The 26 October 0.000 values were missing scores, not zero similarity.** The 26 October version of this page gave the hashed model's UNREL-BEZEL → SYN-009 and UNREL-CHIME → SYN-001 as 0.000; the re-measurement gives 0.225 and 0.189.
+
+- **Cause, checked on 28 October in the stored evaluation run** `5347d32c` (deterministic-hash-v1, 26 October 12:13 GMT): both predictions store `"cosine": null`.
+- **Why the score was null:** the cosine in an evaluation prediction is the vector-search score from `rank_historical`. That search returns only the top `max(retrieval_k, 20)` vectors. At the time it was not limited to historical ideas, and 7 stored test submissions took 7 of the 20 slots ([fixed defect](#fixed-defect-submissions-crowded-historical-ideas-out-of-vector-search)). The two least similar candidates were not returned, so no cosine was recorded, and the table printed the missing value as 0.000.
+- **The figures above are direct cosines,** computed between the query vector and the candidate's stored vector, so they never depend on the search limit. The other hashed values agree with the 26 October figures to within 0.002.
+- **Not stale vectors.** The hashed idea vectors were written by the seed before the switch to MiniLM, but DUP-EXACT's prediction in the same run has a cosine (0.695) against SYN-001, the candidate UNREL-CHIME missed. The vector existed and was simply not in that query's top 20.
+- **Still missing on 28 October.** The 28 October hashed run (`ba088883`) also stores null for both pairs, and for SIM-BOLT: with 111 historical ideas they fall outside the top 20 for those queries.
+- **UNREL-CHIME → SYN-018, also printed as 0.000 in the 26 October sweep table, is not a genuine zero either.** That pair isn't labelled, so no prediction was stored for it, and the 26 October vector state can't be replayed: the 7 test-submission vectors were deleted and the idea vectors re-indexed. Its 26 October value was therefore bounded instead:
+  - **The text inputs haven't changed since 26 October except vehicle order.** Neither the hash function (`deterministic.py`) nor the query text has changed. The only change to the idea text is vehicle order (sorted since 28 October).
+  - **The bound:** the hashed cosine was recomputed for every ordering of SYN-018's 5 vehicles, which covers whatever order the 26 October load used. It lies between **0.185 and 0.191**, never near 0.
+  - **What that rules out:** a printed 0.000 can only have been a missing value, not a real score.
+  - **Same pattern as the confirmed pair:** SYN-018 ranks last of the 20 seeded ideas for this query, within 0.006 of SYN-001 (0.186–0.192), whose null is stored. The other 18 seeded ideas all score above 0.198.
+  - **What is verified:** it is a missing score, not zero similarity.
+  - **What is inferred, not observed:** that it was missing for the same reason as SYN-001, the top-20 limit with 7 submission slots taken. The other path to a missing hashed score, a missing stored vector, can't be excluded for 26 October either. Either way it is "not retrieved", not 0.
+
+**Neither hashed-model anomaly affects a MiniLM figure.** This 0.000 reading and the MRR drop (1.0 → 0.9, [above](#precision-recall-and-f1)) both concern only `deterministic-hash-v1`, the superseded fallback baseline, not the evaluated system. No MiniLM cosine, MRR, precision, recall, F1, sweep row or threshold decision depends on either one. The [threshold sweep](#threshold-sweep) behind the 0.40 decision was re-run on 28 October and every row was unchanged, hashed rows included.
 
 ## Separation between duplicates and look-alikes
 
@@ -233,13 +248,13 @@ No rule or threshold changed: every one of these moves is the drift being remove
 - **What changed nothing:** direction extraction, the subset guard, and making the lexical rule require a matching component. None changed a verdict. Each rule was measured with `--disable` on the new vectors. All 90 duplicates name their component the same way on both sides.
 - **Database:** 111 historical ideas, with no edge-case ideas left after the edge runs.
 
-Details are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md#v2-hard-set-run-first).
+Details are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md#v2-hard-set-measured-first).
 
 **Effect of the "low-voltage"/"LV" assumption, re-measured on the new vectors:** precision, recall, F1 and every verdict are unchanged. Mean rank went from 1.189 to 1.200 and rank@1 from 0.844 to 0.833. For Q-0005, the unlabelled SYN-015 (the same low-voltage battery tray proposal) is now a Potential Duplicate and outranks the labelled H-0005. Before the fix this was recorded as 0.833 → 0.822: the same one-query drop from a different starting point.
 
 ## v2 hard set: clean baseline (27 October 2026)
 
-This is the Tier 1 configuration, re-baselined on 28 October on deterministic embeddings. It was reproduced with the current code by turning later rules off (`--disable direction_detection --disable scope_comparison --disable component_subset_guard --disable lexical_requires_component`, with the symmetric score off by default) and with the "low-voltage" qualifier list emptied for the run. The method and the earlier runs are in [evaluation-hard-set.md](evaluation-hard-set.md), whose figures predate the fix and were not re-baselined.
+This is the Tier 1 configuration, re-baselined on 28 October on deterministic embeddings. It was reproduced with the current code by turning later rules off (`--disable direction_detection --disable scope_comparison --disable component_subset_guard --disable lexical_requires_component`, with the symmetric score off by default) and with the "low-voltage" qualifier list emptied for the run. The method and the earlier runs are in [evaluation-hard-set.md](evaluation-hard-set.md). Its earlier sections predate the fix; its threshold sweep and held-out split were re-run on deterministic embeddings ([re-baseline](evaluation-hard-set.md#re-baseline-on-deterministic-embeddings-28-october-2026)).
 
 - **Database:** 111 historical ideas (VAVE-SYN-001 to -020 and the 91 v2 ideas), each with an `all-MiniLM-L6-v2` vector. The 11 edge-case ideas VAVE-EH-001 to -011 (import batch `e4762c9e`), which had been loaded for [evaluation-edge-cases.md](evaluation-edge-cases.md), were deleted first: 11 ideas, their 55 vehicle rows, 11 vectors and 11 import-change rows. The batch was marked `rolled_back`, and the deletion was recorded in the audit log as `idea.delete_evaluation_ideas`. The edge-case scorer, `scripts/score_edge.py`, now loads those ideas inside a transaction and rolls them back, so they no longer stay in the database.
 - **Settings:** offline, MiniLM, Ollama not reachable, `semantic_duplicate_threshold` 0.82, `retrieval_top_k` 15, `cosine_retrieve_threshold` 0.40, `fuzzy_strong_threshold` 86, `component_fuzzy_match` and `negation_detection` on. Any classifier rule added after this baseline must be turned off to reproduce it, as above.
@@ -256,7 +271,7 @@ End to end, 597 scored pairs (594 distinct query–candidate pairs), 90 duplicat
 
 - Classifier only: precision 0.923, recall 0.800, F1 0.857 (6 false positives). Before the fix it was 0.859 / 0.811 / 0.834 with 12.
 - All 90 duplicates were shown; the worst rank was 3.
-- The pre-fix figures matched [evaluation-hard-set.md](evaluation-hard-set.md#candidate-ordering-by-verdict), which was not re-baselined. Component matching and negation detection change no v2 verdict.
+- The pre-fix figures matched [evaluation-hard-set.md](evaluation-hard-set.md#candidate-ordering-by-verdict), a pre-fix record. The original-rules sweep in its re-baseline section reproduces the re-baselined figures above at 0.82. Component matching and negation detection change no v2 verdict.
 
 ## Limitations
 

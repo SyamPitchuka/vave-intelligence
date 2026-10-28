@@ -100,6 +100,12 @@ def cosine(a: np.ndarray, b: np.ndarray) -> float:
     return float(a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))
 
 
+def format_cosine(value: float | None) -> str:
+    """A None cosine means the vector search did not return the candidate, the opposite of a zero cosine,
+    so it is printed as "not retrieved" and never as 0.000."""
+    return "not retrieved" if value is None else f"{value:.3f}"
+
+
 def summary(values: list[float]) -> dict:
     if not values:
         return {"n": 0}

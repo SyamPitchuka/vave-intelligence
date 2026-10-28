@@ -32,7 +32,7 @@ Every number here comes from `data/vave_duplicate_edge_cases.xlsx`, a synthetic 
 | negation | similar_but_distinct | 2 | 1 | 2 | 2 | EQ-008: negation detection. EQ-007: never shown (candidate selection) |
 | sparse_description | duplicate | 2 | 2 | 2 | 2 | Semantic route on cosine alone |
 | superset | similar_but_distinct | 2 | 0 | 0 | **2** | Scope comparison |
-| reversal | similar_but_distinct | 2 | 0 | 2 as recorded (reversal verbs, since removed; 0 without them) | 2 | Direction extraction: flipped material pair |
+| reversal | similar_but_distinct | 2 | 0 | 2, **recorded 27 October on non-deterministic embeddings, not reproduced** (the reversal verbs it used have been removed; 0 when reproduced without them) | 2 | Direction extraction: flipped material pair |
 | different_programme | related_not_duplicate | 2 | 0 | 0 | 0 | **Still failing.** Not addressed: the workbook gives every row identical vehicle volumes and will be fixed separately |
 | unit_variation | duplicate | 2 | 2 | 2 | 2 | Lexical fuzzy rule |
 
@@ -146,7 +146,7 @@ Command: `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/score_edge.py data/v
 
 ## Per-pair results
 
-Fuzzy is RapidFuzz `token_set_ratio` on the comparison text (0–100). Jaccard is word overlap of the pair text. Cosine, fuzzy, Jaccard and retrieval position are the same in every run, re-measured on deterministic embeddings. "Retr. pos." is the candidate's position in retrieval order (exact, then fuzzy, then cosine) among the 122 historical ideas; only the first 15 are shown. "Shown rank" is after the display re-sort by verdict, with the live settings. The run 1 and run 2 columns are the re-measured reproductions; run 2's reversal verdicts are as recorded.
+Cosine is the direct cosine, which is never missing. A vector-search score the search didn't return would be printed "not retrieved", never 0.000. Fuzzy is RapidFuzz `token_set_ratio` on the comparison text (0–100). Jaccard is word overlap of the pair text. Cosine, fuzzy, Jaccard and retrieval position are the same in every run, re-measured on deterministic embeddings. "Retr. pos." is the candidate's position in retrieval order (exact, then fuzzy, then cosine) among the 122 historical ideas; only the first 15 are shown. "Shown rank" is after the display re-sort by verdict, with the live settings. The run 1 and run 2 columns are the re-measured reproductions; run 2's reversal verdicts are as recorded.
 
 | Query | Candidate | Case type | Label | Run 1 | Run 2 | Run 3 | Correct (3) | Cosine | Fuzzy | Jaccard | Retr. pos. | Shown rank (3) | Reason (run 3) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -162,8 +162,8 @@ Fuzzy is RapidFuzz `token_set_ratio` on the comparison text (0–100). Jaccard i
 | EQ-010 | EH-008 | sparse_description | duplicate | Potential Dup. | Potential Dup. | Potential Dup. | yes | 0.837 | 71.4 | 0.167 | 1 | 1 | same component; cosine ≥ 0.82; no action or state pair in query |
 | EQ-011 | EH-002 | superset | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.931 | 90.2 | 0.442 | 1 | 12 | scope: query adds `dimension` ("relocate 40 mm rearward") |
 | EQ-012 | EH-009 | superset | similar_but_distinct | Potential Dup. | Potential Dup. | **Similar but Distinct** | yes | 0.871 | 90.6 | 0.450 | 2 | 7 | scope: query adds `dimension` ("extend 40 mm rearward") |
-| EQ-013 | EH-001 | reversal | similar_but_distinct | Potential Dup. | **Similar but Distinct** (recorded) | Similar but Distinct | yes | 0.848 | 59.8 | 0.195 | 1 | 14 | flipped: aluminium → steel against steel → aluminium |
-| EQ-014 | EH-010 | reversal | similar_but_distinct | Potential Dup. | **Similar but Distinct** (recorded) | Similar but Distinct | yes | 0.888 | 64.0 | 0.275 | 2 | 13 | flipped: PET → phenolic against phenolic → PET |
+| EQ-013 | EH-001 | reversal | similar_but_distinct | Potential Dup. | **Similar but Distinct** (recorded, not reproduced) | Similar but Distinct | yes | 0.848 | 59.8 | 0.195 | 1 | 14 | flipped: aluminium → steel against steel → aluminium |
+| EQ-014 | EH-010 | reversal | similar_but_distinct | Potential Dup. | **Similar but Distinct** (recorded, not reproduced) | Similar but Distinct | yes | 0.888 | 64.0 | 0.275 | 2 | 13 | flipped: PET → phenolic against phenolic → PET |
 | EQ-015 | EH-001 | different_programme | related_not_duplicate | Potential Dup. | Potential Dup. | Potential Dup. | no | 0.856 | 65.2 | 0.250 | 1 | 2 | same component; cosine ≥ 0.82 (programme not compared) |
 | EQ-016 | EH-004 | different_programme | related_not_duplicate | Potential Dup. | Potential Dup. | Potential Dup. | no | 0.886 | 65.0 | 0.244 | 1 | 1 | same component; cosine ≥ 0.82 (programme not compared) |
 | EQ-017 | EH-003 | unit_variation | duplicate | Potential Dup. | Potential Dup. | Potential Dup. | yes | 0.970 | 94.5 | 0.656 | 1 | 1 | lexical and semantic; both sides decrease (0.059 in = 1.499 mm) |
@@ -194,7 +194,7 @@ Neither query has an action keyword or a state pair, so no check applies and the
 
 ### reversal: 2 of 2 since Tier 1, now through direction extraction
 
-Run 2 used reversal verbs. Run 3 reads the reversal as a flipped material pair: "from aluminium alloy back to the original steel" (aluminium → steel) against "replace the steel … with an aluminium alloy bracket" (steel → aluminium), and PET → phenolic against phenolic → PET. With direction extraction off (stage Z, re-measured), both fail again, because the verb rule no longer exists.
+Run 2 used reversal verbs. Its 2 of 2 is the result recorded on 27 October, before the determinism fix. It was not reproduced, because the verb rule no longer exists in the code; reproduced without it, run 2 gives 0 of 2. Run 3 reads the reversal as a flipped material pair: "from aluminium alloy back to the original steel" (aluminium → steel) against "replace the steel … with an aluminium alloy bracket" (steel → aluminium), and PET → phenolic against phenolic → PET. With direction extraction off (stage Z, re-measured), both fail again, because the verb rule no longer exists.
 
 ### different_programme: 0 of 2 (still failing, not addressed)
 

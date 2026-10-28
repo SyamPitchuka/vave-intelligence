@@ -167,7 +167,7 @@ Before the fix, the v2 hard set effect was recorded as rank@1 0.833 → 0.822: t
 
 ## Per-pair results (live)
 
-Cosine is the direct query–candidate cosine (MiniLM). Fuzzy is `token_set_ratio` on the comparison text. "Same comp." is `components_match` with the live settings.
+Cosine is the direct query–candidate cosine (MiniLM), which is never missing. `score_edge.py` also prints the vector-search score as `search_cos`, and a candidate the search didn't return is printed "not retrieved", never 0.000. Fuzzy is `token_set_ratio` on the comparison text. "Same comp." is `components_match` with the live settings.
 
 | Query | Candidate | Probe type | Verdict | Outcome | Cosine | Fuzzy | Same comp. | Layer that decided it |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

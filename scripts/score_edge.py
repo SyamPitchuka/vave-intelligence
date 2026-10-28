@@ -294,7 +294,8 @@ def main() -> None:
     for r in report["pairs"]:
         print(
             f"{r['query']} {r['candidate']} {r['case_type']:28} {r['polarity']:8} {r['label']:22} -> {r['e2e']:22} "
-            f"{r['outcome']:13}{' (refused at submit)' if r['submission_refused'] else ''} clf={r['classifier']:22} cos={r['cosine']:.3f} fuzzy={r['fuzzy']:.1f} "
+            f"{r['outcome']:13}{' (refused at submit)' if r['submission_refused'] else ''} clf={r['classifier']:22} cos={hard_set.format_cosine(r['cosine'])} "
+            f"search_cos={hard_set.format_cosine(r['pipeline_cosine'])} fuzzy={r['fuzzy']:.1f} "
             f"same={r['same_component']} pos={r['retrieval_position']} rank={r['rank']}"
         )
     print(f"wrote {args.out}")

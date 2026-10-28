@@ -1,7 +1,7 @@
 # Known limitations
 
 - The default embedding in `.env.example` is `all-MiniLM-L6-v2` through sentence-transformers, in `offline` mode. `fallback` mode always uses `deterministic-hash-v1`, a hashed lexical vector that needs no model download and is not a neural semantic model.
-- On the synthetic labels, MiniLM gives every pair a higher cosine than the hashed vector, but the gap between duplicates and similar-but-distinct ideas is smaller: 0.042 against 0.147. A higher cosine is not evidence of a duplicate.
+- On the synthetic labels, MiniLM gives every pair a higher cosine than the hashed vector, but the gap between duplicates and similar-but-distinct ideas is smaller: 0.041 against 0.144 (re-measured on deterministic embeddings, 28 October 2026; see `docs/evaluation-results.md`). A higher cosine is not evidence of a duplicate.
 - Similarity scores are retrieval signals. The interface does not present them as calibrated probabilities.
 - Thresholds are configuration. The evaluation page can compare them. They have not been calibrated on production VAVE history.
 - The labelled set shipped with the app is synthetic and small. Metrics from it are not a production accuracy claim. The evaluation payload sets `small_set` when fewer than 30 labelled cases are present.
