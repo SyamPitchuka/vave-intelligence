@@ -23,3 +23,5 @@ build/
 *.egg-info/
 .alembic/
 coverage/
+
+data/ScreenShots/
