@@ -201,10 +201,10 @@ This was expected. Precision, recall, and F1 cannot change with cosine (see [How
 
 ## v2 hard set: re-run (28 October 2026)
 
-With the Tier 2 rules, the symmetric fuzzy score off and the component subset guard on (the live defaults): precision **0.890**, recall **0.811**, F1 **0.849**, TP 73, FP 9, FN 17, TN 498, 186 abstentions, mean rank 1.200, rank@1 0.833 (75 / 90).
+With the Tier 2 rules, the symmetric fuzzy score off, and the component subset guard and `lexical_requires_component` on (the live defaults): precision **0.890**, recall **0.811**, F1 **0.849**, TP 73, FP 9, FN 17, TN 498, 186 abstentions, mean rank 1.200, rank@1 0.833 (75 / 90).
 
 - **What changed from the baseline below:** scope comparison removed one false positive (Q-0022 against H-0024).
-- **What changed nothing:** turning the symmetric score off and adding the guard. Each changed no pair.
+- **What changed nothing:** turning the symmetric score off, adding the guard, and making the lexical rule require a matching component. None changed a verdict; the last moved one display rank. All 90 duplicates name their component the same way on both sides.
 - **Database:** 111 historical ideas, with no edge-case ideas left after the edge runs.
 
 Details are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md#v2-hard-set-run-first).

@@ -8,7 +8,7 @@ Three runs on 27 October 2026, against the hosted Neon development database with
 
 Each tier was measured on the v2 hard set first, to check for regressions, and only then on these edge cases.
 
-**Since 28 October:** the symmetric fuzzy score is off and a component subset guard is on. With these settings this set gives the same verdict on every pair as run 3. The adversarial follow-up set, the guard and a component-threshold sweep are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md).
+**Since 28 October:** the symmetric fuzzy score is off, and two component rules are on: a subset guard, and the lexical duplicate rule requiring a matching component. With these settings this set gives the same verdict on every pair as run 3. The adversarial follow-up set, the guard and a component-threshold sweep are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md).
 
 Every number here comes from `data/vave_duplicate_edge_cases.xlsx`, a synthetic workbook of 11 historical ideas, 18 queries and 18 labelled pairs. It was written without sight of the classifier's keyword lists, thresholds or code. Each case type isolates one failure mode and has only two or three pairs, so results are reported **by case type**. No overall figure is given, because it would hide which failure mode is live. Read [Limitations](#limitations) before relying on any of it.
 

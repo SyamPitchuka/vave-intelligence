@@ -135,6 +135,7 @@ class SettingsBody(BaseModel):
     semantic_duplicate_threshold: float | None = None
     component_fuzzy_match: bool | None = None
     component_subset_guard: bool | None = None
+    lexical_requires_component: bool | None = None
     negation_detection: bool | None = None
     direction_detection: bool | None = None
     scope_comparison: bool | None = None
@@ -1353,6 +1354,7 @@ def _status_payload(config: dict[str, Any]) -> dict[str, Any]:
         "semantic_duplicate_threshold": config.get("semantic_duplicate_threshold"),
         "component_fuzzy_match": config.get("component_fuzzy_match"),
         "component_subset_guard": config.get("component_subset_guard"),
+        "lexical_requires_component": config.get("lexical_requires_component"),
         "negation_detection": config.get("negation_detection"),
         "direction_detection": config.get("direction_detection"),
         "scope_comparison": config.get("scope_comparison"),

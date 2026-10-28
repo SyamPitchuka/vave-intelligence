@@ -211,6 +211,43 @@ def test_subset_guard_keeps_abbreviations_parentheticals_and_non_distinguishing_
     assert distinguishing_words("Exhaust heat shield front", "Exhaust heat shield") == {"front"}
 
 
+SHACKLE = "Change the front spring shackle from forged steel to a fabricated steel assembly to reduce forging cost."
+BRACKET = "Change the front spring bracket from forged steel to a fabricated steel assembly to reduce forging cost."
+
+
+def _lexical_pair(query_component: str, candidate_component: str, **flags):
+    return classify_pair(
+        query_component=query_component,
+        query_text=SHACKLE,
+        candidate_component=candidate_component,
+        candidate_text=BRACKET,
+        fuzzy_score=97.5,
+        exact=False,
+        component_fuzzy_match=True,
+        component_subset_guard=True,
+        **flags,
+    )
+
+
+def test_lexical_route_ignores_the_component_unless_required():
+    assert _lexical_pair("Front spring shackle", "Front spring bracket").category == "potential_duplicate"
+
+
+def test_lexical_match_on_a_different_component_is_similar_but_distinct():
+    result = _lexical_pair("Front spring shackle", "Front spring bracket", lexical_requires_component=True)
+    assert result.category == "similar_but_distinct"
+    assert "different components" in result.explanation
+    qualified = _lexical_pair("Front spring bracket rear", "Front spring bracket", lexical_requires_component=True)
+    assert qualified.category == "similar_but_distinct"
+
+
+def test_lexical_route_still_accepts_a_matching_or_variant_component():
+    assert _lexical_pair("Front spring bracket", "Front spring bracket", lexical_requires_component=True).category == "potential_duplicate"
+    assert _lexical_pair("Front spring brkt", "Front spring bracket", lexical_requires_component=True).category == "potential_duplicate"
+    # A missing component is not evidence of a different part.
+    assert _lexical_pair(None, "Front spring bracket", lexical_requires_component=True).category == "potential_duplicate"
+
+
 def test_component_variant_reaches_the_semantic_route_only_with_fuzzy_matching():
     assert _semantic_pair(query_component="Cab Mtg Bkt", component_fuzzy_match=True).category == "potential_duplicate"
     assert _semantic_pair(query_component="Cab Mtg Bkt").category == "insufficient_evidence"

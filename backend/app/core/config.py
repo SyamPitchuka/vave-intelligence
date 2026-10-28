@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     # Classifier rules from the edge-case evaluation (see classify_pair); each can be turned off on its own.
     component_fuzzy_match: bool = True
     component_subset_guard: bool = True
+    lexical_requires_component: bool = True
     negation_detection: bool = True
     direction_detection: bool = True
     scope_comparison: bool = True

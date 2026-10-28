@@ -7,7 +7,8 @@ unless a threshold is passed. This classifier does not emit a confidence
 percentage. Same component, department, or benefit is not enough to call two
 ideas duplicates.
 
-Further rules can each be switched off (all off when not passed): fuzzy component
+Further rules can each be switched off (all off when not passed): a lexical match on a
+different component made Similar but Distinct, fuzzy component
 matching after abbreviation expansion (with a guard for qualified names such as
 "front"/"rear"), negated action keywords ignored, opposite before -> after state pairs
 (direction, which also covers reversals), a query that adds kinds of change (scope), and
@@ -130,6 +131,7 @@ class StatePair:
 CLASSIFIER_FLAGS = (
     "component_fuzzy_match",
     "component_subset_guard",
+    "lexical_requires_component",
     "negation_detection",
     "direction_detection",
     "scope_comparison",
@@ -301,6 +303,7 @@ def classify_pair(
     semantic_duplicate_threshold: float | None = None,
     component_fuzzy_match: bool = False,
     component_subset_guard: bool = False,
+    lexical_requires_component: bool = False,
     negation_detection: bool = False,
     direction_detection: bool = False,
     scope_comparison: bool = False,
@@ -384,7 +387,20 @@ def classify_pair(
         and same_component
         and cosine >= semantic_duplicate_threshold
     )
-    if lexical_duplicate and not different_mechanism:
+    # The lexical rule reads only the descriptions. With lexical_requires_component, near-identical text about a
+    # different (or differently qualified) component is a related idea to surface, not a duplicate. Uses the same
+    # component matcher as the semantic route; a pair with a component missing on either side is not judged here.
+    component_mismatch = (
+        lexical_requires_component and bool(q_component and c_component) and not same_component
+    )
+    if lexical_duplicate and not different_mechanism and component_mismatch:
+        category = "similar_but_distinct"
+        explanation = (
+            "The descriptions overlap strongly, but they concern different components. A near-identical change to "
+            "another part is shown for reference, not as a duplicate."
+        )
+        similarities.append("Wording and technical action overlap strongly.")
+    elif lexical_duplicate and not different_mechanism:
         category = "potential_duplicate"
         explanation = (
             "Lexical overlap is high and the technical action does not contradict the historical record. "
