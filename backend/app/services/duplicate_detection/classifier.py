@@ -36,6 +36,11 @@ CHANGE_VERBS = {"replace", "substitute", "substitution", "change", "switch", "sw
 COMPONENT_ABBREVIATIONS = {"brkt": "bracket", "bkt": "bracket", "mtg": "mounting", "assy": "assembly"}
 COMPONENT_MATCH_THRESHOLD = 90
 _PARENTHETICAL = re.compile(r"\([^)]*\)")
+# Descriptive qualifiers dropped from component names, like a parenthetical. Assumption dated 28 October 2026: this
+# corpus has one battery tray, so "low-voltage" describes it rather than naming a different part. Once high-voltage
+# batteries enter the fleet it becomes distinguishing and these entries must go (docs/evaluation-edge-cases-v2.md).
+COMPONENT_DESCRIPTIVE_QUALIFIERS = ("low voltage", "lv")
+_DESCRIPTIVE_QUALIFIER = re.compile(r"\b(?:" + "|".join(COMPONENT_DESCRIPTIVE_QUALIFIERS) + r")\b")
 # Subset guard (component_subset_guard): "Front spring bracket rear" and "Front spring bracket" name different parts
 # although one name contains the other. A fuzzy score cannot see that (ratio gives them 88.9, token_set_ratio 100),
 # so a name whose extra words are anything but these is a different component, and a positional or ordinal
@@ -145,8 +150,8 @@ def classifier_flags(ai_config: dict) -> dict[str, bool]:
 
 
 def component_key(value: str | None) -> str:
-    text = _PARENTHETICAL.sub(" ", value or "")
-    return " ".join(COMPONENT_ABBREVIATIONS.get(token, token) for token in normalize_text(text).split())
+    text = _DESCRIPTIVE_QUALIFIER.sub(" ", normalize_text(_PARENTHETICAL.sub(" ", value or "")))
+    return " ".join(COMPONENT_ABBREVIATIONS.get(token, token) for token in text.split())
 
 
 def distinguishing_words(query: str | None, candidate: str | None) -> set[str]:

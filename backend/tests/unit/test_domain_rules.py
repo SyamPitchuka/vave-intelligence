@@ -7,6 +7,7 @@ from app.services.duplicate_detection import classifier
 from app.services.duplicate_detection.classifier import (
     change_types,
     classify_pair,
+    component_key,
     components_match,
     distinguishing_words,
     state_pairs,
@@ -201,6 +202,14 @@ def test_subset_guard_rejects_a_qualified_component_name_at_any_threshold(monkey
     assert components_match("Door hinge bracket upper", "Door hinge bracket lower", fuzzy=True)
     assert not components_match("Door hinge bracket upper", "Door hinge bracket lower", fuzzy=True, subset_guard=True)
     assert not components_match("LH tail lamp lens", "RH tail lamp lens", fuzzy=True, subset_guard=True)
+
+
+def test_low_voltage_is_a_descriptive_qualifier_but_high_voltage_is_not():
+    assert component_key("Low-voltage battery tray") == "battery tray"
+    assert component_key("LV battery tray") == "battery tray"
+    assert component_key("Valve lever") == "valve lever"
+    assert components_match("Battery tray", "Low-voltage battery tray", fuzzy=True, subset_guard=True)
+    assert not components_match("Battery tray", "High-voltage battery tray", fuzzy=True, subset_guard=True)
 
 
 def test_subset_guard_keeps_abbreviations_parentheticals_and_non_distinguishing_words():

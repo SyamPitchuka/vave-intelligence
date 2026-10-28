@@ -19,6 +19,10 @@ This is the last classifier change in this series. The remaining failures are do
 - **Edge v2 now passes 11 of 16 negatives, but only 7 are real detections.** Four pass only because cosine fell under 0.82, three of them by less than 0.01 ([accidental passes](#accidental-passes-and-the-threshold)).
 - **The component subset guard fixed nothing on any current set** ([note](#component-matching-a-wrong-premise-and-a-guard-that-fixed-nothing)).
 - **The symmetric fuzzy score is off.** Turning it off changed no labelled pair on any set.
+- **"Low-voltage" and "LV" are now dropped from component names**, as a dated assumption ([details](#assumption-low-voltage-is-descriptive-dated-28-october-2026)). The two battery-tray pairs are Potential Duplicate again. There are two side effects:
+  - **v2 hard set rank@1 fell from 0.833 to 0.822.** SYN-015 is now a duplicate of Q-0005 and outranks the labelled one.
+  - **One new unlabelled false positive:** FQ-019 against SYN-015.
+- **At least 18 labelled verdicts sit within 0.01 of the 0.82 cosine threshold** across the three sets, all cited by pair ID ([margin cases](#accidental-passes-and-the-threshold)). The cosine of one pair moved by 0.011 between two runs of unchanged code.
 - **No threshold was changed.**
 
 ## Changes on 28 October
@@ -51,7 +55,8 @@ Each setting can be turned off with `PUT /api/v1/ai/settings`, or with `--disabl
 | Tier 2 as committed (symmetric on) | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.200 | 0.833 | 3 (scope; [details](evaluation-edge-cases.md#v2-regression-check-tier-2)) |
 | Symmetric off, guard on | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.200 | 0.833 | 0 |
 | **Before**: + `lexical_requires_component` off | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.200 | 0.833 | 0 |
-| **After**: `lexical_requires_component` on (live) | **0.890** | **0.811** | **0.849** | 73 | 9 | 17 | **1.200** | **0.833** | 1 (display rank only) |
+| **After**: `lexical_requires_component` on | **0.890** | **0.811** | **0.849** | 73 | 9 | 17 | **1.200** | **0.833** | 1 (display rank only) |
+| + "low-voltage"/"LV" dropped from component names (live) | 0.890 | 0.811 | 0.849 | 73 | 9 | 17 | 1.211 | **0.822** | 1 (Q-0005 → H-0005 rank 1 → 2; [why](#assumption-low-voltage-is-descriptive-dated-28-october-2026)) |
 
 - **No v2 duplicate was lost.** All 90 duplicate pairs name their component the same way on both sides, so the new rule can't touch them.
 - **324 labelled v2 pairs have different components, and none of them was a Potential Duplicate even before.** The v2 hard set has no negative of the kind this rule fixes.
@@ -125,10 +130,26 @@ These pairs are now Similar but Distinct instead of Potential Duplicate:
 | --- | --- | --- | --- | --- | --- | --- |
 | v1 EQ-001 | Cab mount brkt | SYN-016 | Steering column lower bracket | 0.717 | 86.4 | Different part: a false positive removed |
 | v2 FQ-006 | Exhaust heat shield front | H-0056 | Exhaust heat shield | 0.967 | 97.9 | Different part (front against mid shield): a false positive removed |
-| v1 EQ-003 | Battery tray (LV) | SYN-015 | Low-voltage battery tray | 0.953 | 88.4 | **Probably the same part: a likely true duplicate lost** |
-| v2 FQ-012 | Battery tray | SYN-015 | Low-voltage battery tray | 0.940 | 91.0 | **Probably the same part: a likely true duplicate lost** |
+| v1 EQ-003 | Battery tray (LV) | SYN-015 | Low-voltage battery tray | 0.953 | 88.4 | Probably the same part: a likely true duplicate lost. **Restored** by the low-voltage assumption |
+| v2 FQ-012 | Battery tray | SYN-015 | Low-voltage battery tray | 0.940 | 91.0 | Probably the same part: a likely true duplicate lost. **Restored** by the low-voltage assumption |
 
-**The two battery-tray losses come from the component matcher, not the guard.** `fuzz.ratio` scores "battery tray" against "low voltage battery tray" at 66.7, far below 90, with or without the guard. The matcher can't tell a descriptive qualifier ("low-voltage") from a distinguishing one ("rear"). Neither pair is labelled, and both are still shown as Similar but Distinct.
+**The two battery-tray losses came from the component matcher, not the guard.** `fuzz.ratio` scores "battery tray" against "low voltage battery tray" at 66.7, far below 90, with or without the guard. The matcher can't tell a descriptive qualifier ("low-voltage") from a distinguishing one ("rear"). [The assumption below](#assumption-low-voltage-is-descriptive-dated-28-october-2026) restores both pairs.
+
+## Assumption: "low-voltage" is descriptive (dated 28 October 2026)
+
+`COMPONENT_DESCRIPTIVE_QUALIFIERS` in `classifier.py` lists "low voltage" and "LV". `component_key` drops them from component names before matching, as it already dropped a parenthetical such as "(LV)". Before this, no named list existed: "(LV)" was dropped only because it was in parentheses. So this adds a small list and the line that applies it. "High-voltage battery tray" is still a different component from "Battery tray".
+
+- **Why:** this corpus has one battery tray, the low-voltage one, so "low-voltage" describes the part rather than distinguishing it.
+- **Shelf life:** as high-voltage batteries enter the fleet, "low-voltage battery tray" and "high-voltage battery tray" become different parts. "Low-voltage" then becomes distinguishing, and this decision must be reversed by removing the two entries.
+- **The underlying problem is entity resolution.** Whether a qualifier names a different part depends on what parts exist, which only a parts master can answer, not a string rule. Until there is one, a pair whose components differ only by an uncertain qualifier belongs in **Insufficient Evidence / Manual Review Required**, not in either confident verdict.
+
+**Re-run results.** The battery-tray pairs came back as expected, but three other things moved:
+
+| Set | Labelled verdict changes | Other movement |
+| --- | --- | --- |
+| v2 hard set | none (P 0.890, R 0.811, F1 0.849) | **rank@1 0.833 → 0.822, mean rank 1.200 → 1.211.** For Q-0005 ("Replace the steel LV battery carrier with an injection-moulded PP part…"), the labelled duplicate H-0005 dropped from rank 1 to 2. SYN-015 ("Change the low-voltage battery tray from painted steel to a formed polypropylene tray…") is now also a Potential Duplicate and has a higher cosine. SYN-015 is not labelled in the v2 workbook. It is very probably a second true duplicate of Q-0005, so the rank@1 drop reflects the labels rather than a worse ranking |
+| Edge v1 | none | EQ-003 → SYN-015 is a Potential Duplicate again, which moves EQ-003 → EH-002 from rank 1 to 3. EQ-004, EQ-014 and EQ-017 moved one display rank each because of cosine drift between runs ([below](#accidental-passes-and-the-threshold)), not because of this change |
+| Edge v2 | none (every probe type as before) | FQ-012 → SYN-015 is a Potential Duplicate again. **New unlabelled false positive: FQ-019 → SYN-015** ("Do not proceed with the polypropylene low-voltage battery tray…", cosine 0.917). This is FQ-019's known semantic-route failure, now hitting a second candidate |
 
 After the change, the v1 EQ-001 and EQ-002 lists are the 9 cab mounting bracket pairs listed [below](#unlabelled-pairs-eq-001-and-eq-002-flag-before-this-change). SYN-016 is gone.
 
@@ -174,7 +195,51 @@ Cosine is the direct query–candidate cosine (MiniLM). Fuzzy is `token_set_rati
 
 A different embedding model, a re-index or a small change to the text could turn any of the first three into a failure.
 
-**This is the third time a verdict has turned on less than 0.01 of cosine.** Earlier analysis found a true duplicate rejected by 0.006 and a false positive accepted by 0.007. **The 0.82 threshold sits inside the distribution it is meant to separate.** There are two measurements behind this:
+**These are not isolated.** Re-deriving the earlier margin cases from the run files turned up 18 labelled verdicts within 0.01 of 0.82, across all three sets. Each is decided by the cosine threshold alone.
+
+**Edge set v1** (`score_edge.py`):
+
+| Pair | Label | Cosine | Margin | Verdict | Runs |
+| --- | --- | --- | --- | --- | --- |
+| EQ-004 → EH-003 | similar_but_distinct (opposite thickness change) | 0.8269 | **+0.0069** | **Potential Duplicate: false positive accepted by the route** | Runs 1 and 2. From run 3, direction detection overrides the cosine |
+
+**This is the "0.007" false positive.** There is no "0.006" true duplicate in edge set v1: in every v1 run file, no labelled duplicate falls within 0.012 of 0.82. The closest rejected duplicates are in the v2 hard set below (−0.0034 to −0.0097), so the earlier "0.006" can't be tied to a pair and is withdrawn.
+
+**v2 hard set** (`evaluate_hard_set.py`, live settings). The verdict check reran the set with `--semantic-threshold 1.0`, which turns the route off. Every pair at or above 0.82 below loses its Potential Duplicate. The four duplicates under 0.82 are exactly the 4 extra true positives that a threshold of 0.81 gives ([evaluation-hard-set.md](evaluation-hard-set.md)).
+
+| Pair | Label | Cosine | Margin | Verdict at 0.82 |
+| --- | --- | --- | --- | --- |
+| Q-0083 → H-0083 | duplicate | 0.8103 | −0.0097 | rejected (Insufficient Evidence) |
+| Q-0057 → H-0056 | duplicate | 0.8123 | −0.0077 | rejected |
+| Q-0015 → H-0014 | duplicate | 0.8125 | −0.0075 | rejected |
+| Q-0072 → H-0071 | duplicate | 0.8166 | −0.0034 | rejected |
+| Q-0032 → H-0032 | duplicate | 0.8202 | **+0.0002** | accepted |
+| Q-0073 → H-0076 | similar_but_distinct | 0.8226 | +0.0026 | **false positive** |
+| Q-0074 → H-0076 | similar_but_distinct | 0.8234 | +0.0034 | **false positive** |
+| Q-0069 → H-0068 | duplicate | 0.8235 | +0.0035 | accepted |
+| Q-0068 → H-0068 | duplicate | 0.8254 | +0.0054 | accepted |
+| Q-0079 → H-0081 | similar_but_distinct | 0.8266 | +0.0066 | **false positive** |
+| Q-0006 → H-0005 | duplicate | 0.8267 | +0.0067 | accepted |
+| Q-0021 → H-0020 | duplicate | 0.8294 | +0.0094 | accepted |
+| Q-0070 → H-0072 | similar_but_distinct | 0.8295 | +0.0095 | **false positive** |
+| Q-0074 → H-0075 | similar_but_distinct | 0.8297 | +0.0097 | **false positive** |
+
+**Edge set v2:** FQ-016 (−0.0032), FQ-010 (−0.0040) and FQ-021 (−0.0098), all negatives passing by accident (table above).
+
+**In total:**
+
+- **Edge v1:** 1 pair, a false positive accepted (EQ-004 → EH-003).
+- **v2 hard set:** 14 pairs: 4 duplicates rejected, 5 accepted, and 5 false positives accepted.
+- **Edge v2:** 3 accidental passes.
+
+**18 labelled verdicts sit within 0.01 of the threshold**, and on the v2 hard set alone they fall on both sides, in both directions. **The 0.82 threshold sits inside the distribution it is meant to separate.**
+
+**The cosine isn't stable to 0.01 between runs either.** The same pair, EQ-004 → EH-003, scored 0.8162 in one run and 0.8269 in another, with no code change affecting embeddings. That is on both sides of 0.82. Ten v1 pairs differed between those two runs, by up to 0.011.
+
+- **Cause:** `idea_embedding_text` writes the vehicle applicability rows into the embedded text ("Vehicles: HCV Rigid Truck 1200, …"). `Idea.applicability` has no `order_by`, so the order depends on how the rows were loaded.
+- **Check:** reordering only that line moved one query–candidate cosine from 0.755 to 0.777.
+- **Consequence:** an idea's vector depends on row order, so a verdict within about 0.01 of the threshold can change between runs or after a re-index.
+- **Status:** not fixed, since model changes have stopped. Sorting the vehicles in `idea_embedding_text` and re-indexing would remove it. There are two measurements behind this:
 
 - **Edge v2:** seven negatives sit between 0.810 and 0.835 (FQ-021, FQ-001, FQ-010, FQ-016, FQ-022, FQ-015, FQ-002), straddling 0.82.
 - **v2 hard set sweep:** moving from 0.81 to 0.82 trades 4 true duplicates for 6 fewer false positives ([evaluation-hard-set.md](evaluation-hard-set.md)).
@@ -228,7 +293,8 @@ These failures were not fixed. Model changes stop here.
 | FQ-015 | different_programme | **No programme comparison exists.** The vehicle volumes differ (tipper only against rigid only), but nothing reads them. The semantic route accepts at 0.834. | Compare programme applicability. FQ-016 needs the same fix, since it currently passes by 0.003 |
 | FQ-010, FQ-011 | reversal_no_states | **Direction detection needs both states.** "Revert to the previously released design" names neither. They pass by cosine, not detection. | A reversal cue that doesn't need a state pair; the verb rule was removed in Tier 2 |
 | FQ-021 | sparse_negative | **Direction is only in the current and proposed fields** (1.2 → 1.5), not in a parseable phrase. It passes by cosine (0.0098). | Read state pairs from the structured fields |
-| v1 EQ-003, v2 FQ-012 (unlabelled) | — | **The component matcher can't tell a descriptive qualifier from a distinguishing one.** "Battery tray" against "Low-voltage battery tray" is probably the same part, but is now Similar but Distinct. | A list of descriptive qualifiers, or a component master list |
+| v1 EQ-003, v2 FQ-012 (unlabelled) | — | **The component matcher can't tell a descriptive qualifier from a distinguishing one.** Patched for "low-voltage"/"LV" only, as a [dated assumption](#assumption-low-voltage-is-descriptive-dated-28-october-2026) | A parts master, with uncertain qualifiers routed to Insufficient Evidence / Manual Review Required |
+| all | — | **Embedding text depends on applicability row order.** Cosine varies by up to about 0.01 between runs ([details](#accidental-passes-and-the-threshold)) | Sort the vehicles in `idea_embedding_text` and re-index |
 
 ## Unlabelled pairs EQ-001 and EQ-002 flag (before this change)
 
@@ -256,5 +322,6 @@ H-0003 is accepted by the semantic route: "changed" isn't a change verb, so EQ-0
 
 - **Two or three pairs per probe type.** Each result is about a mechanism, not a rate.
 - **The set was written knowing the rules**, so it tests over-firing, not generalisation. `lexical_requires_component` was written after seeing these failures, so this set no longer tests it fairly either.
+- **The component-routing fix depends on retrieval it doesn't control.** The five pairs it fixed (FQ-002 to FQ-006) are shown at ranks 10 to 15 in a top-15 window, and that window is still selected lexically (exact, then fuzzy, then cosine). Two of them (FQ-002, FQ-004) occupy the last shown slot. One more candidate with a higher fuzzy score would push them out of view. They would still count as correct, since they aren't duplicates, but they would no longer be surfaced. The fix's measured effect on these cases depends on that retrieval.
 - **No LLM rerank.** Ollama wasn't reachable.
 - **Database state.** The edge ideas are loaded and rolled back in one transaction. The database had 111 historical ideas before and after every run, and no VAVE-FH or VAVE-EH codes.

@@ -209,6 +209,12 @@ With the Tier 2 rules, the symmetric fuzzy score off, and the component subset g
 
 Details are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md#v2-hard-set-run-first).
 
+**After "low-voltage" and "LV" were added as descriptive component qualifiers (same day):**
+
+- **Unchanged:** precision, recall and F1, and every verdict.
+- **Changed:** mean rank 1.200 → 1.211 and rank@1 0.833 → 0.822 (74 / 90).
+- **Why:** for Q-0005, the unlabelled SYN-015 (the same low-voltage battery tray proposal) is now a Potential Duplicate and outranks the labelled H-0005. This is the current reference.
+
 ## v2 hard set: clean baseline (27 October 2026)
 
 This is the reference for comparing later classifier changes on `data/vave_duplicate_eval_set_v2.xlsx`. The method and the earlier runs are in [evaluation-hard-set.md](evaluation-hard-set.md).
