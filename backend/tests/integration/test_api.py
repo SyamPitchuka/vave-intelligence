@@ -198,9 +198,29 @@ def test_copilot_cites_the_guideline(client):
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["abstained"] is False
-    excerpts = " ".join(item["excerpt"] for item in body["citations"])
-    assert "saving per vehicle" in excerpts.lower()
-    assert body["provider"] == "deterministic"
+    # Fallback mode has no language model, so the answer is a labelled quote from the top passage.
+    assert body["answer_mode"] == "extractive"
+    assert body["provider"] == "extractive"
+    assert body["answer"].startswith("Extractive answer")
+    [citation] = body["citations"]
+    assert "saving per vehicle" in citation["excerpt"].lower()
+    assert citation["section_heading"] == "Savings"
+    assert citation["document_title"] == "Synthetic VAVE guideline"
+    assert len(body["evidence"]) <= 5
+
+
+def test_copilot_abstains_below_the_citation_threshold_and_says_why(client):
+    admin = login(client, "admin@vave.local", "ChangeMeAdmin!23")
+    engineer = login(client, "engineer@vave.local", "VaveDemo!234")
+    try:
+        assert client.put("/api/v1/ai/settings", headers=auth(admin), json={"copilot_citation_threshold": 1.0}).status_code == 200
+        body = client.post("/api/v1/copilot/chat", headers=auth(engineer), json={"message": "How is total combined annual saving calculated?"}).json()
+        assert body["abstained"] is True and body["answer_mode"] == "abstained"
+        assert "below the citation-confidence threshold of 1.000" in body["abstention_reason"]
+        assert body["citations"] == []
+    finally:
+        reset = client.put("/api/v1/ai/settings", headers=auth(admin), json={"copilot_citation_threshold": None})
+        assert reset.json()["copilot_citation_threshold"] is None
 
 
 def test_evaluation_reports_only_labelled_metrics(client):

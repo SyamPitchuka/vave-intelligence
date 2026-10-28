@@ -6,7 +6,7 @@ import { Badge, ErrorState, Hint, Label, PageHeader, Select, Textarea } from "@/
 import { api, downloadFile } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { errorMessage } from "@/lib/utils";
-import type { ChatReply, Citation } from "@/types";
+import type { AnswerMode, ChatReply, Citation } from "@/types";
 
 type SessionItem = { id: string; title: string | null; created_at: string | null };
 type Message = {
@@ -16,6 +16,8 @@ type Message = {
   citations: Citation[] | null;
   evidence: Citation[] | null;
   abstained: boolean;
+  answer_mode?: AnswerMode | null;
+  abstention_reason?: string | null;
   provider: string | null;
 };
 
@@ -95,7 +97,7 @@ export function CopilotPage() {
           {(thread.data?.messages ?? []).map((message) => (
             <article key={message.id}>
               <p className="text-xs uppercase tracking-wide text-muted">{message.role}{message.provider ? ` · ${message.provider}` : ""}</p>
-              {message.abstained ? <Badge tone="amber">Insufficient evidence</Badge> : null}
+              <ModeBadge mode={message.answer_mode} abstained={message.abstained} />
               <div className="prose-sm mt-1 text-sm leading-6">
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
@@ -166,13 +168,25 @@ export function CopilotPage() {
 function Answer({ answer }: { answer: ChatReply }) {
   return (
     <article>
-      {answer.abstained ? <Badge tone="amber">Insufficient evidence</Badge> : null}
+      <ModeBadge mode={answer.answer_mode} abstained={answer.abstained} />
       <div className="text-sm leading-6"><ReactMarkdown>{answer.answer}</ReactMarkdown></div>
       <p className="mt-1 text-xs text-muted">{answer.provider} · {answer.model ?? "model not recorded"}</p>
       <CitationList title="Citations" items={answer.citations ?? []} />
       <CitationList title="Retrieved evidence" items={answer.evidence ?? []} />
     </article>
   );
+}
+
+function ModeBadge({ mode, abstained }: { mode?: AnswerMode | null; abstained: boolean }) {
+  if (mode === "abstained" || (!mode && abstained)) return <Badge tone="amber">No answer: insufficient evidence</Badge>;
+  if (mode === "extractive") return <Badge tone="blue">Extractive: quoted passage, no language model</Badge>;
+  if (mode === "generated") return <Badge tone="blue">Generated from cited passages</Badge>;
+  return null;
+}
+
+function sectionLabel(item: Citation): string {
+  if (item.section_number) return `section ${item.section_number} ${item.section_heading ?? ""}`.trim();
+  return item.section_heading || item.section || "Section not recorded";
 }
 
 function CitationList({ title, items }: { title: string; items: Citation[] }) {
@@ -183,8 +197,9 @@ function CitationList({ title, items }: { title: string; items: Citation[] }) {
       <ul className="mt-1 space-y-2">
         {items.map((item) => (
           <li key={item.chunk_id} className="rounded border border-line bg-canvas p-2 text-xs leading-5">
+            {item.document_number ? <span className="text-muted">{item.document_number} · </span> : null}
             <a className="font-medium text-accent-700" href={`/api/v1/documents/${item.document_id}`}>{item.document_title}</a>
-            {item.is_synthetic ? " · Synthetic" : ""} · {item.section || "Section not recorded"} · page {item.page_number ?? "not recorded"}
+            {item.is_synthetic ? " · Synthetic" : ""} · {sectionLabel(item)} · page {item.page_number ?? "not recorded"} · cosine {item.cosine_similarity.toFixed(3)}
             <span className="mt-1 block">{item.excerpt}</span>
           </li>
         ))}

@@ -31,7 +31,9 @@ EDITABLE = {
     "direction_detection",
     "scope_comparison",
     "symmetric_lexical_fuzzy",
-    "copilot_lexical_threshold",
+    "copilot_top_k",
+    "copilot_distinct_sections",
+    "copilot_citation_threshold",
     "dataset_label",
     "display_timezone",
 }
@@ -67,7 +69,9 @@ def _defaults(settings: Settings) -> dict[str, Any]:
         "direction_detection": settings.direction_detection,
         "scope_comparison": settings.scope_comparison,
         "symmetric_lexical_fuzzy": settings.symmetric_lexical_fuzzy,
-        "copilot_lexical_threshold": settings.copilot_lexical_threshold,
+        "copilot_top_k": settings.copilot_top_k,
+        "copilot_distinct_sections": settings.copilot_distinct_sections,
+        "copilot_citation_threshold": settings.copilot_citation_threshold,
         "dataset_label": settings.dataset_label,
         "display_timezone": settings.display_timezone,
         "last_connection_check": None,
@@ -146,6 +150,17 @@ def save_ai_settings(db: Session, updates: dict[str, Any], user_id: uuid.UUID | 
         if not 0 < semantic <= 1:
             raise ValueError("The semantic duplicate threshold must be above 0 and at most 1, or empty to turn it off.")
     current["semantic_duplicate_threshold"] = semantic
+    copilot_k = int(current.get("copilot_top_k") or 5)
+    if not 1 <= copilot_k <= 20:
+        raise ValueError("Copilot passages per question must be between 1 and 20.")
+    current["copilot_top_k"] = copilot_k
+    current["copilot_distinct_sections"] = bool(current.get("copilot_distinct_sections", True))
+    citation = current.get("copilot_citation_threshold")
+    if citation is not None:
+        citation = float(citation)
+        if not 0 < citation <= 1:
+            raise ValueError("The citation-confidence threshold must be above 0 and at most 1, or empty to turn it off.")
+    current["copilot_citation_threshold"] = citation
     for flag in CLASSIFIER_FLAGS:
         # A row saved before these settings existed has no value; leave it to the default.
         if flag in current:

@@ -124,7 +124,8 @@ export type AiStatus = {
   comparison_timeout_seconds: number;
   fuzzy_strong_threshold: number;
   cosine_retrieve_threshold: number;
-  copilot_lexical_threshold: number;
+  copilot_top_k: number;
+  copilot_citation_threshold: number | null;
   llm_required: boolean;
   dataset_label: string;
   display_timezone: string;
@@ -209,16 +210,25 @@ export type ImportBatch = {
 };
 
 export type Citation = {
+  rank?: number;
   document_id: string;
+  document_number?: string | null;
   document_title: string;
+  document_type?: string | null;
   chunk_id: string;
+  section_number?: string | null;
+  section_heading?: string | null;
+  section_path?: string | null;
   page_number: number | null;
-  section: string | null;
+  /** Messages stored before section-aware chunking carry a section label instead of number and heading. */
+  section?: string | null;
+  citation?: string;
   excerpt: string;
-  lexical_score: number;
   cosine_similarity: number;
   is_synthetic: boolean;
 };
+
+export type AnswerMode = "generated" | "extractive" | "abstained";
 
 export type ChatReply = {
   session_id: string;
@@ -227,6 +237,8 @@ export type ChatReply = {
   citations: Citation[];
   evidence: Citation[];
   abstained: boolean;
+  answer_mode: AnswerMode | null;
+  abstention_reason: string | null;
   provider: string;
   model: string | null;
 };

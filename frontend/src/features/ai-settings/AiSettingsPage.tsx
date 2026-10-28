@@ -37,7 +37,7 @@ export function AiSettingsPage() {
           comparison_timeout_seconds: Number(form.comparison_timeout_seconds),
           fuzzy_strong_threshold: Number(form.fuzzy_strong_threshold),
           cosine_retrieve_threshold: Number(form.cosine_retrieve_threshold),
-          copilot_lexical_threshold: Number(form.copilot_lexical_threshold),
+          copilot_top_k: Number(form.copilot_top_k),
           dataset_label: form.dataset_label,
           display_timezone: form.display_timezone,
         }),
@@ -73,6 +73,8 @@ export function AiSettingsPage() {
         <p>Comparison timeout: {current.comparison_timeout_seconds}s</p>
         <p>Fuzzy threshold: {current.fuzzy_strong_threshold}</p>
         <p>Cosine floor: {current.cosine_retrieve_threshold}</p>
+        <p>Copilot passages per question: {current.copilot_top_k}</p>
+        <p>Copilot citation-confidence threshold: {current.copilot_citation_threshold ?? "Not set (not calibrated; the copilot does not abstain on confidence)"}</p>
         <p>OpenAI configured on server: {current.openai_configured ? "Yes" : "No"}</p>
         <p>External inference blocked: {current.external_inference_blocked ? "Yes" : "No"}</p>
         <p>Last connection check: {formatWhen(current.last_connection_check, current.display_timezone)} · {current.last_connection_ok === null ? "Not checked" : current.last_connection_ok ? "Succeeded" : "Failed"}</p>

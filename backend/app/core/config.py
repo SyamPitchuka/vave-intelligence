@@ -74,11 +74,19 @@ class Settings(BaseSettings):
     # Off: it changed no labelled v2 or edge-case verdict, and it costs v2 recall unless the semantic route is on
     # (docs/evaluation-edge-cases.md).
     symmetric_lexical_fuzzy: bool = False
-    copilot_lexical_threshold: float = 0.45
+    # Knowledge copilot. Passages retrieved per question, and the citation-confidence threshold: the lowest top
+    # passage cosine at which the copilot answers. It has no default on purpose; it must be calibrated on the
+    # active embedding model, and None leaves abstention on confidence off until then.
+    copilot_top_k: int = 5
+    # Two windows of one section are one place to look: keep the best one, so top-k is k distinct sections.
+    copilot_distinct_sections: bool = True
+    copilot_citation_threshold: float | None = None
 
     upload_max_mb: int = 20
-    chunk_size: int = 800
-    chunk_overlap: int = 120
+    # Chunks are sections on a page; only a section longer than this is split into overlapping windows. The
+    # embedding model's own input limit (256 tokens for all-MiniLM-L6-v2) applies if it is lower.
+    chunk_max_tokens: int = 256
+    chunk_overlap_tokens: int = 48
 
     log_level: str = "INFO"
     log_prompt_bodies: bool = False

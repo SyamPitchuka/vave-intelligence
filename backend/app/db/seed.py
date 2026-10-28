@@ -36,6 +36,7 @@ from app.services.imports.workbook import write_workbook
 from app.services.llm_providers.fallback import DeterministicEmbeddingProvider
 
 logger = logging.getLogger(__name__)
+GUIDELINE_FILENAME = "vave_synthetic_guideline.txt"
 
 
 def seed_reference(db: Session) -> None:
@@ -77,7 +78,7 @@ def seed_reference(db: Session) -> None:
 
 
 def seed_demo_content(db: Session) -> None:
-    from app.models import Document, Idea
+    from app.models import Document, DocumentChunk, Idea
 
     settings = get_settings()
     seed_reference(db)
@@ -120,24 +121,38 @@ def seed_demo_content(db: Session) -> None:
         )
     _seed_cases(db, "Synthetic duplicate labels v1", "duplicate", EVALUATION_CASES)
     _seed_cases(db, "Synthetic copilot citations v1", "copilot", COPILOT_CASES)
-    if db.scalar(select(func.count()).select_from(Document)) == 0:
-        from app.services.copilot.service import ingest_bytes
+    from app.services.copilot.service import ingest_bytes
 
+    # A guideline chunked before section-aware chunking has no section_path; it is seed content, so rebuild it.
+    stale_guidelines = db.scalars(
+        select(Document).where(
+            Document.filename == GUIDELINE_FILENAME,
+            Document.is_synthetic.is_(True),
+            Document.chunks.any(DocumentChunk.section_path.is_(None)),
+        )
+    ).all()
+    for stale in stale_guidelines:
+        db.delete(stale)
+    db.flush()
+    if stale_guidelines or db.scalar(select(func.count()).select_from(Document)) == 0:
         admin = db.scalar(select(User).where(User.email == settings.admin_email))
         ingest_bytes(
             db,
             content=GUIDELINE_TEXT.encode("utf-8"),
-            filename="vave_synthetic_guideline.txt",
+            filename=GUIDELINE_FILENAME,
             title="Synthetic VAVE guideline",
             visibility="all_authenticated",
             user_id=admin.id if admin else None,
             storage_dir=settings.resolved_storage_dir(),
             embedder=embedder,
-            chunk_size=settings.chunk_size,
-            chunk_overlap=settings.chunk_overlap,
             is_synthetic=True,
             max_bytes=settings.upload_max_mb * 1024 * 1024,
+            max_tokens=settings.chunk_max_tokens,
+            overlap_tokens=settings.chunk_overlap_tokens,
         )
+    # Only a guideline seeded just now gets a (deterministic) passage vector, at ingest. Passages already indexed,
+    # such as a corpus embedded with MiniLM, are left alone: re-embedding them here would add hashed vectors on
+    # every start. Other models need POST /api/v1/ai/reindex.
     db.flush()
 
 

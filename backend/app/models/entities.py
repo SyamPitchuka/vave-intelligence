@@ -332,6 +332,9 @@ class Document(Base):
     visibility: Mapped[str] = mapped_column(String(32), nullable=False, default="engineering")
     is_synthetic: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
     page_count: Mapped[int | None] = mapped_column(Integer)
+    # From the document itself where it states them, e.g. CVOEM/VAVE/TD-BM/FY23/014 and "Teardown benchmark".
+    document_number: Mapped[str | None] = mapped_column(String(64))
+    document_type: Mapped[str | None] = mapped_column(String(64))
     error: Mapped[str | None] = mapped_column(Text)
     storage_path: Mapped[str | None] = mapped_column(String(512))
     uploaded_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
@@ -348,10 +351,33 @@ class DocumentChunk(Base):
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     page_number: Mapped[int | None] = mapped_column(Integer)
+    # Display label, e.g. "4.2.1 Mounting bracket - principal finding".
     section: Mapped[str | None] = mapped_column(String(255))
+    section_number: Mapped[str | None] = mapped_column(String(32))
+    section_heading: Mapped[str | None] = mapped_column(String(255))
+    # Headings from the top level down, joined by " > ". Null on chunks made before section-aware chunking.
+    section_path: Mapped[str | None] = mapped_column(Text)
+    # 0 for a whole section-on-a-page; 1, 2, ... for overlapping windows of one too long to embed whole.
+    window: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
+    # Tokens by the embedding model's tokenizer where it has one, otherwise words.
     token_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     document: Mapped[Document] = relationship(back_populates="chunks")
+
+
+class DocumentChunkEmbedding(Base):
+    """Copilot passage vectors. Kept apart from idea vectors (embedding_records), made by the same provider."""
+
+    __tablename__ = "document_chunk_embeddings"
+    __table_args__ = (UniqueConstraint("chunk_id", "model_name", name="uq_chunk_embedding_model"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    chunk_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("document_chunks.id", ondelete="CASCADE"), index=True)
+    model_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    dimensions: Mapped[int] = mapped_column(Integer, nullable=False, default=EMBEDDING_DIM)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIM), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class ChatSession(Base):
@@ -378,6 +404,9 @@ class ChatMessage(Base):
     citations: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     evidence: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     abstained: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # generated, extractive or abstained; null on user messages.
+    answer_mode: Mapped[str | None] = mapped_column(String(16))
+    abstention_reason: Mapped[str | None] = mapped_column(Text)
     provider: Mapped[str | None] = mapped_column(String(64))
     model_name: Mapped[str | None] = mapped_column(String(120))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

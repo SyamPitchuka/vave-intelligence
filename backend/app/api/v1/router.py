@@ -29,7 +29,6 @@ from app.models import (
     DataSourceConfig,
     Department,
     Document,
-    DocumentChunk,
     DuplicateAnalysisCandidate,
     DuplicateAnalysisRun,
     EvaluationDataset,
@@ -46,7 +45,7 @@ from app.models import (
 )
 from app.services.analytics_service import dashboard, rejections, savings
 from app.services.audit import add_audit
-from app.services.copilot.service import answer_question, can_read_document, ingest_bytes
+from app.services.copilot.service import answer_question, can_read_document, ingest_bytes, reindex_documents
 from app.services.duplicate_detection.service import analyze_submission, latest_decision
 from app.services.evaluation_service import run_evaluation
 from app.services.ideas.service import create_submission, list_ideas, load_idea, search_ideas, update_draft
@@ -140,7 +139,9 @@ class SettingsBody(BaseModel):
     direction_detection: bool | None = None
     scope_comparison: bool | None = None
     symmetric_lexical_fuzzy: bool | None = None
-    copilot_lexical_threshold: float | None = None
+    copilot_top_k: int | None = None
+    copilot_distinct_sections: bool | None = None
+    copilot_citation_threshold: float | None = None
     dataset_label: str | None = None
     display_timezone: str | None = None
 
@@ -719,10 +720,10 @@ async def upload_document(
         user_id=user.id,
         storage_dir=settings.resolved_storage_dir(),
         embedder=embedder,
-        chunk_size=settings.chunk_size,
-        chunk_overlap=settings.chunk_overlap,
         is_synthetic=is_synthetic,
         max_bytes=settings.upload_max_mb * 1024 * 1024,
+        max_tokens=settings.chunk_max_tokens,
+        overlap_tokens=settings.chunk_overlap_tokens,
     )
     add_audit(db, user_id=user.id, action="document.upload", entity_type="document", entity_id=str(document.id), details={"filename": document.filename, "visibility": visibility}, ip_address=client_ip(request))
     db.commit()
@@ -736,7 +737,7 @@ def document_detail(document_id: uuid.UUID, db: Session = Depends(get_db), user:
         raise LookupError("Document was not found.")
     payload = _document(document)
     payload["chunks"] = [
-        {"id": str(chunk.id), "chunk_index": chunk.chunk_index, "page_number": chunk.page_number, "section": chunk.section, "excerpt": chunk.content[:400]}
+        {"id": str(chunk.id), "chunk_index": chunk.chunk_index, "page_number": chunk.page_number, "section": chunk.section, "section_number": chunk.section_number, "section_heading": chunk.section_heading, "section_path": chunk.section_path, "window": chunk.window, "token_count": chunk.token_count, "excerpt": chunk.content[:400]}
         for chunk in document.chunks
     ]
     return payload
@@ -789,7 +790,7 @@ def session_detail(session_id: uuid.UUID, db: Session = Depends(get_db), user: U
         "id": str(session.id),
         "title": session.title,
         "messages": [
-            {"id": str(item.id), "role": item.role, "content": item.content, "citations": item.citations, "evidence": item.evidence, "abstained": item.abstained, "provider": item.provider, "model": item.model_name, "created_at": item.created_at.isoformat() if item.created_at else None}
+            {"id": str(item.id), "role": item.role, "content": item.content, "citations": item.citations, "evidence": item.evidence, "abstained": item.abstained, "answer_mode": item.answer_mode, "abstention_reason": item.abstention_reason, "provider": item.provider, "model": item.model_name, "created_at": item.created_at.isoformat() if item.created_at else None}
             for item in session.messages
         ],
     }
@@ -829,11 +830,12 @@ def update_ai_settings(body: SettingsBody, request: Request, db: Session = Depen
 
         raise HTTPException(status_code=403, detail={"code": "forbidden", "message": "Only a system administrator can change AI settings."})
     updates = {key: value for key, value in body.model_dump().items() if value is not None}
-    if "semantic_duplicate_threshold" in body.model_fields_set:
-        # An explicit null turns the semantic route off, so it is not dropped with the other unset fields.
-        updates["semantic_duplicate_threshold"] = body.semantic_duplicate_threshold
+    # An explicit null turns a threshold off, so it is not dropped with the other unset fields.
+    for key in ("semantic_duplicate_threshold", "copilot_citation_threshold"):
+        if key in body.model_fields_set:
+            updates[key] = getattr(body, key)
     config, reindex = save_ai_settings(db, updates, user.id)
-    add_audit(db, user_id=user.id, action="ai.settings", entity_type="application_settings", entity_id="ai", details={"mode": config["mode"], "embedding_model": config["embedding_model"], "reindex_required": reindex}, ip_address=client_ip(request))
+    add_audit(db, user_id=user.id, action="ai.settings", entity_type="application_settings", entity_id="ai", details={"mode": config["mode"], "embedding_model": config["embedding_model"], "copilot_citation_threshold": config.get("copilot_citation_threshold"), "reindex_required": reindex}, ip_address=client_ip(request))
     db.commit()
     payload = _status_payload(config)
     payload["reindex_required"] = reindex
@@ -871,17 +873,13 @@ def reindex(db: Session = Depends(get_db), user: User = Depends(get_current_user
     db.add(job)
     db.flush()
     ids = list(db.scalars(select(Idea.id)).all())
-    chunk_ids = list(db.scalars(select(DocumentChunk.id)).all())
     _reindex_ids(db, ids)
     config, _chat, embedder, _status, _warning = _runtime(db)
-    for chunk in db.scalars(select(DocumentChunk)).all():
-        from app.services.embeddings.index import upsert_embedding
-
-        upsert_embedding(db, entity_type="document_chunk", entity_id=chunk.id, model_name=embedder.model, text=chunk.content, embedder=embedder)
+    chunk_count = reindex_documents(db, embedder)
     job.status = "completed"
     job.progress = 100
     job.finished_at = datetime.now(UTC)
-    job.result = {"ideas": len(ids), "chunks": len(chunk_ids), "model": embedder.model}
+    job.result = {"ideas": len(ids), "chunks": chunk_count, "model": embedder.model}
     db.commit()
     return {"id": str(job.id), "status": job.status, "result": job.result}
 
@@ -1319,6 +1317,8 @@ def _document(row: Document) -> dict[str, Any]:
         "visibility": row.visibility,
         "is_synthetic": row.is_synthetic,
         "page_count": row.page_count,
+        "document_number": row.document_number,
+        "document_type": row.document_type,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 
@@ -1331,6 +1331,8 @@ def _message(session: ChatSession, message: ChatMessage) -> dict[str, Any]:
         "citations": message.citations,
         "evidence": message.evidence,
         "abstained": message.abstained,
+        "answer_mode": message.answer_mode,
+        "abstention_reason": message.abstention_reason,
         "provider": message.provider,
         "model": message.model_name,
     }
@@ -1359,7 +1361,9 @@ def _status_payload(config: dict[str, Any]) -> dict[str, Any]:
         "direction_detection": config.get("direction_detection"),
         "scope_comparison": config.get("scope_comparison"),
         "symmetric_lexical_fuzzy": config.get("symmetric_lexical_fuzzy"),
-        "copilot_lexical_threshold": config.get("copilot_lexical_threshold"),
+        "copilot_top_k": config.get("copilot_top_k"),
+        "copilot_distinct_sections": config.get("copilot_distinct_sections"),
+        "copilot_citation_threshold": config.get("copilot_citation_threshold"),
         "llm_required": config.get("llm_required"),
         "dataset_label": config.get("dataset_label"),
         "display_timezone": config.get("display_timezone"),

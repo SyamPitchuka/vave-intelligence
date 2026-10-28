@@ -1,0 +1,595 @@
+[
+  {
+    "id": "M2-001",
+    "query": "What material change was recommended for the alternator mounting bracket in the FY23 teardown study?",
+    "type": "single_hop",
+    "expected_docs": [
+      "TD-BM/FY23/014"
+    ],
+    "expected_section": "4.2",
+    "expected_page": 12,
+    "answer_anchor": "Cast-iron bracket replaced with HSLA steel; approximately 18 per cent weight reduction, no change in fatigue life.",
+    "answerable": true,
+    "notes": "Baseline query carried over from the September development build, so results are comparable."
+  },
+  {
+    "id": "M2-002",
+    "query": "Has any competitor benchmark evaluated composite leaf springs for this vehicle segment?",
+    "type": "single_hop",
+    "expected_docs": [
+      "CB-BM/2024/007"
+    ],
+    "expected_section": "2.1",
+    "expected_page": 6,
+    "answer_anchor": "GFRP composite mono-leaf, 35 per cent mass saving against the steel multi-leaf, durability validation ongoing.",
+    "answerable": true,
+    "notes": "Carried over from the development build. LABEL CORRECTED 28 October 2026, after the first evaluation run: was section 2, page 5; now section 2.1, page 6. Verified against the raw PDF page text, independently of retrieval: the 35 per cent mass saving and the open durability validation are on p.6 under 2.1.1 and 2.1.2; section 2 on p.5 only points forward to section 2.1."
+  },
+  {
+    "id": "M2-003",
+    "query": "What was the measured in-cab noise difference in the 2024 cabin benchmark?",
+    "type": "single_hop",
+    "expected_docs": [
+      "CB-BM/2024/011"
+    ],
+    "expected_section": "2.1",
+    "expected_page": 5,
+    "answer_anchor": "63 dB(A) against 68 dB(A) at 80 km/h, attributed to the air-suspended cab mount and acoustic laminated glass.",
+    "answerable": true,
+    "notes": "Deliberately phrased without naming any vehicle, since the corpus is anonymised."
+  },
+  {
+    "id": "M2-004",
+    "query": "What gearbox ratio spread was recorded in the powertrain and driveline benchmark?",
+    "type": "single_hop",
+    "expected_docs": [
+      "TD-BM/2024/012"
+    ],
+    "expected_section": "3",
+    "expected_page": 6,
+    "answer_anchor": "Nine-speed gearbox with a ratio spread of about 11.5:1 against the current platform's six-speed at about 6.8:1.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-005",
+    "query": "What wear-reduction change was identified for the tipper body in mining duty?",
+    "type": "single_hop",
+    "expected_docs": [
+      "CB-BM/2024/013"
+    ],
+    "expected_section": "2",
+    "expected_page": 4,
+    "answer_anchor": "Hardened-steel bolt-on floor liner, plus 42.0 kg, for the mining and quarry duty variant.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-006",
+    "query": "What cooling pack change was benchmarked for the construction-duty variant?",
+    "type": "single_hop",
+    "expected_docs": [
+      "TD-BM/2024/014"
+    ],
+    "expected_section": "3",
+    "expected_page": 6,
+    "answer_anchor": "Increased-margin radiator core, about 15 per cent larger frontal area, with an electronically controlled viscous fan.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-007",
+    "query": "How much can be saved by eliminating the separate quench and temper operation on the front axle beam?",
+    "type": "single_hop",
+    "expected_docs": [
+      "TD-BM/2024/015"
+    ],
+    "expected_section": "3.2",
+    "expected_page": 5,
+    "answer_anchor": "About INR 1,240 per beam by moving to a micro-alloyed grade cooled directly from forging heat.",
+    "answerable": true,
+    "notes": "Finding 3.2. The largest single cost opportunity in that teardown. LABEL CORRECTED 28 October 2026, after the first evaluation run: was section 3.2, page 4; now section 3.2, page 5. Verified against the raw PDF page text, independently of retrieval: INR 1,240 per beam is on p.5, the second page of section 3.2; p.4 is where the section starts."
+  },
+  {
+    "id": "M2-008",
+    "query": "What proportion of VAVE ideas closed in FY24 H1 were duplicates?",
+    "type": "single_hop",
+    "expected_docs": [
+      "VE-CL/2024/008"
+    ],
+    "expected_section": "2",
+    "expected_page": 2,
+    "answer_anchor": "148 of 337 closures, 43.9 per cent, were duplicates of ideas already on record.",
+    "answerable": true,
+    "notes": "The headline statistic the whole project rests on."
+  },
+  {
+    "id": "M2-009",
+    "query": "How has the price of hot-rolled coil moved over the last twenty-four months?",
+    "type": "single_hop",
+    "expected_docs": [
+      "MC-IX/2025/003"
+    ],
+    "expected_section": "2",
+    "expected_page": 2,
+    "answer_anchor": "HR coil IS 2062 E250 fell 9.3 per cent, from INR 58.4 to INR 53.0 per kg.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-010",
+    "query": "Why did the aluminium cab mounting bracket crack in service?",
+    "type": "single_hop",
+    "expected_docs": [
+      "WF-FA/2024/021"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 3,
+    "answer_anchor": "Fretting-initiated fatigue at the clamped interface between the aluminium mount face and the steel washer.",
+    "answerable": true,
+    "notes": "The mechanism, not the symptom. Tests whether retrieval returns the cause."
+  },
+  {
+    "id": "M2-011",
+    "query": "What salt spray performance is required for a bracket directly exposed to road spray?",
+    "type": "single_hop",
+    "expected_docs": [
+      "ES-STD/2023/004"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 4,
+    "answer_anchor": "Exposure class C1 requires 720 hours to red rust, tested to IS 9844.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-012",
+    "query": "At what annual volume does a progressive press tool become cheaper than fabrication for a chassis bracket?",
+    "type": "single_hop",
+    "expected_docs": [
+      "SC-TC/2024/009"
+    ],
+    "expected_section": "3",
+    "expected_page": 3,
+    "answer_anchor": "21,400 units per year at single-programme volume.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-013",
+    "query": "How much of the FY27 kerb mass target is still unallocated?",
+    "type": "single_hop",
+    "expected_docs": [
+      "WR-RM/2024/002"
+    ],
+    "expected_section": "2",
+    "expected_page": 2,
+    "answer_anchor": "61 kg of the 232 kg target remains unallocated; 171 kg is committed.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-014",
+    "query": "Why was the proposal to delete the roof acoustic pad withdrawn?",
+    "type": "single_hop",
+    "expected_docs": [
+      "VE-WS/2024/017"
+    ],
+    "expected_section": "5",
+    "expected_page": 5,
+    "answer_anchor": "Deleting it would cost about 2.1 dB(A) at 1 kHz, exceeding the available margin against the cabin noise target.",
+    "answerable": true,
+    "notes": "In meeting-minutes register, which shares little vocabulary with the query. LABEL CORRECTED 28 October 2026, after the first evaluation run: was section 5.1, page 5; now section 5, page 5. Verified against the raw PDF page text, independently of retrieval: the document has no section 5.1; 'Outcome 5.1' is a numbered outcome callout inside section 5 (NVH package discussion), not a section number."
+  },
+  {
+    "id": "M2-015",
+    "query": "Why was the aluminium cab mounting bracket reversed, and under what conditions could it be proposed again?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "WF-FA/2024/021",
+      "WF-FA/2024/021"
+    ],
+    "expected_section": "3.1 and 6",
+    "expected_page": "3 and 5",
+    "answer_anchor": "Mechanism: fretting-initiated fatigue at the clamped interface. Five stated conditions, including a fixture that reproduces the joint and validation on the tipper duty cycle.",
+    "answerable": true,
+    "notes": "Two distant sections of one document. Tests whether retrieval returns both, not just the first."
+  },
+  {
+    "id": "M2-016",
+    "query": "If I propose an aluminium bracket bolted to a steel frame, what validation does the standard require?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "ES-STD/2023/004",
+      "WF-FA/2024/021"
+    ],
+    "expected_section": "4.2 and 3.2",
+    "expected_page": "5 and 3",
+    "answer_anchor": "A fixture reproducing the clamped joint in dissimilar materials; a component-level result on a rigid interface plate is not acceptable evidence.",
+    "answerable": true,
+    "notes": "The standard states the requirement; the warranty report explains why it exists."
+  },
+  {
+    "id": "M2-017",
+    "query": "Should the front spring bracket move from fabrication to pressing?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "SC-TC/2024/009",
+      "TD-BM/2024/015"
+    ],
+    "expected_section": "3 and 6",
+    "expected_page": "3 and 7",
+    "answer_anchor": "Break-even is 21,400 units against a platform volume of 18,000, so not at single-programme volume; combined volume is 29,400, which reverses the answer.",
+    "answerable": true,
+    "notes": "The answer is conditional and the condition lives in a different section from the number."
+  },
+  {
+    "id": "M2-018",
+    "query": "Is the PET felt headliner idea at risk?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "VE-WS/2024/017",
+      "WR-RM/2024/002"
+    ],
+    "expected_section": "4.2 and 3.1",
+    "expected_page": "4 and 4",
+    "answer_anchor": "Field Quality raised hot-climate sag history at the workshop; the roadmap lists VC-24-0502 as at risk with 3.40 kg exposed.",
+    "answerable": true,
+    "notes": "Requires a meeting minute and a programme roadmap - very different registers. LABEL CORRECTED 28 October 2026, after the first evaluation run: was section 4.2 and 3.1, page 5 and 4; now section 4.2 and 3.1, page 4 and 4. Verified against the raw PDF page text, independently of retrieval: section 4.2 of VE-WS/2024/017 (the PET felt discussion) is entirely on p.4, not p.5; the WR-RM/2024/002 anchor is unchanged."
+  },
+  {
+    "id": "M2-019",
+    "query": "What coating should I specify for an exposed chassis bracket, and what does it cost?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "ES-STD/2023/004",
+      "MC-IX/2025/003"
+    ],
+    "expected_section": "3.1 and 3.1",
+    "expected_page": "4 and 4",
+    "answer_anchor": "Zinc-nickel 8 um, zinc flake or E-coat plus topcoat meet the 720 hour C1 requirement; zinc-nickel is INR 412 per square metre.",
+    "answerable": true,
+    "notes": "Requirement in one document, rate in another."
+  },
+  {
+    "id": "M2-020",
+    "query": "Why were two frame web reduction ideas assessed differently when they look almost identical?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "VE-CL/2024/008",
+      "TD-BM/2024/015"
+    ],
+    "expected_section": "4 and 6",
+    "expected_page": "5 and 7",
+    "answer_anchor": "VC-24-0124 and VC-24-0129 differ only by a local doubler; the first failed hanger fatigue and the second passed at 1.18 times target.",
+    "answerable": true,
+    "notes": "The distinguishing feature is a single design element."
+  },
+  {
+    "id": "M2-021",
+    "query": "Which closed ideas would now qualify at current material rates?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "MC-IX/2025/003",
+      "VE-CL/2024/008"
+    ],
+    "expected_section": "4 and 5",
+    "expected_page": "5 and 5",
+    "answer_anchor": "Eleven of nineteen threshold closures would now qualify; the cost index lists the specific ideas that crossed.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-022",
+    "query": "What is the largest cost gap in the front axle group and does the supplier panel support fixing it?",
+    "type": "multi_hop",
+    "expected_docs": [
+      "TD-BM/2024/015",
+      "SC-TC/2024/009"
+    ],
+    "expected_section": "8 and 1.1",
+    "expected_page": "8 and 2",
+    "answer_anchor": "INR 4,680 total, 74 per cent in the beam and brake bracketry; forging capability exists on the panel with a 30 to 40 week tool lead time.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-023",
+    "query": "What change was made to the door check bracket?",
+    "type": "near_miss",
+    "expected_docs": [
+      "VE-WS/2024/017"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 3,
+    "answer_anchor": "Two webs deleted from the door check bracket casting, logged as VC-24-0561.",
+    "answerable": true,
+    "notes": "Must NOT return the door HINGE bracket (VC-23-0219). One word apart, different part."
+  },
+  {
+    "id": "M2-024",
+    "query": "What was decided about the front spring rear bracket?",
+    "type": "near_miss",
+    "expected_docs": [
+      "TD-BM/2024/015"
+    ],
+    "expected_section": "6",
+    "expected_page": 7,
+    "answer_anchor": "Finding 6.1: the front and rear brackets carry different load cases and must not be treated as interchangeable.",
+    "answerable": true,
+    "notes": "Must NOT return the front spring FRONT bracket analysis as if it were the same part. LABEL CORRECTED 28 October 2026, after the first evaluation run: was section 6.1, page 7; now section 6, page 7. Verified against the raw PDF page text, independently of retrieval: 'Finding 6.1' is a numbered finding callout inside section 6 (Suspension bracketry); section 6.1 is Process route and volume sensitivity."
+  },
+  {
+    "id": "M2-025",
+    "query": "Was the oil pan thickness increased for stone impact?",
+    "type": "near_miss",
+    "expected_docs": [
+      "VE-CL/2024/008"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 4,
+    "answer_anchor": "VC-24-0101 proposed increasing 1.2 to 1.5 mm; recorded as distinct from VC-22-0310 which reduced it.",
+    "answerable": true,
+    "notes": "Must NOT return the REDUCE proposal. Opposite direction, near-identical wording."
+  },
+  {
+    "id": "M2-026",
+    "query": "What is the required coating for a bracket inside the cab?",
+    "type": "near_miss",
+    "expected_docs": [
+      "ES-STD/2023/004"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 4,
+    "answer_anchor": "Exposure class C3, 168 hours to red rust; 12 um yellow zinc or E-coat permitted.",
+    "answerable": true,
+    "notes": "Must NOT return the C1 exposed-chassis requirement of 720 hours."
+  },
+  {
+    "id": "M2-027",
+    "query": "What did the benchmark find about brake drum width?",
+    "type": "near_miss",
+    "expected_docs": [
+      "TD-BM/2024/015"
+    ],
+    "expected_section": "5",
+    "expected_page": 7,
+    "answer_anchor": "Finding 5.1: the 180 mm width is justified on thermal margin; narrowing to 160 mm raises lining temperature by 42 degrees Celsius.",
+    "answerable": true,
+    "notes": "Must NOT return the brake chamber bracket finding, which is adjacent in the document. LABEL CORRECTED 28 October 2026, after the first evaluation run: was section 5.1, page 7; now section 5, page 7. Verified against the raw PDF page text, independently of retrieval: 'Finding 5.1' is a numbered finding callout inside section 5 (Hub, drum and bearing arrangement); section 5.1 is Bearing arrangement."
+  },
+  {
+    "id": "M2-028",
+    "query": "Was the battery tray relocated?",
+    "type": "near_miss",
+    "expected_docs": [
+      "VE-CL/2024/008"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 4,
+    "answer_anchor": "VC-24-0263 proposed the PP tray plus a 40 mm rearward relocation; recorded as a superset of VC-22-0455, not a duplicate.",
+    "answerable": true,
+    "notes": "Must NOT return the material-only change as if it answered the relocation question."
+  },
+  {
+    "id": "M2-029",
+    "query": "What is the warranty cost of the bracket failures?",
+    "type": "near_miss",
+    "expected_docs": [
+      "WF-FA/2024/021"
+    ],
+    "expected_section": "4.2",
+    "expected_page": 4,
+    "answer_anchor": "INR 31.4 million across FY23 and FY24.",
+    "answerable": true,
+    "notes": "Must NOT return the forgone cost benefit of INR 214 per vehicle, which sits in the same table."
+  },
+  {
+    "id": "M2-030",
+    "query": "Can I use a lock washer to stop the bolt coming loose?",
+    "type": "cross_register",
+    "expected_docs": [
+      "ES-STD/2023/004"
+    ],
+    "expected_section": "2.2",
+    "expected_page": 3,
+    "answer_anchor": "Separate lock washers are withdrawn; prevailing torque shall be achieved by the serrated flange of family F1.",
+    "answerable": true,
+    "notes": "Query is colloquial; the source is normative 'shall' language with no shared vocabulary."
+  },
+  {
+    "id": "M2-031",
+    "query": "My bracket keeps rusting through. What should I have specified?",
+    "type": "cross_register",
+    "expected_docs": [
+      "ES-STD/2023/004"
+    ],
+    "expected_section": "3.1",
+    "expected_page": 4,
+    "answer_anchor": "For exposure class C1, a system meeting 720 hours to red rust: zinc-nickel, zinc flake or E-coat plus topcoat.",
+    "answerable": true,
+    "notes": "Symptom described informally; answer is a clause-numbered requirement table."
+  },
+  {
+    "id": "M2-032",
+    "query": "Do I need approval to use a fastener that is not on the list?",
+    "type": "cross_register",
+    "expected_docs": [
+      "ES-STD/2023/004"
+    ],
+    "expected_section": "5",
+    "expected_page": 6,
+    "answer_anchor": "A D2 deviation, approved by the Standards Committee, valid for a single part number for 36 months.",
+    "answerable": true,
+    "notes": ""
+  },
+  {
+    "id": "M2-033",
+    "query": "Why does my cost case keep getting rejected when the saving looks fine?",
+    "type": "cross_register",
+    "expected_docs": [
+      "MC-IX/2025/003"
+    ],
+    "expected_section": "5",
+    "expected_page": 5,
+    "answer_anchor": "Material substitution cases older than twelve months must be re-costed; estimates without a rate basis date cannot be re-tested.",
+    "answerable": true,
+    "notes": "Query is a complaint; the answer is submission guidance."
+  },
+  {
+    "id": "M2-034",
+    "query": "Someone already tried this. Where do I find out what happened?",
+    "type": "cross_register",
+    "expected_docs": [
+      "VE-CL/2024/008"
+    ],
+    "expected_section": "1.1",
+    "expected_page": 2,
+    "answer_anchor": "Each closure entry carries a precedent reference; a matching submission should be closed by citing the precedent.",
+    "answerable": true,
+    "notes": "Tests retrieval of process guidance from a vague procedural question."
+  },
+  {
+    "id": "M2-035",
+    "query": "What is the fuel consumption improvement from the aerodynamic cab roof fairing?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "No aerodynamics content anywhere in the corpus. Plausible for a VAVE corpus, absent from this one."
+  },
+  {
+    "id": "M2-036",
+    "query": "What was the tyre rolling resistance benchmark result?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "Tyres are not covered by any document."
+  },
+  {
+    "id": "M2-037",
+    "query": "How many warranty claims were there for the gearbox in FY24?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "The warranty analysis covers bracketry only and says so in its scope. A system that answers this is extrapolating."
+  },
+  {
+    "id": "M2-038",
+    "query": "What is the cost of titanium per kilogram?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "The cost index covers steel, aluminium and polymers. Titanium is absent."
+  },
+  {
+    "id": "M2-039",
+    "query": "What is the FY28 kerb mass target?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "The roadmap runs to FY27. Tests whether the system invents an extrapolation."
+  },
+  {
+    "id": "M2-040",
+    "query": "Which supplier was selected for the composite air reservoir?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "The roadmap says supplier capability is not confirmed. No supplier is named anywhere."
+  },
+  {
+    "id": "M2-041",
+    "query": "What torque is specified for an M24 fastener?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "The torque table covers M8 to M20. M24 is absent. Tests whether the system interpolates a safety-relevant value."
+  },
+  {
+    "id": "M2-042",
+    "query": "What did the FY25 teardown benchmark conclude?",
+    "type": "unanswerable",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "No FY25 teardown exists in the corpus. Tests whether a plausible document reference is fabricated."
+  },
+  {
+    "id": "M2-043",
+    "query": "What about the bracket?",
+    "type": "vague",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "Dozens of brackets across the corpus. No basis for choosing."
+  },
+  {
+    "id": "M2-044",
+    "query": "Was it approved?",
+    "type": "vague",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "No referent at all."
+  },
+  {
+    "id": "M2-045",
+    "query": "Tell me about the cost.",
+    "type": "vague",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "Cost appears in every document."
+  },
+  {
+    "id": "M2-046",
+    "query": "What is the weight saving?",
+    "type": "vague",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "Many weight savings are recorded. Tests whether the system picks one and presents it as the answer."
+  },
+  {
+    "id": "M2-047",
+    "query": "Any issues with the design?",
+    "type": "vague",
+    "expected_docs": [],
+    "expected_section": null,
+    "expected_page": null,
+    "answer_anchor": null,
+    "answerable": false,
+    "notes": "Maximally underspecified. The control case for abstention."
+  }
+]

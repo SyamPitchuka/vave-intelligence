@@ -50,7 +50,9 @@ Analysis categories are `potential_duplicate`, `similar_but_distinct`, `no_stron
 | Table | Purpose |
 | --- | --- |
 | documents | Uploaded file metadata and visibility |
-| document_chunks | Chunk text, page, section |
+| documents | Also document number and document type, read from the document |
+| document_chunks | Section-aware chunk: text, page, section number, heading and path, window, token count |
+| document_chunk_embeddings | Copilot passage vectors, one per chunk and embedding model; separate from idea vectors |
 | chat_sessions, chat_messages, chat_feedback | Copilot history for the owning user |
 | evaluation_datasets, evaluation_cases | Ground truth, separate from predictions |
 | evaluation_runs, evaluation_predictions | Metrics and per-case output |

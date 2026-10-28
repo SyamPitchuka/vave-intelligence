@@ -45,6 +45,12 @@ class DeterministicEmbeddingProvider:
     def embed(self, text: str) -> list[float]:
         return embed_text(text, self.dimensions)
 
+    # The hashed vector reads the whole text, so it has no input limit; tokens are approximated by words.
+    max_tokens = None
+
+    def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
     def status(self) -> ProviderStatus:
         return ProviderStatus(
             "deterministic",
@@ -75,6 +81,14 @@ class SentenceTransformerEmbeddingProvider:
                 "The index was not updated. A dimension change needs a migration and a full re-index."
             )
         return [float(value) for value in vector]
+
+    @property
+    def max_tokens(self) -> int:
+        """The longest input the model reads. Text beyond it is cut off without an error."""
+        return int(self._model().max_seq_length)
+
+    def count_tokens(self, text: str) -> int:
+        return len(self._model().tokenizer.encode(text, add_special_tokens=False))
 
     def status(self) -> ProviderStatus:
         try:
