@@ -28,7 +28,8 @@ def idea_embedding_text(idea) -> str:
             f"Benefit: {idea.expected_benefit or ''}",
             f"Constraints: {idea.constraints or ''}",
             f"Department: {department}",
-            f"Vehicles: {', '.join(vehicles)}",
+            # Sorted: applicability rows come back in load order, which would make the vector depend on it.
+            f"Vehicles: {', '.join(sorted(vehicles))}",
             f"Idea type: {idea.idea_type or ''}",
         ]
     )

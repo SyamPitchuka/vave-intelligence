@@ -465,3 +465,23 @@ def test_date_parse_day_first():
 
     assert parse_date("02/01/2024") == date(2024, 1, 2)
     assert parse_date("2024-01-15") == date(2024, 1, 15)
+
+
+def test_idea_embedding_text_does_not_depend_on_applicability_row_order():
+    from types import SimpleNamespace
+
+    from app.services.embeddings.index import idea_embedding_text
+
+    rows = [
+        SimpleNamespace(vehicle_family=SimpleNamespace(name=name), annual_volume=volume)
+        for name, volume in [("HCV Rigid Truck", 1200), ("HCV Tipper", 800), ("COWL", 200)]
+    ]
+
+    def idea(applicability):
+        return SimpleNamespace(
+            belonged_department=None, applicability=applicability, component="Battery tray", description="d",
+            current_design=None, proposed_change=None, engineering_rationale=None, expected_benefit=None,
+            constraints=None, idea_type=None,
+        )
+
+    assert idea_embedding_text(idea(rows)) == idea_embedding_text(idea(list(reversed(rows))))
