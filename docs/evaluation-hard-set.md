@@ -11,9 +11,9 @@ Every number here comes from `data/vave_duplicate_eval_set_v2.xlsx`, a synthetic
 - **Overall, precision 1.0, recall 0.322, F1 0.487.** Of 90 labelled duplicates, 29 were called Potential Duplicate. There were no false positives.
 - **Recall depends almost entirely on wording.** Easy duplicates: recall 0.967 (29 of 30). Medium and hard duplicates: recall 0 (0 of 60).
 - **Retrieval is not the cause.** All 90 labelled duplicates were among the 15 candidates shown, 65 of them at rank 1. Scoring end to end and scoring the classifier alone give identical precision, recall, and F1.
-- **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 – 0.34. That rule has since been removed. Those 53 now go to manual review, recall is unchanged, and 127 correct look-alike verdicts went to manual review with them ([details](#after-removing-the-low-overlap-rule)).
+- **One classifier rule causes 53 of the 61 misses.** A same-component pair with word overlap (Jaccard) below 0.28 is called Similar but Distinct, even when nothing shows a different mechanism. Paraphrased duplicates have Jaccard 0.10 â€“ 0.34. That rule has since been removed. Those 53 now go to manual review, recall is unchanged, and 127 correct look-alike verdicts went to manual review with them ([details](#after-removing-the-low-overlap-rule)).
 - **The embedding separates the labels better than the verdict does,** but not cleanly. Within each query, the labelled duplicate has the highest MiniLM cosine of its labelled candidates in 83 of 90 queries. Across queries, 28 similar-but-distinct pairs score above 0.80, where 77 of the 90 duplicates sit.
-- **A semantic route to Potential Duplicate** (same component, cosine ≥ threshold, no detected different action) was added on 27 October 2026. It is off by default in code, and was then turned on at 0.82 in the development database. Every measurement here was taken with it off ([how to revert](#live-setting-and-how-to-revert-it)). On the 15 held-out component families, a threshold of 0.82 chosen on the other 15 gives **precision 0.857, recall 0.800, F1 0.828**, against recall 0.333 and F1 0.500 without the route. At 0.91, the lowest threshold with precision 1.0 on the tuning families, held-out precision stays 1.0 but recall is only 0.378. See [Semantic Potential Duplicate route](#semantic-potential-duplicate-route).
+- **A semantic route to Potential Duplicate** (same component, cosine â‰¥ threshold, no detected different action) was added on 27 October 2026. It is off by default in code, and was then turned on at 0.82 in the development database. Every measurement here was taken with it off ([how to revert](#live-setting-and-how-to-revert-it)). On the 15 held-out component families, a threshold of 0.82 chosen on the other 15 gives **precision 0.857, recall 0.800, F1 0.828**, against recall 0.333 and F1 0.500 without the route. At 0.91, the lowest threshold with precision 1.0 on the tuning families, held-out precision stays 1.0 but recall is only 0.378. See [Semantic Potential Duplicate route](#semantic-potential-duplicate-route).
 - **Candidates are now ordered by verdict, then cosine,** instead of by fuzzy score. With the live settings, the labelled duplicate's mean rank went from 1.533 to 1.200 and rank@1 from 0.722 to 0.833. Precision, recall, and F1 are unchanged. See [Candidate ordering by verdict](#candidate-ordering-by-verdict).
 
 ## Setup
@@ -22,7 +22,7 @@ Every number here comes from `data/vave_duplicate_eval_set_v2.xlsx`, a synthetic
 
 - **Removed first:** the 7 earlier test submissions, VAVE-NEW-00001 to -00007, with their 7 analysis runs, 105 candidate rows, 3 vehicle rows, and 14 embedding vectors. None had a review decision. The deletion was recorded in the audit log as `idea.delete_test_submissions`. This also removed analysis `a8555c14`, which [evaluation-results.md](evaluation-results.md#observed-examples) quotes; the figures quoted there are unchanged.
 - **Remaining historical ideas:** 20, VAVE-SYN-001 to -020.
-- **Imported:** the Ideas sheet, 91 rows, through the normal preview → commit import (batch `d56eccdc-83cf-4bf4-893d-36d99570e269`, marked synthetic, 0 errors). The 52 warnings were all department names outside the initial catalogue (Electrical, Powertrain, Axle, and similar), which are kept as given.
+- **Imported:** the Ideas sheet, 91 rows, through the normal preview â†’ commit import (batch `d56eccdc-83cf-4bf4-893d-36d99570e269`, marked synthetic, 0 errors). The 52 warnings were all department names outside the initial catalogue (Electrical, Powertrain, Axle, and similar), which are kept as given.
 - **Evaluated against:** 111 historical ideas, each with an `all-MiniLM-L6-v2` vector.
 
 The first commit attempt returned HTTP 500 and wrote nothing. `import_commit` crashed on every commit that changed rows; see [Defect found while loading](#defect-found-while-loading).
@@ -57,10 +57,10 @@ End to end:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **overall** | 597 | 90 | **1.000** | **0.322** | **0.487** | 0.000 | 29 | 0 | 61 | 507 | 60 |
 | easy | 300 | 30 | 1.000 | 0.967 | 0.983 | 0.000 | 29 | 0 | 1 | 270 | 28 |
-| medium | 30 | 30 | — | 0.000 | — | — | 0 | 0 | 30 | 0 | 6 |
-| hard | 267 | 30 | — | 0.000 | — | 0.000 | 0 | 0 | 30 | 237 | 26 |
+| medium | 30 | 30 | â€” | 0.000 | â€” | â€” | 0 | 0 | 30 | 0 | 6 |
+| hard | 267 | 30 | â€” | 0.000 | â€” | 0.000 | 0 | 0 | 30 | 237 | 26 |
 
-"—" means the metric is undefined: no pair at that difficulty was predicted a duplicate, and the medium set has no negatives at all.
+"â€”" means the metric is undefined: no pair at that difficulty was predicted a duplicate, and the medium set has no negatives at all.
 
 Classifier only, the precision, recall, F1, and counts are identical in every row. Only the abstentions differ (207 overall: 150 easy, 6 medium, 51 hard), because the classifier also judges the unrelated pairs that retrieval never showed.
 
@@ -136,7 +136,7 @@ Fuzzy is RapidFuzz `token_set_ratio` on the comparison text. Jaccard is the word
 What the distributions show:
 
 - **No easy duplicate falls below 0.87 cosine or 80 fuzzy.** That is why the lexical rules catch them.
-- **Medium and hard duplicates look lexically like look-alikes.** No medium or hard duplicate reaches fuzzy 86 or Jaccard 0.62, the two rules that call a duplicate without other conditions. Their fuzzy range of 56 – 77 overlaps the similar-but-distinct range of 43 – 81.
+- **Medium and hard duplicates look lexically like look-alikes.** No medium or hard duplicate reaches fuzzy 86 or Jaccard 0.62, the two rules that call a duplicate without other conditions. Their fuzzy range of 56 â€“ 77 overlaps the similar-but-distinct range of 43 â€“ 81.
 - **Cosine keeps more of the gap.** The medium and hard duplicate medians, 0.859 and 0.833, are well above the similar-but-distinct median of 0.715. The ranges still overlap, though: similar-but-distinct pairs reach 0.910, and 28 of them are at 0.80 or above, alongside 77 of the 90 duplicates. No single cosine threshold separates the two labels.
 - **Unrelated pairs are well separated on every score.** Their maxima are cosine 0.696 and fuzzy 65.2. Retrieval hid 243 of the 270.
 - **Within a query, ranking works.** The labelled duplicate has the highest cosine among that query's labelled candidates in 83 of 90 queries: 30 of 30 easy, 28 of 30 medium, 25 of 30 hard. It has the highest fuzzy score in 82.
@@ -149,8 +149,8 @@ Each of the 61 missed duplicates was traced through the branches of `classify_pa
 | --- | --- | --- | --- |
 | medium | Similar but Distinct | same component, Jaccard < 0.28 | 24 |
 | hard | Similar but Distinct | same component, Jaccard < 0.28 | 29 |
-| medium | Insufficient Evidence | same component, Jaccard 0.28 – 0.45 | 6 |
-| hard | Insufficient Evidence | same component, Jaccard 0.28 – 0.45 | 1 |
+| medium | Insufficient Evidence | same component, Jaccard 0.28 â€“ 0.45 | 6 |
+| hard | Insufficient Evidence | same component, Jaccard 0.28 â€“ 0.45 | 1 |
 | easy | Insufficient Evidence | fell through every rule | 1 |
 
 **The main cause was this rule** in `classifier.py` (since removed, see [below](#after-removing-the-low-overlap-rule)):
@@ -166,12 +166,12 @@ elif same_component and overlap < 0.45:
 
 Hard examples (all labelled duplicate, all called Similar but Distinct):
 
-| Query → candidate | Fuzzy | Jaccard | Cosine | Query wording | Historical wording |
+| Query â†’ candidate | Fuzzy | Jaccard | Cosine | Query wording | Historical wording |
 | --- | --- | --- | --- | --- | --- |
-| Q-0003 → H-0001 | 58.1 | 0.188 | 0.835 | "move away from the current ferrous part to a light-alloy design, geometry adjusted so rigidity is not lost" | "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness" |
-| Q-0006 → H-0005 | 59.5 | 0.167 | 0.827 | "drop the coated metal pressing in favour of a thermoplastic moulding" | "Change the low-voltage battery tray from painted steel to a formed polypropylene tray" |
-| Q-0009 → H-0008 | 61.3 | 0.143 | 0.760 | "Thinner sump wall, with an internal plate added so oil movement … does not uncover the pickup" | "Reduce engine oil pan sheet thickness from 1.5 mm to 1.2 mm and add a baffle" |
-| Q-0012 → H-0011 | 68.4 | 0.238 | 0.874 | "One mirror mount for both sides instead of two mirror-image parts" | "Commonise the left and right exterior mirror brackets into one handed bracket" |
+| Q-0003 â†’ H-0001 | 58.1 | 0.188 | 0.835 | "move away from the current ferrous part to a light-alloy design, geometry adjusted so rigidity is not lost" | "Replace the steel cab mounting bracket with an aluminium alloy bracket sized for equivalent stiffness" |
+| Q-0006 â†’ H-0005 | 59.5 | 0.167 | 0.827 | "drop the coated metal pressing in favour of a thermoplastic moulding" | "Change the low-voltage battery tray from painted steel to a formed polypropylene tray" |
+| Q-0009 â†’ H-0008 | 61.3 | 0.143 | 0.760 | "Thinner sump wall, with an internal plate added so oil movement â€¦ does not uncover the pickup" | "Reduce engine oil pan sheet thickness from 1.5 mm to 1.2 mm and add a baffle" |
+| Q-0012 â†’ H-0011 | 68.4 | 0.238 | 0.874 | "One mirror mount for both sides instead of two mirror-image parts" | "Commonise the left and right exterior mirror brackets into one handed bracket" |
 
 In each case a reviewer would be told the historical idea is a different change.
 
@@ -183,22 +183,22 @@ The rule was changed so that this branch returns Insufficient Evidence. Similar 
 
 The evaluation was re-run on the same data and settings. Recall cannot change, because these pairs fail every rule that leads to Potential Duplicate:
 
-| Difficulty | Recall before | Recall after | Precision before → after | F1 before → after | Abstentions before → after |
+| Difficulty | Recall before | Recall after | Precision before â†’ after | F1 before â†’ after | Abstentions before â†’ after |
 | --- | --- | --- | --- | --- | --- |
-| overall | 0.322 | 0.322 | 1.000 → 1.000 | 0.487 → 0.487 | 60 → 240 |
-| easy | 0.967 | 0.967 | 1.000 → 1.000 | 0.983 → 0.983 | 28 → 28 |
-| medium | 0.000 | 0.000 | — → — | — → — | 6 → 30 |
-| hard | 0.000 | 0.000 | — → — | — → — | 26 → 182 |
+| overall | 0.322 | 0.322 | 1.000 â†’ 1.000 | 0.487 â†’ 0.487 | 60 â†’ 240 |
+| easy | 0.967 | 0.967 | 1.000 â†’ 1.000 | 0.983 â†’ 0.983 | 28 â†’ 28 |
+| medium | 0.000 | 0.000 | â€” â†’ â€” | â€” â†’ â€” | 6 â†’ 30 |
+| hard | 0.000 | 0.000 | â€” â†’ â€” | â€” â†’ â€” | 26 â†’ 182 |
 
 What changed was the verdict on 180 pairs, end to end:
 
 | Label | Potential Duplicate | Insufficient Evidence | Similar but Distinct | Not shown |
 | --- | --- | --- | --- | --- |
-| duplicate (easy) | 29 → 29 | 1 → 1 | 0 → 0 | 0 → 0 |
-| duplicate (medium) | 0 → 0 | 6 → **30** | 24 → **0** | 0 → 0 |
-| duplicate (hard) | 0 → 0 | 1 → **30** | 29 → **0** | 0 → 0 |
-| similar but distinct | 0 → 0 | 25 → **152** | 141 → **14** | 71 → 71 |
-| unrelated | 0 → 0 | 27 → 27 | 0 → 0 | 243 → 243 |
+| duplicate (easy) | 29 â†’ 29 | 1 â†’ 1 | 0 â†’ 0 | 0 â†’ 0 |
+| duplicate (medium) | 0 â†’ 0 | 6 â†’ **30** | 24 â†’ **0** | 0 â†’ 0 |
+| duplicate (hard) | 0 â†’ 0 | 1 â†’ **30** | 29 â†’ **0** | 0 â†’ 0 |
+| similar but distinct | 0 â†’ 0 | 25 â†’ **152** | 141 â†’ **14** | 71 â†’ 71 |
+| unrelated | 0 â†’ 0 | 27 â†’ 27 | 0 â†’ 0 | 243 â†’ 243 |
 
 - **Gained:** no duplicate is now called Similar but Distinct. The 53 that were now go to manual review.
 - **Lost:** 127 correct Similar but Distinct verdicts on look-alikes also went to manual review. Only 14 of the 237 look-alikes are still called distinct, because only those have a detected difference in action.
@@ -213,12 +213,12 @@ Raising medium and hard recall needs a positive signal that the action is the sa
 
 ## Other observations
 
-- **An unlabelled duplicate in the seed data.** Query Q-0037 ("Change the disc brake pad to a cheaper friction material and add an edge chamfer …"):
+- **An unlabelled duplicate in the seed data.** Query Q-0037 ("Change the disc brake pad to a cheaper friction material and add an edge chamfer â€¦"):
   - It was flagged Potential Duplicate against **VAVE-SYN-002** (fuzzy 87.2, cosine 0.938). That is the seeded brake-pad chamfer idea, which describes the same change.
   - The workbook does not label it, because the workbook only knows its own VAVE-H ideas, so the hit does not count in the metrics.
   - Its labelled duplicate, VAVE-H-0038 (fuzzy 80.0, cosine 0.970, the highest cosine of any candidate), went to manual review. That pair is the 1 easy miss.
-- **The cosine threshold did not matter.** The candidate filter is `exact OR fuzzy ≥ 40 OR cosine ≥ 0.40`. Every duplicate has fuzzy ≥ 56, so all would be shown at any threshold.
-- **Comparison with the v1 set.** The 12-case v1 set ([evaluation-results.md](evaluation-results.md)) gave recall 0.8, and its 5 duplicates all had fuzzy ≥ 86. It measured the easy case only. The v2 easy row, recall 0.967, agrees with it.
+- **The cosine threshold did not matter.** The candidate filter is `exact OR fuzzy â‰¥ 40 OR cosine â‰¥ 0.40`. Every duplicate has fuzzy â‰¥ 56, so all would be shown at any threshold.
+- **Comparison with the v1 set.** The 12-case v1 set ([evaluation-results.md](evaluation-results.md)) gave recall 0.8, and its 5 duplicates all had fuzzy â‰¥ 86. It measured the easy case only. The v2 easy row, recall 0.967, agrees with it.
 
 ## Defect found while loading
 
@@ -245,8 +245,8 @@ Run on 27 October 2026, same database, data, and settings as above.
 
 `classify_pair` (`duplicate_detection/classifier.py`) has a second route to Potential Duplicate, checked after the lexical one. It fires when all of these hold:
 
-- **The component matches.** When this section was written, that meant equal normalised component names. Since Tier 1 it is `components_match`: abbreviations expanded, parenthetical and descriptive qualifiers dropped, RapidFuzz `ratio` ≥ 90 (`component_fuzzy_match`), with the subset guard ([evaluation-edge-cases.md](evaluation-edge-cases.md#tier-1-changes)).
-- **Cosine ≥ `semantic_duplicate_threshold`.** In the app this is the vector-search score that `rank_historical` passes in.
+- **The component matches.** When this section was written, that meant equal normalised component names. Since Tier 1 it is `components_match`: abbreviations expanded, parenthetical and descriptive qualifiers dropped, RapidFuzz `ratio` â‰¥ 90 (`component_fuzzy_match`), with the subset guard ([evaluation-edge-cases.md](evaluation-edge-cases.md#tier-1-changes)).
+- **Cosine â‰¥ `semantic_duplicate_threshold`.** In the app this is the vector-search score that `rank_historical` passes in.
 - **No positive evidence of a different action:** `change_types()` did not detect disjoint kinds of change in the two texts. If either text has no detected change, nothing blocks the route.
 
 The route is **off by default**:
@@ -288,7 +288,7 @@ Two things to know while it is on:
   ```
 - **One pipeline run, then a replay.** The pipeline runs once per query with the route off. `classify_pair` is then re-run for every labelled pair at each threshold, from 0.70 to 0.95 in steps of 0.01. Which candidates are shown does not depend on the verdict, so the shown set is the same at every threshold.
   - **End to end** uses the cosine the pipeline saw.
-  - **Classifier only** uses the directly computed cosine. The two agree to within 3 × 10⁻⁷ wherever both exist.
+  - **Classifier only** uses the directly computed cosine. The two agree to within 3 Ã— 10â»â· wherever both exist.
 - **Metrics:** end to end, as in the tables above. A pair the pipeline did not show counts as not a duplicate.
 - **Cross-check.** The full pipeline was also run with `--semantic-threshold 0.82`, so the route ran inside `analyze_submission` itself. It gave exactly the replayed result:
   - end to end: TP 73, FP 10, FN 17, TN 497
@@ -349,8 +349,8 @@ Classifier only, the numbers match end to end from 0.84 upwards. Below that, cla
 
 **Families.** A family is the query component. Each of the 30 components has exactly 3 TestQueries, easy, medium and hard, which reword the same idea. A split by query would put rewordings of one idea on both sides, so the split is by family, in the order families first appear in TestQueries:
 
-- **Tuning:** families 1 – 15, queries VAVE-Q-0001 – 0045. Cab mounting bracket, Battery tray, Engine oil pan, Exterior mirror bracket, Frame intermediate crossmember, Cab wiring harness, Tail lamp lens, Rear axle banjo housing, Air intake duct, Steering column lower bracket, Propeller shaft tube, Headliner substrate, Disc brake pad, Fuel tank mounting strap, Radiator mounting bracket. 301 pairs, 45 duplicates.
-- **Held out:** families 16 – 30, queries VAVE-Q-0046 – 0090. Cab door inner panel, Suspension bump stop, Instrument panel bracket, Exhaust heat shield, Air tank mounting bracket, Seat frame rail, Front fender bracket, Washer fluid reservoir, Alternator mounting bracket, Spring hanger bracket, Front grille mesh, Clutch pedal assembly, Fuel filter head, Cab step assembly, Gear shift lever knob. 296 pairs, 45 duplicates.
+- **Tuning:** families 1 â€“ 15, queries VAVE-Q-0001 â€“ 0045. Cab mounting bracket, Battery tray, Engine oil pan, Exterior mirror bracket, Frame intermediate crossmember, Cab wiring harness, Tail lamp lens, Rear axle banjo housing, Air intake duct, Steering column lower bracket, Propeller shaft tube, Headliner substrate, Disc brake pad, Fuel tank mounting strap, Radiator mounting bracket. 301 pairs, 45 duplicates.
+- **Held out:** families 16 â€“ 30, queries VAVE-Q-0046 â€“ 0090. Cab door inner panel, Suspension bump stop, Instrument panel bracket, Exhaust heat shield, Air tank mounting bracket, Seat frame rail, Front fender bracket, Washer fluid reservoir, Alternator mounting bracket, Spring hanger bracket, Front grille mesh, Clutch pedal assembly, Fuel filter head, Cab step assembly, Gear shift lever knob. 296 pairs, 45 duplicates.
 
 **Leakage through other pairs.** A pair belongs to its query's family. A tuning query's unrelated pairs point at ideas from other families, but the route needs the same component, so those pairs can never fire it.
 
@@ -379,8 +379,8 @@ Each difficulty has 15 held-out duplicates, so one pair moves a per-difficulty r
 
 | Threshold | Precision | Recall | F1 |
 | --- | --- | --- | --- |
-| 0.82 | −0.045 (0.902 → 0.857) | −0.022 (0.822 → 0.800) | −0.032 (0.860 → 0.828) |
-| 0.91 | 0.000 (1.000 → 1.000) | −0.022 (0.400 → 0.378) | −0.023 (0.571 → 0.548) |
+| 0.82 | âˆ’0.045 (0.902 â†’ 0.857) | âˆ’0.022 (0.822 â†’ 0.800) | âˆ’0.032 (0.860 â†’ 0.828) |
+| 0.91 | 0.000 (1.000 â†’ 1.000) | âˆ’0.022 (0.400 â†’ 0.378) | âˆ’0.023 (0.571 â†’ 0.548) |
 
 What the split shows:
 
@@ -430,11 +430,11 @@ End to end. FP is the number of look-alikes called Potential Duplicate.
 
 ### Data issue found in the workbook
 
-Three query–candidate pairs appear twice in LabelledPairs, each time with conflicting labels (unrelated/easy and similar-but-distinct/hard):
+Three queryâ€“candidate pairs appear twice in LabelledPairs, each time with conflicting labels (unrelated/easy and similar-but-distinct/hard):
 
-- VAVE-Q-0052 → VAVE-H-0071
-- VAVE-Q-0064 → VAVE-H-0001
-- VAVE-Q-0079 → VAVE-H-0011
+- VAVE-Q-0052 â†’ VAVE-H-0071
+- VAVE-Q-0064 â†’ VAVE-H-0001
+- VAVE-Q-0079 â†’ VAVE-H-0011
 
 All three are in the held-out families, and none is a same-component pair. They count as negatives under either label and can never fire the route, so the figures above are unaffected. The total is 597 rows, but only 594 distinct pairs.
 
@@ -453,7 +453,7 @@ In a live test on `Cab mounting bracket`:
 
 **The old rule.** `rank_historical` (`duplicate_detection/service.py`) sorts every historical idea by exact match, then fuzzy score, then cosine. `analyze_submission` then:
 1. keeps the first 15 that pass the candidate filter
-2. numbers them 1 – 15 in that same order
+2. numbers them 1 â€“ 15 in that same order
 3. computes each verdict
 
 The verdict never affected the order, and cosine only broke ties between equal fuzzy scores.
@@ -465,14 +465,14 @@ The verdict never affected the order, and cosine only broke ties between equal f
 
 ### The fix
 
-After all verdicts are known, `analyze_submission` re-sorts the shown candidates and renumbers them 1 – 15 (`candidate_display_key`):
+After all verdicts are known, `analyze_submission` re-sorts the shown candidates and renumbers them 1 â€“ 15 (`candidate_display_key`):
 
 1. **By verdict:** Potential Duplicate, then Insufficient Evidence, then Similar but Distinct, then No Strong Match. This is the order `headline_category` already used (`VERDICT_PRIORITY` in `classifier.py`).
 2. **Within a verdict, by cosine,** highest first. A candidate with no cosine (outside the top-20 vector search) goes after those with one.
 3. **Then by fuzzy,** highest first. Full ties keep retrieval order.
 
 What does not change:
-- **The shown set.** Selection still takes the first 15 in exact → fuzzy → cosine order.
+- **The shown set.** Selection still takes the first 15 in exact â†’ fuzzy â†’ cosine order.
 - **The language-model comparisons.** They still go to the first 5 candidates in retrieval order.
 - **Every verdict.** The re-sort happens after classification, so no verdict can change.
 
@@ -490,12 +490,12 @@ The API and the interface already order candidates by their stored rank, so they
 
 ### Results
 
-| Difficulty | Mean rank, before | Mean rank, after | Rank@1, before | Rank@1, after | Worst rank, before → after |
+| Difficulty | Mean rank, before | Mean rank, after | Rank@1, before | Rank@1, after | Worst rank, before â†’ after |
 | --- | --- | --- | --- | --- | --- |
-| **overall** | **1.533** | **1.200** | **0.722** (65 of 90) | **0.833** (75 of 90) | 11 → 3 |
-| easy | 1.233 | 1.100 | 0.833 (25) | 0.933 (28) | 4 → 3 |
-| medium | 1.633 | 1.233 | 0.667 (20) | 0.800 (24) | 9 → 3 |
-| hard | 1.733 | 1.267 | 0.667 (20) | 0.767 (23) | 11 → 3 |
+| **overall** | **1.533** | **1.200** | **0.722** (65 of 90) | **0.833** (75 of 90) | 11 â†’ 3 |
+| easy | 1.233 | 1.100 | 0.833 (25) | 0.933 (28) | 4 â†’ 3 |
+| medium | 1.633 | 1.233 | 0.667 (20) | 0.800 (24) | 9 â†’ 3 |
+| hard | 1.733 | 1.267 | 0.667 (20) | 0.767 (23) | 11 â†’ 3 |
 
 **Precision, recall, and F1 are unchanged,** as expected:
 - **End to end:** precision 0.880, recall 0.811, F1 0.844 (TP 73, FP 10, FN 17, TN 497), before and after, at every difficulty.
@@ -552,9 +552,9 @@ Selection rule as before, fixed in the script: the threshold with the highest F1
 | Re-baseline, live rules | **0.81** | 0.884 (0.82: 0.857) | **0.89** |
 
 - **0.82 is no longer the selected threshold.** On the fixed embeddings the tuning families select 0.81 under both rule sets: the optimum moved down by 0.01.
-- **The move rests on two tuning duplicates.** Q-0032 → H-0032 (0.8109) and Q-0015 → H-0014 (0.8119) are the only tuning pairs with cosine in [0.81, 0.82), and both are labelled duplicates. On the old vectors Q-0032 was at 0.8202 and was accepted at 0.82. Lowering the threshold to 0.81 takes both back, and costs nothing on the tuning families.
+- **The move rests on two tuning duplicates.** Q-0032 â†’ H-0032 (0.8109) and Q-0015 â†’ H-0014 (0.8119) are the only tuning pairs with cosine in [0.81, 0.82), and both are labelled duplicates. On the old vectors Q-0032 was at 0.8202 and was accepted at 0.82. Lowering the threshold to 0.81 takes both back, and costs nothing on the tuning families.
 - **On all 30 families, 0.82 is still the F1 maximum** under both rule sets (live rules F1 0.862 against 0.857 at 0.81).
-- **The precision-1.0 threshold moved from 0.91 to 0.89 under the live rules,** because scope comparison now blocks Q-0022 → H-0024 (0.902), the tuning look-alike that set it. Under the original rules it is still 0.91.
+- **The precision-1.0 threshold moved from 0.91 to 0.89 under the live rules,** because scope comparison now blocks Q-0022 â†’ H-0024 (0.902), the tuning look-alike that set it. Under the original rules it is still 0.91.
 
 ### Held-out split, old and new
 
@@ -562,8 +562,8 @@ End to end. Old figures are from [the 27 October split](#tuning-set-and-held-out
 
 | Threshold | Set | Old P / R / F1 | New, original rules P / R / F1 | New, live rules P / R / F1 | New live TP / FP / FN | New live recall easy / medium / hard |
 | --- | --- | --- | --- | --- | --- | --- |
-| route off | Tuning | 1.000 / 0.311 / 0.475 | — | 1.000 / 0.311 / 0.475 | 14 / 0 / 31 | 0.933 / 0.000 / 0.000 |
-| route off | **Held-out** | 1.000 / 0.333 / 0.500 | — | **1.000 / 0.333 / 0.500** | 15 / 0 / 30 | 1.000 / 0.000 / 0.000 |
+| route off | Tuning | 1.000 / 0.311 / 0.475 | â€” | 1.000 / 0.311 / 0.475 | 14 / 0 / 31 | 0.933 / 0.000 / 0.000 |
+| route off | **Held-out** | 1.000 / 0.333 / 0.500 | â€” | **1.000 / 0.333 / 0.500** | 15 / 0 / 30 | 1.000 / 0.000 / 0.000 |
 | 0.81 (new max tuning F1) | Tuning | 0.864 / 0.844 / 0.854 | 0.905 / 0.844 / 0.874 | 0.927 / 0.844 / 0.884 | 38 / 3 / 7 | 1.000 / 0.867 / 0.667 |
 | 0.81 (new max tuning F1) | **Held-out** | 0.796 / 0.867 / 0.830 | 0.841 / 0.822 / 0.831 | **0.841 / 0.822 / 0.831** | 37 / 7 / 8 | 1.000 / 0.733 / 0.733 |
 | 0.82 (old choice, live setting) | Tuning | 0.902 / 0.822 / 0.860 | 0.900 / 0.800 / 0.847 | 0.923 / 0.800 / 0.857 | 36 / 3 / 9 | 1.000 / 0.800 / 0.600 |
@@ -576,10 +576,10 @@ End to end. Old figures are from [the 27 October split](#tuning-set-and-held-out
 What the re-run shows:
 
 - **At the newly selected 0.81, held-out F1 is 0.831.** That is almost the same as the old 0.828 at 0.82, from a different mix: recall 0.822 and precision 0.841 (7 look-alikes called Potential Duplicate).
-- **The old choice, 0.82, now does better on the held-out families:** 0.947 / 0.800 / 0.867, with 2 false positives. Moving from 0.82 to 0.81 gains one held-out duplicate (Q-0072 → H-0071, 0.8139) and adds five held-out look-alikes, all between 0.8146 and 0.8175: Q-0075 → H-0076, Q-0074 → H-0075, Q-0079 → H-0081, Q-0073 → H-0076 and Q-0074 → H-0076. Four of those five were false positives at 0.82 on the old vectors.
+- **The old choice, 0.82, now does better on the held-out families:** 0.947 / 0.800 / 0.867, with 2 false positives. Moving from 0.82 to 0.81 gains one held-out duplicate (Q-0072 â†’ H-0071, 0.8139) and adds five held-out look-alikes, all between 0.8146 and 0.8175: Q-0075 â†’ H-0076, Q-0074 â†’ H-0075, Q-0079 â†’ H-0081, Q-0073 â†’ H-0076 and Q-0074 â†’ H-0076. Four of those five were false positives at 0.82 on the old vectors.
 - **This comparison is reported, not used.** Preferring 0.82 because it scores better on the held-out families would be tuning on the held-out set. What the evidence supports is narrower: the selection rule's answer moved by 0.01, the tuning F1 surface between 0.81 and 0.82 turns on two pairs, and the held-out families disagree with that choice by 5 look-alikes within 0.006 of 0.81.
-- **Held-out precision reaches 1.0 at 0.83.** The highest-cosine held-out look-alike shown with the same component is Q-0073 → H-0075 at 0.824 (it was 0.838 before the fix).
-- **The rules added since 27 October change only the tuning side.** Held-out figures are identical under original and live rules at every threshold. On the tuning families, the live rules remove one false positive (scope comparison, Q-0022 → H-0024) at every threshold up to 0.90.
+- **Held-out precision reaches 1.0 at 0.83.** The highest-cosine held-out look-alike shown with the same component is Q-0073 â†’ H-0075 at 0.824 (it was 0.838 before the fix).
+- **The rules added since 27 October change only the tuning side.** Held-out figures are identical under original and live rules at every threshold. On the tuning families, the live rules remove one false positive (scope comparison, Q-0022 â†’ H-0024) at every threshold up to 0.90.
 
 ### Full sweep, all 30 families
 
@@ -653,9 +653,60 @@ At 0.82 the live-rule row reproduces the current reference figures in [evaluatio
 - **Difficulty is tied to the label** (see the table above), so the per-difficulty rows mix different negatives, and precision is undefined for medium and hard.
 - **20 VAVE-SYN ideas were also present and are unlabelled.** They can be shown as candidates and take slots among the 15, but they never count in the metrics. One of them was a genuine duplicate of Q-0037.
 - **No language model was involved.** With Ollama running, `analyze_submission` asks the model about up to 5 candidates per query. Where the model and the heuristic disagree on a non-exact match, the result becomes Insufficient Evidence. That could turn some of the 53 wrong Similar but Distinct verdicts into manual reviews, but it cannot produce a Potential Duplicate that the heuristic rejects. This was not measured.
+
+  Module 2 was measured with the same model on 31 October (see evaluation-copilot.md, "Generated answers"), and found it non-deterministic: repeated queries changed outcome, in both directions, with identical retrieval. If that holds here, the downgrades described above would not be reproducible either, and a single run of this set with the model enabled would not settle the question. A sound measurement would need many runs reporting a distribution.
+
+  Practical note: running this evaluation with Ollama reachable also changes the end-to-end result and takes hours, so every figure in this document was produced with `chat=deterministic llm_status=unavailable`.
 - **Nothing was stored as an evaluation run.** The script is read-only, so this run does not appear on the Evaluation page.
 - **One split, and a small held-out set.** The held-out set is 15 families, 45 duplicates, and 251 negatives.
   - Its false positives at 0.82 number 6, so one look-alike more or fewer moves held-out precision by about 0.02.
   - The split is the first 15 families against the last 15, in workbook order. It was not repeated with other partitions, so the size of the gap is one draw.
 - **Held-out families come from the same generator,** with the same phrasing habits. They are unseen components, not unseen writing, so the held-out numbers are still likely to be better than real submissions written by different engineers.
-- **Every look-alike false positive needs the same component,** and so does every duplicate here. When this was written, the route compared normalised names exactly, so a real history with inconsistent component names, such as "Cab mount bracket" against "Cab mounting bracket", would have blocked it for true duplicates. Tier 1's `component_fuzzy_match` changed that: names now match at RapidFuzz `ratio` ≥ 90 after abbreviation expansion, which fixes the abbreviation cases in edge set v1. Variants that score under 90, or a qualifier the matcher can't classify, still block the route.
+- **Every look-alike false positive needs the same component,** and so does every duplicate here. When this was written, the route compared normalised names exactly, so a real history with inconsistent component names, such as "Cab mount bracket" against "Cab mounting bracket", would have blocked it for true duplicates. Tier 1's `component_fuzzy_match` changed that: names now match at RapidFuzz `ratio` â‰¥ 90 after abbreviation expansion, which fixes the abbreviation cases in edge set v1. Variants that score under 90, or a qualifier the matcher can't classify, still block the route.
+## Second split, ordered by time (31 October 2026)
+
+The held-out split above divides the 30 component families in the order they appear in
+TestQueries. That controls for the leak this set is most exposed to -  three queries of a family
+paraphrase one idea -  but says nothing about time. A threshold calibrated on one set of components
+and tested on another answers whether the choice generalises across parts, not whether a choice
+made on past ideas still holds on later ones.
+
+`--split-by-time` orders families by the earliest `Idea generation date` they contain, so the
+tuning half precedes the held-out half chronologically. The family-level control is unchanged:
+paraphrases of one idea still travel together.
+
+| Setting | Value |
+| --- | --- |
+| Command | `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/evaluate_hard_set.py data/vave_duplicate_eval_set_v2.xlsx out_time_split.json --sweep 0.70 0.95 0.01 --split-families 15 --split-by-time` |
+| Provenance | `chat=deterministic llm_status=unavailable`, matching every figure above |
+| Tuning half | 15 families, earliest ideas 2023-01-25 to 2023-11-15 |
+| Held-out half | 15 families, earliest ideas 2023-11-22 to 2025-01-13 |
+| Families changing side vs the workbook-order split | **14 of 30** |
+| Output committed | `out_time_split.json` |
+
+**Ollama must not be running for this.** The duplicate pipeline re-ranks the first five candidates
+with the chat provider when one is reachable (`use_llm` in `duplicate_detection/service.py`), which
+changes the end-to-end result and makes the run hours long. Every figure in this document was
+produced with `chat=deterministic`.
+
+### Result
+
+| Threshold | Tuning P | Tuning R | Tuning F1 | Held-out P | Held-out R | Held-out F1 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.80 | 0.892 | 0.733 | 0.805 | 0.840 | 0.933 | 0.884 |
+| **0.81** | 0.943 | 0.733 | **0.825** | 0.840 | 0.933 | 0.884 |
+| **0.82** | 0.938 | 0.667 | 0.779 | **0.933** | **0.933** | **0.933** |
+| 0.83 | 0.966 | 0.622 | 0.757 | 0.947 | 0.800 | 0.867 |
+| 0.85 | 1.000 | 0.556 | 0.714 | 0.943 | 0.733 | 0.825 |
+
+- The selection rule (maximum F1 on the tuning half) picks **0.81**, exactly as the workbook-order
+  split does after the determinism re-baseline.
+- The held-out half favours **0.82** over 0.81 -  0.933 against 0.884 here, 0.867 against 0.831
+  under the workbook-order split. At 0.82 on the later ideas, 0.82 dominates 0.81 outright: the
+  same recall at higher precision.
+- Two splits of different design select the same threshold by the same rule and rank 0.82 above it
+  on held-out data. The choice of 0.82 is therefore not an artefact of how the data was divided.
+
+**Caveat.** The held-out half scores higher than the tuning half at every threshold, so the two
+halves are not equally difficult and the absolute held-out figures are optimistic. What the split
+supports is the narrower claim: the threshold ranking is stable across two unrelated divisions.

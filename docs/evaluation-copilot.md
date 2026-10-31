@@ -257,3 +257,105 @@ Module 1 and Module 2 show the same thing independently, on different tasks and 
 - **The evaluation set and the corpus come from the same author and generator.** Six of its 42 anchors were wrong before correction, so others may be too. Only anchors that failed a check were re-verified against the PDFs.
 - **The threshold was chosen on the first-run index,** which included the guideline. The rule chooses the same value on the corrected index.
 - **A fresh database is still seeded with the demo guideline.** The integration tests rely on it. The dev database no longer contains it.
+## Generated answers: the same set with a local language model (31 October 2026)
+
+The figures above were measured with Ollama unreachable, so every answer was extractive. The
+generated path was evaluated on 31 October against the same database, the same index and the
+same evaluation set.
+
+| Setting | Value |
+| --- | --- |
+| Language model | `llama3.2` (3B) served by Ollama 0.40.13, CPU only, 127.0.0.1:11434 |
+| Embedding | `sentence-transformers/all-MiniLM-L6-v2`, unchanged |
+| Threshold | `copilot_citation_threshold` 0.4873, unchanged |
+| Provenance line | `embedding=sentence-transformers/all-MiniLM-L6-v2 chat=ollama llm_status=pending` |
+
+- **Command:** `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/evaluate_copilot.py data/vave_module2_retrieval_eval_set.json out_generated.json`
+- **Outputs committed:** `out_extractive.json` (baseline, `chat=deterministic llm_status=unavailable`) and `out_generated.json`.
+
+### Control: retrieval is unaffected
+
+Retrieval is identical between the two runs, as it must be -  the language model takes no part in
+it. Had these moved, the comparison would have been measuring something other than what it claims.
+
+| Measure | Extractive | Generated |
+| --- | --- | --- |
+| recall@1, @3, @5 (of 34 answerable) | 12, 22, 24 | 12, 22, 24 |
+| MRR | 0.5892 | 0.5892 |
+| `primary_max_balanced_accuracy` | 0.4873 | 0.4873 |
+| `lowest_with_no_calibration_false_answer` | 0.7932 | 0.7932 |
+
+### Outcome: nothing measurable changed in that run
+
+| Measure | Extractive | Generated |
+| --- | --- | --- |
+| Queries answered | 28 | 28 |
+| Queries refused | 19 | 19 |
+| Citations correct, calibration / held out | 9 / 4 | 9 / 4 |
+| False answers | 4 | 4 |
+| Model returned `insufficient` | n/a | **0 of 28** |
+
+The same 28 queries were answered and the same 19 refused -  the same queries, not similar counts.
+The four false answers are the same four: M2-037, M2-039, M2-041, M2-042. In 28 opportunities the
+model never once reported that the passages did not answer the question, although its instructions
+offer that option explicitly.
+
+**Why.** The abstention gate compares the top passage's cosine against the threshold and decides
+*before* composition begins (`compose_answer` in `services/copilot/service.py`). The model is only
+asked to word an answer that has already been authorised. A language model placed after the gate
+cannot repair a gate failure.
+
+### Four queries repeated through the interface
+
+A single batch run establishes what happened once, not what the system does. Four queries were
+repeated through the UI afterwards, same configuration. The results do not reproduce the batch run.
+
+| Query | Extractive | Generated, on repetition | Effect |
+| --- | --- | --- | --- |
+| FY24 H1 duplicate proportion (M2-008) | Quotes the register: "one hundred and forty-eight of them, forty-four per cent" | **"40% of VAVE ideas closed in FY24 H1 were duplicates"**, citing three passages that each state 43.9 or 44 per cent | Worse |
+| M24 fastener torque (M2-041) | Quotes the whole table, M8 to M20, so the absence of M24 is visible | **"34 Nm"**, where the batch run gave **"24 Nm"**. Both are M8 values (24 at grade 8.8, 34 at grade 10.9) | Worse |
+| FY28 kerb mass target (M2-039) | Quotes the FY27 passage | **Refuses** -  the model judged the retrieved passages insufficient | Better |
+| Why steel and aluminium are on separate scales | Returns Finding 2.1 at cosine 0.539, which does not answer the question | **Correct**, citing passage 2 -  the figure caption at 0.536 | Better |
+
+Two improved, two degraded, and M2-039 contradicted its own batch result with identical retrieval
+at the same score of 0.783.
+
+- **The scales case is the one gain.** `_extractive` composes from `evidence[0]` alone, so a passage
+  that loses by 0.003 is unreachable however clearly it answers. `_generate` receives all k and
+  cites by number; here it chose the second.
+- **The torque case is the one serious loss.** The table covers M8 to M20. Both fabricated values
+  come from the M8 row, one column apart. The figure is constructed, not retrieved, and constructed
+  differently on each occasion -  so a reader cannot catch it by asking twice.
+- **The duplicate-proportion case is the most instructive.** Three citations, every one stating
+  43.9 per cent or forty-four per cent, and an answer of 40 per cent. The citation apparatus worked
+  and the arithmetic did not.
+
+**Conclusion.** The effect of generation on this corpus is not a direction but a variance. The
+aggregate stability of the batch run conceals movement underneath it rather than showing the model
+is inert. A sound evaluation would run the full set many times and report a distribution per
+figure. That was not done.
+
+## Probe: facts in tables, figure captions and charts (31 October 2026)
+
+The 47-query set is drawn from prose. Chunking extracts text, so a table survives as a flattened
+row of values, a figure caption survives as a sentence, and values plotted inside a chart do not
+survive at all. Six queries were written against that distinction *after* the measured evaluation.
+They are diagnostic, authored with the corpus open, and change none of the figures above.
+
+| Probe | Where the answer lives | Outcome | Top cosine |
+| --- | --- | --- | --- |
+| Largest unallocated gap in the kerb mass roadmap | A table, summarised in a Finding | Correct, answered from Finding 2.1 rather than the table | 0.669 |
+| October 2024 rate for PA66-GF30 | A table row | Correct; the table was retrieved as flattened text and quoted whole | 0.613 |
+| Which stream carries the largest single allocation | A figure caption | Correct, from the caption of a chart the system cannot see | 0.501 |
+| Why steel and aluminium are on separate scales | A figure caption | **Wrong**; a Finding that does not answer the question won by 0.003 | 0.539 |
+| Hot-rolled coil rate in March 2024 | Plotted in the chart only | Refused, correctly | 0.447 |
+| Month of lowest hot-rolled coil rate | Plotted in the chart only | Refused, correctly | 0.460 |
+
+- Tables and captions are retrievable because both survive extraction as text. A caption that only
+  named its figure, rather than stating what the figure shows, would not have been answerable.
+- Both chart-only probes were refused, but the mechanism is weaker than the result suggests: the
+  system refuses because no text matches, not because it knows the value is drawn in a figure it
+  does not index. It cannot say "that is plotted in Figure 1".
+- The caption failure at 0.003 is the same arithmetic as the thresholds elsewhere in this report,
+  now deciding which of two retrieved passages is presented as the answer. The losing passage is
+  displayed directly beneath the winning one.

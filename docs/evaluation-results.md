@@ -44,9 +44,9 @@ Cosine between each labelled query and its labelled historical candidate. The qu
 
 | Label | Cases | deterministic-hash-v1 | all-MiniLM-L6-v2 |
 | --- | --- | --- | --- |
-| duplicate | 5 | 0.593 – 0.695 | 0.818 – 0.904 |
-| similar but distinct | 4 | 0.338 – 0.449 | 0.703 – 0.777 |
-| unrelated | 3 | 0.189 – 0.399 | 0.277 – 0.426 |
+| duplicate | 5 | 0.593 â€“ 0.695 | 0.818 â€“ 0.904 |
+| similar but distinct | 4 | 0.338 â€“ 0.449 | 0.703 â€“ 0.777 |
+| unrelated | 3 | 0.189 â€“ 0.399 | 0.277 â€“ 0.426 |
 
 Per case:
 
@@ -65,22 +65,22 @@ Per case:
 | UNREL-CHIME | unrelated | VAVE-SYN-001 | 0.189 | 0.277 | 39.3 |
 | UNREL-PAD | unrelated | VAVE-SYN-002 | 0.399 | 0.426 | 45.3 |
 
-**The 26 October 0.000 values were missing scores, not zero similarity.** The 26 October version of this page gave the hashed model's UNREL-BEZEL → SYN-009 and UNREL-CHIME → SYN-001 as 0.000; the re-measurement gives 0.225 and 0.189.
+**The 26 October 0.000 values were missing scores, not zero similarity.** The 26 October version of this page gave the hashed model's UNREL-BEZEL â†’ SYN-009 and UNREL-CHIME â†’ SYN-001 as 0.000; the re-measurement gives 0.225 and 0.189.
 
 - **Cause, checked on 28 October in the stored evaluation run** `5347d32c` (deterministic-hash-v1, 26 October 12:13 GMT): both predictions store `"cosine": null`.
 - **Why the score was null:** the cosine in an evaluation prediction is the vector-search score from `rank_historical`. That search returns only the top `max(retrieval_k, 20)` vectors. At the time it was not limited to historical ideas, and 7 stored test submissions took 7 of the 20 slots ([fixed defect](#fixed-defect-submissions-crowded-historical-ideas-out-of-vector-search)). The two least similar candidates were not returned, so no cosine was recorded, and the table printed the missing value as 0.000.
 - **The figures above are direct cosines,** computed between the query vector and the candidate's stored vector, so they never depend on the search limit. The other hashed values agree with the 26 October figures to within 0.002.
 - **Not stale vectors.** The hashed idea vectors were written by the seed before the switch to MiniLM, but DUP-EXACT's prediction in the same run has a cosine (0.695) against SYN-001, the candidate UNREL-CHIME missed. The vector existed and was simply not in that query's top 20.
 - **Still missing on 28 October.** The 28 October hashed run (`ba088883`) also stores null for both pairs, and for SIM-BOLT: with 111 historical ideas they fall outside the top 20 for those queries.
-- **UNREL-CHIME → SYN-018, also printed as 0.000 in the 26 October sweep table, is not a genuine zero either.** That pair isn't labelled, so no prediction was stored for it, and the 26 October vector state can't be replayed: the 7 test-submission vectors were deleted and the idea vectors re-indexed. Its 26 October value was therefore bounded instead:
+- **UNREL-CHIME â†’ SYN-018, also printed as 0.000 in the 26 October sweep table, is not a genuine zero either.** That pair isn't labelled, so no prediction was stored for it, and the 26 October vector state can't be replayed: the 7 test-submission vectors were deleted and the idea vectors re-indexed. Its 26 October value was therefore bounded instead:
   - **The text inputs haven't changed since 26 October except vehicle order.** Neither the hash function (`deterministic.py`) nor the query text has changed. The only change to the idea text is vehicle order (sorted since 28 October).
   - **The bound:** the hashed cosine was recomputed for every ordering of SYN-018's 5 vehicles, which covers whatever order the 26 October load used. It lies between **0.185 and 0.191**, never near 0.
   - **What that rules out:** a printed 0.000 can only have been a missing value, not a real score.
-  - **Same pattern as the confirmed pair:** SYN-018 ranks last of the 20 seeded ideas for this query, within 0.006 of SYN-001 (0.186–0.192), whose null is stored. The other 18 seeded ideas all score above 0.198.
+  - **Same pattern as the confirmed pair:** SYN-018 ranks last of the 20 seeded ideas for this query, within 0.006 of SYN-001 (0.186â€“0.192), whose null is stored. The other 18 seeded ideas all score above 0.198.
   - **What is verified:** it is a missing score, not zero similarity.
   - **What is inferred, not observed:** that it was missing for the same reason as SYN-001, the top-20 limit with 7 submission slots taken. The other path to a missing hashed score, a missing stored vector, can't be excluded for 26 October either. Either way it is "not retrieved", not 0.
 
-**Neither hashed-model anomaly affects a MiniLM figure.** This 0.000 reading and the MRR drop (1.0 → 0.9, [above](#precision-recall-and-f1)) both concern only `deterministic-hash-v1`, the superseded fallback baseline, not the evaluated system. No MiniLM cosine, MRR, precision, recall, F1, sweep row or threshold decision depends on either one. The [threshold sweep](#threshold-sweep) behind the 0.40 decision was re-run on 28 October and every row was unchanged, hashed rows included.
+**Neither hashed-model anomaly affects a MiniLM figure.** This 0.000 reading and the MRR drop (1.0 â†’ 0.9, [above](#precision-recall-and-f1)) both concern only `deterministic-hash-v1`, the superseded fallback baseline, not the evaluated system. No MiniLM cosine, MRR, precision, recall, F1, sweep row or threshold decision depends on either one. The [threshold sweep](#threshold-sweep) behind the 0.40 decision was re-run on 28 October and every row was unchanged, hashed rows included.
 
 ## Separation between duplicates and look-alikes
 
@@ -106,14 +106,14 @@ The live candidate filter, `exact OR fuzzy >= 40 OR cosine >= t`, was replayed f
 | --- | --- | --- | --- | --- | --- |
 | deterministic-hash-v1 | 0.22 | 5 | 6 | 2 | 19.8 |
 | deterministic-hash-v1 | 0.30 | 5 | 6 | 1 | 19.8 |
-| deterministic-hash-v1 | 0.40 – 0.80 | 5 | 6 | 0 | 19.7 |
+| deterministic-hash-v1 | 0.40 â€“ 0.80 | 5 | 6 | 0 | 19.7 |
 | all-MiniLM-L6-v2 | 0.22 | 5 | 7 | 4 | 20.0 |
 | all-MiniLM-L6-v2 | 0.30 | 5 | 6 | 2 | 19.8 |
-| all-MiniLM-L6-v2 | 0.40 – 0.80 | 5 | 6 | 0 | 19.7 |
+| all-MiniLM-L6-v2 | 0.40 â€“ 0.80 | 5 | 6 | 0 | 19.7 |
 
 The values 0.40, 0.50, 0.60, 0.65, 0.70, 0.75, and 0.80 were each tested and gave identical rows, so they are combined above.
 
-Only 4 query–candidate pairs have fuzzy < 40, so only these depend on the threshold:
+Only 4 queryâ€“candidate pairs have fuzzy < 40, so only these depend on the threshold:
 
 | Query | Candidate | Deterministic | MiniLM |
 | --- | --- | --- | --- |
@@ -132,11 +132,11 @@ Only 4 query–candidate pairs have fuzzy < 40, so only these depend on the thre
 
 Reasons:
 
-- **At 0.22, MiniLM admits all 4 low-fuzzy pairs on cosine alone.** That includes UNREL-CHIME → VAVE-SYN-001, which is labelled unrelated.
+- **At 0.22, MiniLM admits all 4 low-fuzzy pairs on cosine alone.** That includes UNREL-CHIME â†’ VAVE-SYN-001, which is labelled unrelated.
 - **0.40 is the lowest tested value with no cosine-only admissions for either model,** and every labelled duplicate is kept at it.
 - **No tested value above 0.40 changes anything,** so a higher value gains nothing on this data and leaves less room for real paraphrases with low fuzzy scores.
 
-The practical effect is small. `fuzzy >= 40` already admits about 19.7 of the 20 historical ideas per query, and every labelled duplicate has fuzzy ≥ 86. The fuzzy cut-off controls the candidate list far more than the cosine threshold does. It was not tuned, because 12 cases are too few.
+The practical effect is small. `fuzzy >= 40` already admits about 19.7 of the 20 historical ideas per query, and every labelled duplicate has fuzzy â‰¥ 86. The fuzzy cut-off controls the candidate list far more than the cosine threshold does. It was not tuned, because 12 cases are too few.
 
 ## Defects fixed
 
@@ -161,9 +161,9 @@ These come from duplicate analysis `a8555c14-8649-4e7a-a3c7-d410e33c301f`, run o
 
 The rules below are from `classifier.py`:
 - **Potential duplicate** needs one of:
-  - fuzzy ≥ 86
-  - Jaccard word overlap ≥ 0.62
-  - the same component, the same detected kind of change, Jaccard ≥ 0.42, and fuzzy ≥ 68
+  - fuzzy â‰¥ 86
+  - Jaccard word overlap â‰¥ 0.62
+  - the same component, the same detected kind of change, Jaccard â‰¥ 0.42, and fuzzy â‰¥ 68
 
   It also requires that the two kinds of change do not contradict each other.
 - **No strong match** needs fuzzy < 48 and Jaccard < 0.18.
@@ -188,7 +188,7 @@ VAVE-SYN-017 is itself a reworded copy of VAVE-SYN-001 in the synthetic data. It
 VAVE-SYN-019 (cosine 0.775903, fuzzy 53.87, Jaccard 0.1395) was called **Similar but Distinct**, which is correct. It is a topology-optimised steel casting, not a material change.
 - **What decided it:** the detected kind of change differs: `material_substitution` for the query against `topology` for the candidate.
 - **Where that comes from:** `change_types()`, which matches keywords in the free text. "topology", "optimized", and "casting" mean topology; a material word such as "aluminum" with a verb such as "use" or "replace" means material substitution. It is not a structured field.
-- **What did not decide it:** the embedding. At 0.776 the cosine was close to the true duplicates' 0.826 – 0.834.
+- **What did not decide it:** the embedding. At 0.776 the cosine was close to the true duplicates' 0.826 â€“ 0.834.
 
 A paraphrase that avoids those keywords would lose this protection.
 
@@ -239,8 +239,8 @@ This was expected. Precision, recall, and F1 cannot change with cosine (see [How
 
 **Against the pre-fix figures** (P 0.890, R 0.811, F1 0.849), 5 labelled verdicts changed:
 
-- **4 false positives were removed,** each moving below 0.82: Q-0073 → H-0076 (0.8226 → 0.8169), Q-0074 → H-0076 (0.8234 → 0.8175), Q-0079 → H-0081 (0.8266 → 0.8168) and Q-0074 → H-0075 (0.8297 → 0.8164).
-- **1 true duplicate was lost:** Q-0032 → H-0032 (0.8202 → 0.8109).
+- **4 false positives were removed,** each moving below 0.82: Q-0073 â†’ H-0076 (0.8226 â†’ 0.8169), Q-0074 â†’ H-0076 (0.8234 â†’ 0.8175), Q-0079 â†’ H-0081 (0.8266 â†’ 0.8168) and Q-0074 â†’ H-0075 (0.8297 â†’ 0.8164).
+- **1 true duplicate was lost:** Q-0032 â†’ H-0032 (0.8202 â†’ 0.8109).
 
 No rule or threshold changed: every one of these moves is the drift being removed.
 
@@ -250,7 +250,7 @@ No rule or threshold changed: every one of these moves is the drift being remove
 
 Details are in [evaluation-edge-cases-v2.md](evaluation-edge-cases-v2.md#v2-hard-set-measured-first).
 
-**Effect of the "low-voltage"/"LV" assumption, re-measured on the new vectors:** precision, recall, F1 and every verdict are unchanged. Mean rank went from 1.189 to 1.200 and rank@1 from 0.844 to 0.833. For Q-0005, the unlabelled SYN-015 (the same low-voltage battery tray proposal) is now a Potential Duplicate and outranks the labelled H-0005. Before the fix this was recorded as 0.833 → 0.822: the same one-query drop from a different starting point.
+**Effect of the "low-voltage"/"LV" assumption, re-measured on the new vectors:** precision, recall, F1 and every verdict are unchanged. Mean rank went from 1.189 to 1.200 and rank@1 from 0.844 to 0.833. For Q-0005, the unlabelled SYN-015 (the same low-voltage battery tray proposal) is now a Potential Duplicate and outranks the labelled H-0005. Before the fix this was recorded as 0.833 â†’ 0.822: the same one-query drop from a different starting point.
 
 ## v2 hard set: clean baseline (27 October 2026)
 
@@ -260,7 +260,7 @@ This is the Tier 1 configuration, re-baselined on 28 October on deterministic em
 - **Settings:** offline, MiniLM, Ollama not reachable, `semantic_duplicate_threshold` 0.82, `retrieval_top_k` 15, `cosine_retrieve_threshold` 0.40, `fuzzy_strong_threshold` 86, `component_fuzzy_match` and `negation_detection` on. Any classifier rule added after this baseline must be turned off to reproduce it, as above.
 - **Command:** `HF_HUB_OFFLINE=1 backend/.venv/bin/python scripts/evaluate_hard_set.py data/vave_duplicate_eval_set_v2.xlsx out.json`
 
-End to end, 597 scored pairs (594 distinct query–candidate pairs), 90 duplicates. Figures from before the fix are in brackets:
+End to end, 597 scored pairs (594 distinct queryâ€“candidate pairs), 90 duplicates. Figures from before the fix are in brackets:
 
 | | Precision | Recall | F1 | TP | FP | FN | TN | Abstentions | Mean rank | rank@1 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -285,4 +285,6 @@ End to end, 597 scored pairs (594 distinct query–candidate pairs), 90 duplicat
 - **Evaluation queries are embedded from their text only.** The live app also embeds the component, department, and other fields, which produces different cosines. For example, before the fix, the integration test's paraphrase request scored 0.836 against VAVE-SYN-001 with MiniLM in the live app, against 0.818 here (0.814 before the fix).
 - **rank@1 on the v2 hard set is measured against partial labels.** The corpus contains true duplicates that aren't labelled: for Q-0005, SYN-015 is the same low-voltage battery tray proposal as the labelled H-0005, and it ranks first. rank@1 therefore understates ranking quality rather than showing a ranking defect.
 - **No language model was involved.** Ollama was not running, so every verdict came from the deterministic heuristic.
+
+  Module 2 was measured with the same model on 31 October (see evaluation-copilot.md, "Generated answers"), and found it non-deterministic: repeated queries changed outcome, in both directions, with identical retrieval. If that holds here, the downgrades described above would not be reproducible either, and a single run of this set with the model enabled would not settle the question. A sound measurement would need many runs reporting a distribution.
 - **The integration tests ran against a hosted Neon database only with the code defaults** (deterministic embeddings, threshold 0.22), not with MiniLM or 0.40.
