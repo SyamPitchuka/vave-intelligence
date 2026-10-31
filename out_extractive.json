@@ -1,0 +1,4320 @@
+{
+ "config": {
+  "embedding": "sentence-transformers/all-MiniLM-L6-v2",
+  "chat": "deterministic",
+  "llm_status": "unavailable",
+  "k": 5,
+  "distinct_sections": true
+ },
+ "top5_changed_by_dedup": 3,
+ "thresholds": {
+  "primary_max_balanced_accuracy": 0.4873,
+  "lowest_with_no_calibration_false_answer": 0.7932,
+  "scored": 0.4873
+ },
+ "calibration_sweep": [
+  {
+   "threshold": 0.0,
+   "balanced_accuracy": 0.5,
+   "answerable_n": 17,
+   "answerable_answered": 17,
+   "answerable_abstained": 0,
+   "citation_correct": 12,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 0,
+   "false_answers": 7,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043",
+    "M2-045",
+    "M2-047"
+   ]
+  },
+  {
+   "threshold": 0.3038,
+   "balanced_accuracy": 0.5714285714285714,
+   "answerable_n": 17,
+   "answerable_answered": 17,
+   "answerable_abstained": 0,
+   "citation_correct": 12,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 1,
+   "false_answers": 6,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043",
+    "M2-045"
+   ]
+  },
+  {
+   "threshold": 0.3654,
+   "balanced_accuracy": 0.6428571428571428,
+   "answerable_n": 17,
+   "answerable_answered": 17,
+   "answerable_abstained": 0,
+   "citation_correct": 12,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 2,
+   "false_answers": 5,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043"
+   ]
+  },
+  {
+   "threshold": 0.3876,
+   "balanced_accuracy": 0.6134453781512605,
+   "answerable_n": 17,
+   "answerable_answered": 16,
+   "answerable_abstained": 1,
+   "citation_correct": 11,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 2,
+   "false_answers": 5,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043"
+   ]
+  },
+  {
+   "threshold": 0.403,
+   "balanced_accuracy": 0.5840336134453781,
+   "answerable_n": 17,
+   "answerable_answered": 15,
+   "answerable_abstained": 2,
+   "citation_correct": 10,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 2,
+   "false_answers": 5,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043"
+   ]
+  },
+  {
+   "threshold": 0.4169,
+   "balanced_accuracy": 0.5546218487394958,
+   "answerable_n": 17,
+   "answerable_answered": 14,
+   "answerable_abstained": 3,
+   "citation_correct": 9,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 2,
+   "false_answers": 5,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043"
+   ]
+  },
+  {
+   "threshold": 0.4338,
+   "balanced_accuracy": 0.5252100840336134,
+   "answerable_n": 17,
+   "answerable_answered": 13,
+   "answerable_abstained": 4,
+   "citation_correct": 9,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 2,
+   "false_answers": 5,
+   "false_answer_ids": [
+    "M2-035",
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043"
+   ]
+  },
+  {
+   "threshold": 0.4552,
+   "balanced_accuracy": 0.5966386554621849,
+   "answerable_n": 17,
+   "answerable_answered": 13,
+   "answerable_abstained": 4,
+   "citation_correct": 9,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 3,
+   "false_answers": 4,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041",
+    "M2-043"
+   ]
+  },
+  {
+   "threshold": 0.4873,
+   "balanced_accuracy": 0.6680672268907563,
+   "answerable_n": 17,
+   "answerable_answered": 13,
+   "answerable_abstained": 4,
+   "citation_correct": 9,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 4,
+   "false_answers": 3,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.513,
+   "balanced_accuracy": 0.6386554621848739,
+   "answerable_n": 17,
+   "answerable_answered": 12,
+   "answerable_abstained": 5,
+   "citation_correct": 8,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 4,
+   "false_answers": 3,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.5212,
+   "balanced_accuracy": 0.6092436974789917,
+   "answerable_n": 17,
+   "answerable_answered": 11,
+   "answerable_abstained": 6,
+   "citation_correct": 7,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 4,
+   "false_answers": 3,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.547,
+   "balanced_accuracy": 0.5798319327731092,
+   "answerable_n": 17,
+   "answerable_answered": 10,
+   "answerable_abstained": 7,
+   "citation_correct": 6,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 4,
+   "false_answers": 3,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.5679,
+   "balanced_accuracy": 0.6512605042016807,
+   "answerable_n": 17,
+   "answerable_answered": 10,
+   "answerable_abstained": 7,
+   "citation_correct": 6,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.5809,
+   "balanced_accuracy": 0.6218487394957983,
+   "answerable_n": 17,
+   "answerable_answered": 9,
+   "answerable_abstained": 8,
+   "citation_correct": 5,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.5983,
+   "balanced_accuracy": 0.592436974789916,
+   "answerable_n": 17,
+   "answerable_answered": 8,
+   "answerable_abstained": 9,
+   "citation_correct": 5,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.611,
+   "balanced_accuracy": 0.5630252100840336,
+   "answerable_n": 17,
+   "answerable_answered": 7,
+   "answerable_abstained": 10,
+   "citation_correct": 5,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.6275,
+   "balanced_accuracy": 0.5336134453781513,
+   "answerable_n": 17,
+   "answerable_answered": 6,
+   "answerable_abstained": 11,
+   "citation_correct": 4,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.6532,
+   "balanced_accuracy": 0.5042016806722689,
+   "answerable_n": 17,
+   "answerable_answered": 5,
+   "answerable_abstained": 12,
+   "citation_correct": 3,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.6785,
+   "balanced_accuracy": 0.47478991596638653,
+   "answerable_n": 17,
+   "answerable_answered": 4,
+   "answerable_abstained": 13,
+   "citation_correct": 2,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 5,
+   "false_answers": 2,
+   "false_answer_ids": [
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  {
+   "threshold": 0.6881,
+   "balanced_accuracy": 0.5462184873949579,
+   "answerable_n": 17,
+   "answerable_answered": 4,
+   "answerable_abstained": 13,
+   "citation_correct": 2,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 6,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-039"
+   ]
+  },
+  {
+   "threshold": 0.6972,
+   "balanced_accuracy": 0.5168067226890756,
+   "answerable_n": 17,
+   "answerable_answered": 3,
+   "answerable_abstained": 14,
+   "citation_correct": 1,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 6,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-039"
+   ]
+  },
+  {
+   "threshold": 0.7172,
+   "balanced_accuracy": 0.48739495798319327,
+   "answerable_n": 17,
+   "answerable_answered": 2,
+   "answerable_abstained": 15,
+   "citation_correct": 1,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 6,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-039"
+   ]
+  },
+  {
+   "threshold": 0.7332,
+   "balanced_accuracy": 0.4579831932773109,
+   "answerable_n": 17,
+   "answerable_answered": 1,
+   "answerable_abstained": 16,
+   "citation_correct": 0,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 6,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-039"
+   ]
+  },
+  {
+   "threshold": 0.7606,
+   "balanced_accuracy": 0.42857142857142855,
+   "answerable_n": 17,
+   "answerable_answered": 0,
+   "answerable_abstained": 17,
+   "citation_correct": 0,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 6,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-039"
+   ]
+  },
+  {
+   "threshold": 0.7932,
+   "balanced_accuracy": 0.5,
+   "answerable_n": 17,
+   "answerable_answered": 0,
+   "answerable_abstained": 17,
+   "citation_correct": 0,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 7,
+   "false_answers": 0,
+   "false_answer_ids": []
+  }
+ ],
+ "records": [
+  {
+   "id": "M2-001",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What material change was recommended for the alternator mounting bracket in the FY23 teardown study?",
+   "expected": [
+    {
+     "doc": "TD-BM/FY23/014",
+     "section": "4.2",
+     "page": 12
+    }
+   ],
+   "top_score": 0.6695,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": true,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6695,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.2.1",
+     "section_heading": "Mounting bracket - principal finding",
+     "page_number": 12
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6553,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.1.11",
+     "section_heading": "Cross-reference",
+     "page_number": 11
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5883,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "3.1",
+     "section_heading": "Frame side member",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5563,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.1.5",
+     "section_heading": "Opportunities in this sub-group",
+     "page_number": 8
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5356,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "3.2",
+     "section_heading": "Crossmembers and gussets",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Replace the cast-iron alternator mounting bracket with an HSLA steel bracket: approximately 18 per cent weight reduction with no change in fatigue life.\"\n\nSource: CVOEM/VAVE/TD-BM/FY23/014, Teardown benchmark report FY23, section 4.2.1 Mounting bracket - principal finding, p. 12 (cosine 0.669)"
+  },
+  {
+   "id": "M2-002",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Has any competitor benchmark evaluated composite leaf springs for this vehicle segment?",
+   "expected": [
+    {
+     "doc": "CB-BM/2024/007",
+     "section": "2.1",
+     "page": 6
+    }
+   ],
+   "top_score": 0.7586,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.7586,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "1.2",
+     "section_heading": "Constructions examined",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.7273,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "2.1",
+     "section_heading": "Composite mono-leaf spring",
+     "page_number": 6
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.7134,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "2.1.2",
+     "section_heading": "Open questions",
+     "page_number": 6
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.7028,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "1.5",
+     "section_heading": "Durability testing observed",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.7017,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "1",
+     "section_heading": "Scope and method",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"\u2022 Steel multi-leaf, nine leaves, the construction in use on the subject vehicle rear suspension. \u2022 Steel parabolic, three leaves, in use on the subject vehicle front suspension and on two benchmarks. \u2022 Steel parabolic, two leaves, observed on one benchmark with a higher-rate interleaf pad. \u2022 GFRP composite mono-leaf, observed on one benchmark, reported in section 2.1.\"\n\nSource: CVOEM/VAVE/CB-BM/2024/007, Competitor benchmark - leaf springs, section 1.2 Constructions examined, p. 2 (cosine 0.759)"
+  },
+  {
+   "id": "M2-003",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What was the measured in-cab noise difference in the 2024 cabin benchmark?",
+   "expected": [
+    {
+     "doc": "CB-BM/2024/011",
+     "section": "2.1",
+     "page": 5
+    }
+   ],
+   "top_score": 0.6886,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6886,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "2.1",
+     "section_heading": "NVH bench results",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6177,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "1.2",
+     "section_heading": "What a 5 dB(A) difference means",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6056,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5631,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "1",
+     "section_heading": "Scope and test method",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5628,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "5",
+     "section_heading": "NVH package discussion",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Condition Subject vehicle Benchmark D Difference 80 km/h constant, laden 68.0 dB(A) 63.0 dB(A) -5.0 60 km/h constant, laden 64.2 dB(A) 60.1 dB(A) -4.1 Idle, in cab 51.4 dB(A) 49.8 dB(A) -1.6 Full load acceleration, peak 74.6 dB(A) 70.2 dB(A) -4.4 Figure 1 - Cabin interior noise by octave band at 80 km/h. The largest difference is in the 500 Hz to 2 kHz range, where door sealing and glazing dominate the transmission path.\"\n\nSource: CVOEM/VAVE/CB-BM/2024/011, Cabin sealing, glazing and NVH benchmark, section 2.1 NVH bench results, p. 5 (cosine 0.689)"
+  },
+  {
+   "id": "M2-004",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "What gearbox ratio spread was recorded in the powertrain and driveline benchmark?",
+   "expected": [
+    {
+     "doc": "TD-BM/2024/012",
+     "section": "3",
+     "page": 6
+    }
+   ],
+   "top_score": 0.7829,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.7829,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "3.1",
+     "section_heading": "Transmission ratio comparison",
+     "page_number": 6
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.7827,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "1.1",
+     "section_heading": "Ratio measurement",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6813,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "1.3",
+     "section_heading": "Measured masses",
+     "page_number": 3
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.6702,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "1",
+     "section_heading": "Scope and method",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.6672,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "1.2",
+     "section_heading": "Why ratio spread matters for VAVE",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Gear Subject ratio Benchmark C ratio 1st 6.80 11.50 2nd 4.02 8.62 3rd 2.44 6.44 4th 1.54 4.82 5th 1.00 3.60 6th 0.78 2.70 7th - 2.02 8th - 1.34 9th - 1.00 Spread 6.8:1 11.5:1 Figure 1 - Gearbox ratio spread.\"\n\nSource: CVOEM/VAVE/TD-BM/2024/012, Powertrain and driveline benchmark, section 3.1 Transmission ratio comparison, p. 6 (cosine 0.783)"
+  },
+  {
+   "id": "M2-005",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What wear-reduction change was identified for the tipper body in mining duty?",
+   "expected": [
+    {
+     "doc": "CB-BM/2024/013",
+     "section": "2",
+     "page": 4
+    }
+   ],
+   "top_score": 0.7058,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.7058,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "1.2",
+     "section_heading": "Measured wear",
+     "page_number": 3
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6897,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "1.1",
+     "section_heading": "Duty cycles",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.647,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5603,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "2.3",
+     "section_heading": "Payload consequence",
+     "page_number": 5
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5124,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "5",
+     "section_heading": "Opportunities and conclusions",
+     "page_number": 8
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Duty Unlined wear (mm) Lined wear (mm) Floor life, unlined Construction 1.8 0.4 Beyond vehicle life Quarry 4.6 1.1 About 65,000 km Mining overburden 5.9 1.4 About 51,000 km Coal 1.2 0.3 Beyond vehicle life Finding 1.1.\"\n\nSource: CVOEM/VAVE/CB-BM/2024/013, Tipper body and hydraulics benchmark, section 1.2 Measured wear, p. 3 (cosine 0.706)"
+  },
+  {
+   "id": "M2-006",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "What cooling pack change was benchmarked for the construction-duty variant?",
+   "expected": [
+    {
+     "doc": "TD-BM/2024/014",
+     "section": "3",
+     "page": 6
+    }
+   ],
+   "top_score": 0.6852,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6852,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/014",
+     "section_number": "3.2",
+     "section_heading": "Expected result",
+     "page_number": 7
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.674,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/014",
+     "section_number": "1.2",
+     "section_heading": "Why this condition",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6614,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/014",
+     "section_number": "1.1",
+     "section_heading": "Thermal test",
+     "page_number": 2
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.6588,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/014",
+     "section_number": "2.1",
+     "section_heading": "Core comparison",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.6453,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/014",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"On the measured air-side characteristics of the benchmark cores and the subject vehicle's heat rejection, the proposed pack is estimated to stabilise at about 103 degrees Celsius on the test grade, 2 degrees below the alarm limit. That is a smaller margin than either benchmark achieves and should be confirmed by simulation before commitment.\"\n\nSource: CVOEM/VAVE/TD-BM/2024/014, Powertrain cooling pack benchmark, section 3.2 Expected result, p. 7 (cosine 0.685)"
+  },
+  {
+   "id": "M2-007",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "How much can be saved by eliminating the separate quench and temper operation on the front axle beam?",
+   "expected": [
+    {
+     "doc": "TD-BM/2024/015",
+     "section": "3.2",
+     "page": 5
+    }
+   ],
+   "top_score": 0.6368,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6368,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "3.2",
+     "section_heading": "Material and process",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5703,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "3.2",
+     "section_heading": "Process cost adders",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5409,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "3.2",
+     "section_heading": "Material and process",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5083,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "3.1",
+     "section_heading": "Mass and section",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4873,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "10",
+     "section_heading": "Conclusions and recommendations",
+     "page_number": 10
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"The Benchmark C beam uses a micro-alloyed steel cooled directly from forging heat, removing the separate quench and temper operation entirely.\"\n\nSource: CVOEM/VAVE/TD-BM/2024/015, Front axle and brake teardown benchmark, section 3.2 Material and process, p. 5 (cosine 0.637)"
+  },
+  {
+   "id": "M2-008",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "What proportion of VAVE ideas closed in FY24 H1 were duplicates?",
+   "expected": [
+    {
+     "doc": "VE-CL/2024/008",
+     "section": "2",
+     "page": 2
+    }
+   ],
+   "top_score": 0.712,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.712,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6719,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "2",
+     "section_heading": "Closure summary for the period",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5787,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "2",
+     "section_heading": "Closure summary for the period",
+     "page_number": 3
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5764,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "5",
+     "section_heading": "Closures below the benefit threshold",
+     "page_number": 6
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5089,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "3.2",
+     "section_heading": "Duplicate checks performed during the workshop",
+     "page_number": 3
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"One hundred and forty-eight of them, forty-four per cent, were closed as duplicates of ideas already on record.\"\n\nSource: CVOEM/VAVE/VE-CL/2024/008, Idea closure and lessons learned register, Front matter, p. 1 (cosine 0.712)"
+  },
+  {
+   "id": "M2-009",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "How has the price of hot-rolled coil moved over the last twenty-four months?",
+   "expected": [
+    {
+     "doc": "MC-IX/2025/003",
+     "section": "2",
+     "page": 2
+    }
+   ],
+   "top_score": 0.569,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.569,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "2",
+     "section_heading": "Rate movement",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5629,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "2",
+     "section_heading": "Rate movement",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5071,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3626,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "1.1",
+     "section_heading": "Scope of materials",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3553,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "3.2",
+     "section_heading": "Process cost adders",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Material Oct 2022 Oct 2023 Oct 2024 24-month change HR coil, IS 2062 E250 58.4 57.8 53.0 -9.3% CR coil, IS 513 D 64.2 63.1 59.4 -7.5% HSLA 340 67.1 66.4 65.0 -3.1% Forging steel, EN 8D 61.8 62.4 60.2 -2.6% Micro-alloyed 38MnVS6 69.4 70.1 68.8 -0.9% Aluminium AA6061-T6 212.0 206.4 202.0 -4.7% Aluminium AA5754 198.6 194.2 191.8 -3.4% Polypropylene, TPO grade 118.5 121.0 127.0 +7.2% Glass-filled nylon PA66-GF30 268.0 281.4 294.6 +9.9%\"\n\nSource: CVOEM/VAVE/MC-IX/2025/003, Commodity and material cost index, section 2 Rate movement, p. 2 (cosine 0.569)"
+  },
+  {
+   "id": "M2-010",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Why did the aluminium cab mounting bracket crack in service?",
+   "expected": [
+    {
+     "doc": "WF-FA/2024/021",
+     "section": "3.1",
+     "page": 3
+    }
+   ],
+   "top_score": 0.666,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.666,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6351,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "3.1",
+     "section_heading": "Mechanism",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6198,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5366,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.1",
+     "section_heading": "History",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.519,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.2",
+     "section_heading": "Consequence",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"AA6061-T6 to specification in all 68 examined parts; hardness and conductivity within range. \u2022 Casting quality. No porosity or inclusion at or near any initiation site. \u2022 Bolt torque.\"\n\nSource: CVOEM/VAVE/WF-FA/2024/021, Field failure and warranty analysis, section 4.3 What was NOT the cause, p. 4 (cosine 0.666)"
+  },
+  {
+   "id": "M2-011",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What salt spray performance is required for a bracket directly exposed to road spray?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.5271,
+   "anchor_hit_rank": 3,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 3,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5271,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "3.2",
+     "section_heading": "Test method",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4565,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4258,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "3.1",
+     "section_heading": "Requirement by exposure class",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3779,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3773,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "5",
+     "section_heading": "Deviations",
+     "page_number": 6
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Performance shall be demonstrated by neutral salt spray to IS 9844, with red rust on the significant surface as the end point.\"\n\nSource: CVOEM/VAVE/ES-STD/2023/004, Fastener and corrosion protection standard, section 3.2 Test method, p. 4 (cosine 0.527)"
+  },
+  {
+   "id": "M2-012",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "At what annual volume does a progressive press tool become cheaper than fabrication for a chassis bracket?",
+   "expected": [
+    {
+     "doc": "SC-TC/2024/009",
+     "section": "3",
+     "page": 3
+    }
+   ],
+   "top_score": 0.6621,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6621,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6181,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "3",
+     "section_heading": "Volume sensitivity and break-even",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6162,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "2",
+     "section_heading": "Cost structure by process",
+     "page_number": 2
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5706,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "6.1",
+     "section_heading": "Process route and volume sensitivity",
+     "page_number": 7
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5334,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "1.1",
+     "section_heading": "Panel composition",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"This study sets out the cost structure of fabrication, progressive pressing and forging for chassis brackets across the qualified supplier panel, and identifies the volume at which each becomes preferable. For the front spring bracket the break-even between fabrication and a progressive press tool falls at 21,400 units per year, above the current platform volume.\"\n\nSource: CVOEM/VAVE/SC-TC/2024/009, Supplier capability and tooling cost study, Front matter, p. 1 (cosine 0.662)"
+  },
+  {
+   "id": "M2-013",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "How much of the FY27 kerb mass target is still unallocated?",
+   "expected": [
+    {
+     "doc": "WR-RM/2024/002",
+     "section": "2",
+     "page": 2
+    }
+   ],
+   "top_score": 0.7286,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": null,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.7286,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "1",
+     "section_heading": "Target and basis",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6188,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6002,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "4",
+     "section_heading": "The unallocated gap",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5923,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "3.1",
+     "section_heading": "Ideas at risk",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5731,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "1.1",
+     "section_heading": "Why mass, and why now",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"The FY24 baseline kerb mass of 2,840 kg is the measured average of twelve production vehicles built in September 2024, in the standard specification with a full fuel tank and without body. The FY27 target of 2,608 kg is derived from the payload commitment in the platform brief and is not negotiable at sub-system level.\"\n\nSource: CVOEM/VAVE/WR-RM/2024/002, Kerb mass reduction roadmap, section 1 Target and basis, p. 2 (cosine 0.729)"
+  },
+  {
+   "id": "M2-014",
+   "type": "single_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Why was the proposal to delete the roof acoustic pad withdrawn?",
+   "expected": [
+    {
+     "doc": "VE-WS/2024/017",
+     "section": "5",
+     "page": 5
+    }
+   ],
+   "top_score": 0.585,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.585,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "5",
+     "section_heading": "NVH package discussion",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4579,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "5",
+     "section_heading": "NVH package discussion",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3775,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "6.1",
+     "section_heading": "A reversal is not a failure to record",
+     "page_number": 7
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.336,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "3",
+     "section_heading": "Cost and mass",
+     "page_number": 6
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3352,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "4.1",
+     "section_heading": "Dependency",
+     "page_number": 7
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Item 3.1.8 withdrawn in the room. Minuted with the reasoning so that a future proposal to delete the roof acoustic pad can be closed against this record.\"\n\nSource: CVOEM/VAVE/VE-WS/2024/017, VE workshop minutes - cab structure and trim, section 5 NVH package discussion, p. 5 (cosine 0.585)"
+  },
+  {
+   "id": "M2-015",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "Why was the aluminium cab mounting bracket reversed, and under what conditions could it be proposed again?",
+   "expected": [
+    {
+     "doc": "WF-FA/2024/021",
+     "section": "3.1",
+     "page": 3
+    },
+    {
+     "doc": "WF-FA/2024/021",
+     "section": "6",
+     "page": 5
+    }
+   ],
+   "top_score": 0.7379,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 5,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.7379,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6484,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.2",
+     "section_heading": "Consequence",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6465,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "6.1",
+     "section_heading": "A reversal is not a failure to record",
+     "page_number": 7
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.6006,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5876,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "6",
+     "section_heading": "Conditions for reconsideration",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Residual torque measured on 44 returned joints; 41 within specification.\"\n\nSource: CVOEM/VAVE/WF-FA/2024/021, Field failure and warranty analysis, section 4.3 What was NOT the cause, p. 4 (cosine 0.738)"
+  },
+  {
+   "id": "M2-016",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "If I propose an aluminium bracket bolted to a steel frame, what validation does the standard require?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "4.2",
+     "page": 5
+    },
+    {
+     "doc": "WF-FA/2024/021",
+     "section": "3.2",
+     "page": 3
+    }
+   ],
+   "top_score": 0.6163,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": 4,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6163,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "6",
+     "section_heading": "Conditions for reconsideration",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5028,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4856,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.1",
+     "section_heading": "History",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4829,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "3.2",
+     "section_heading": "Why validation did not predict it",
+     "page_number": 3
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4755,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Recommendation. Any submission proposing an aluminium cab mounting bracket that does not address all five conditions should be closed by citing this section, without a fresh engineering assessment.\"\n\nSource: CVOEM/VAVE/WF-FA/2024/021, Field failure and warranty analysis, section 6 Conditions for reconsideration, p. 5 (cosine 0.616)"
+  },
+  {
+   "id": "M2-017",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "Should the front spring bracket move from fabrication to pressing?",
+   "expected": [
+    {
+     "doc": "SC-TC/2024/009",
+     "section": "3",
+     "page": 3
+    },
+    {
+     "doc": "TD-BM/2024/015",
+     "section": "6",
+     "page": 7
+    }
+   ],
+   "top_score": 0.393,
+   "anchor_hit_rank": 3,
+   "doc_hit_rank": 2,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.393,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "6.1",
+     "section_heading": "Process route and volume sensitivity",
+     "page_number": 7
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.3906,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "4",
+     "section_heading": "Worked example: front spring bracket",
+     "page_number": 5
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3666,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "3",
+     "section_heading": "Volume sensitivity and break-even",
+     "page_number": 3
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3521,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3309,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.393 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-018",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Is the PET felt headliner idea at risk?",
+   "expected": [
+    {
+     "doc": "VE-WS/2024/017",
+     "section": "4.2",
+     "page": 4
+    },
+    {
+     "doc": "WR-RM/2024/002",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.4714,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 2,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4714,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "4.2",
+     "section_heading": "Discussion on item 4.1.1",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.2969,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "3.1",
+     "section_heading": "Ideas at risk",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.256,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "4.1",
+     "section_heading": "Ideas logged",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.2359,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "4.1",
+     "section_heading": "Sensitivity of material substitution cases",
+     "page_number": 5
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.2214,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "1.2",
+     "section_heading": "Relationship to value-engineering proposals",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.471 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-019",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What coating should I specify for an exposed chassis bracket, and what does it cost?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "3.1",
+     "page": 4
+    },
+    {
+     "doc": "MC-IX/2025/003",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.5152,
+   "anchor_hit_rank": 4,
+   "doc_hit_rank": 4,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5152,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "3.1",
+     "section_heading": "Requirement by exposure class",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4872,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4365,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "4",
+     "section_heading": "Worked example: front spring bracket",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4226,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "3.1",
+     "section_heading": "Coating and surface treatment",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.416,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "4.2",
+     "section_heading": "Bracket design comparison",
+     "page_number": 6
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Systems below the requirement are withdrawn from exposed chassis applications. Requirement 3.1.\"\n\nSource: CVOEM/VAVE/ES-STD/2023/004, Fastener and corrosion protection standard, section 3.1 Requirement by exposure class, p. 4 (cosine 0.515)"
+  },
+  {
+   "id": "M2-020",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Why were two frame web reduction ideas assessed differently when they look almost identical?",
+   "expected": [
+    {
+     "doc": "VE-CL/2024/008",
+     "section": "4",
+     "page": 5
+    },
+    {
+     "doc": "TD-BM/2024/015",
+     "section": "6",
+     "page": 7
+    }
+   ],
+   "top_score": 0.363,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": true,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.363,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "6.2",
+     "section_heading": "Direction is not captured",
+     "page_number": 7
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.3508,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "3.1",
+     "section_heading": "Frame side member",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3351,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.1.3",
+     "section_heading": "Load path and why the solid web persists",
+     "page_number": 8
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3186,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "1.2",
+     "section_heading": "How opportunities are classified",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3155,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "4.1",
+     "section_heading": "Sensitivity of material substitution cases",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.363 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-021",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "calibration",
+   "query": "Which closed ideas would now qualify at current material rates?",
+   "expected": [
+    {
+     "doc": "MC-IX/2025/003",
+     "section": "4",
+     "page": 5
+    },
+    {
+     "doc": "VE-CL/2024/008",
+     "section": "5",
+     "page": 5
+    }
+   ],
+   "top_score": 0.6038,
+   "anchor_hit_rank": 3,
+   "doc_hit_rank": 2,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6038,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "5",
+     "section_heading": "Closures below the benefit threshold",
+     "page_number": 6
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5832,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "4",
+     "section_heading": "Effect on the open idea portfolio",
+     "page_number": 5
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5437,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "5",
+     "section_heading": "Closures below the benefit threshold",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5351,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "5",
+     "section_heading": "Guidance for idea submission",
+     "page_number": 5
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.516,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Nineteen ideas closed in this period were within INR 30 of the threshold. Against the aluminium and steel movements recorded in CVOEM/VAVE/MC-IX/2025/003, eleven of them would now qualify.\"\n\nSource: CVOEM/VAVE/VE-CL/2024/008, Idea closure and lessons learned register, section 5 Closures below the benefit threshold, p. 6 (cosine 0.604)"
+  },
+  {
+   "id": "M2-022",
+   "type": "multi_hop",
+   "answerable": true,
+   "half": "held_out",
+   "query": "What is the largest cost gap in the front axle group and does the supplier panel support fixing it?",
+   "expected": [
+    {
+     "doc": "TD-BM/2024/015",
+     "section": "8",
+     "page": 8
+    },
+    {
+     "doc": "SC-TC/2024/009",
+     "section": "1.1",
+     "page": 2
+    }
+   ],
+   "top_score": 0.5367,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5367,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "1.2",
+     "section_heading": "Costing basis",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5291,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "8",
+     "section_heading": "Comparative cost analysis",
+     "page_number": 8
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5248,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "9.1",
+     "section_heading": "Opportunities considered and rejected",
+     "page_number": 9
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4994,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4993,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "10",
+     "section_heading": "Conclusions and recommendations",
+     "page_number": 10
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"All costs are fully absorbed piece costs at an assumed annual volume of 18,000 units, expressed in Indian rupees at October 2024 input prices. Material rates are taken from CVOEM/VAVE/MC-IX/2025/003.\"\n\nSource: CVOEM/VAVE/TD-BM/2024/015, Front axle and brake teardown benchmark, section 1.2 Costing basis, p. 2 (cosine 0.537)"
+  },
+  {
+   "id": "M2-023",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What change was made to the door check bracket?",
+   "expected": [
+    {
+     "doc": "VE-WS/2024/017",
+     "section": "3.1",
+     "page": 3
+    }
+   ],
+   "top_score": 0.5108,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 2,
+   "citation_correct": true,
+   "top5_changed_by_dedup": true,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5108,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "3.2",
+     "section_heading": "Duplicate checks performed during the workshop",
+     "page_number": 3
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4701,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "3.1",
+     "section_heading": "Ideas logged",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4186,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.2",
+     "section_heading": "Consequence",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4161,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.1.3",
+     "section_heading": "Load path and why the solid web persists",
+     "page_number": 8
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4073,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"This is the door CHECK bracket, a different part with a different load path.\"\n\nSource: CVOEM/VAVE/VE-WS/2024/017, VE workshop minutes - cab structure and trim, section 3.2 Duplicate checks performed during the workshop, p. 3 (cosine 0.511)"
+  },
+  {
+   "id": "M2-024",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "held_out",
+   "query": "What was decided about the front spring rear bracket?",
+   "expected": [
+    {
+     "doc": "TD-BM/2024/015",
+     "section": "6",
+     "page": 7
+    }
+   ],
+   "top_score": 0.5379,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5379,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "6",
+     "section_heading": "Suspension bracketry",
+     "page_number": 7
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.486,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "9",
+     "section_heading": "Value engineering opportunities",
+     "page_number": 9
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4644,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "4.2",
+     "section_heading": "Bracket design comparison",
+     "page_number": 6
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4375,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "4",
+     "section_heading": "Worked example: front spring bracket",
+     "page_number": 5
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.428,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"The front spring FRONT bracket and the front spring REAR bracket carry materially different load cases: the rear bracket reacts braking torque through the shackle while the front bracket does not. Proposals that treat the two as interchangeable should be rejected on this basis.\"\n\nSource: CVOEM/VAVE/TD-BM/2024/015, Front axle and brake teardown benchmark, section 6 Suspension bracketry, p. 7 (cosine 0.538)"
+  },
+  {
+   "id": "M2-025",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "calibration",
+   "query": "Was the oil pan thickness increased for stone impact?",
+   "expected": [
+    {
+     "doc": "VE-CL/2024/008",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.413,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.413,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "3.1",
+     "section_heading": "Near-duplicates that were correctly NOT closed",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.303,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "1.1",
+     "section_heading": "Duty cycles",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.2819,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "4",
+     "section_heading": "Closures on validation risk",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.2695,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "1.2",
+     "section_heading": "Measured wear",
+     "page_number": 3
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.2546,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "4",
+     "section_heading": "Effect on the open idea portfolio",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.413 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-026",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "held_out",
+   "query": "What is the required coating for a bracket inside the cab?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.4506,
+   "anchor_hit_rank": 2,
+   "doc_hit_rank": 2,
+   "first_relevant_rank": 2,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4506,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "3.1",
+     "section_heading": "Ideas logged",
+     "page_number": 3
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4412,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "3.1",
+     "section_heading": "Requirement by exposure class",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.432,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "2",
+     "section_heading": "Claims by failure mode",
+     "page_number": 2
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4201,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4157,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "6",
+     "section_heading": "Conditions for reconsideration",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.451 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-027",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What did the benchmark find about brake drum width?",
+   "expected": [
+    {
+     "doc": "TD-BM/2024/015",
+     "section": "5",
+     "page": 7
+    }
+   ],
+   "top_score": 0.6182,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6182,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "5",
+     "section_heading": "Hub, drum and bearing arrangement",
+     "page_number": 7
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.508,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "8",
+     "section_heading": "Comparative cost analysis",
+     "page_number": 8
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5073,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "9.1",
+     "section_heading": "Opportunities considered and rejected",
+     "page_number": 9
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4938,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "2",
+     "section_heading": "Vehicles and build standard",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4922,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "4.1",
+     "section_heading": "Chamber and bracket",
+     "page_number": 6
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Finding 5.1. The 180 mm drum width is justified by thermal margin and is not a value-engineering opportunity.\"\n\nSource: CVOEM/VAVE/TD-BM/2024/015, Front axle and brake teardown benchmark, section 5 Hub, drum and bearing arrangement, p. 7 (cosine 0.618)"
+  },
+  {
+   "id": "M2-028",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Was the battery tray relocated?",
+   "expected": [
+    {
+     "doc": "VE-CL/2024/008",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.2702,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.2702,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "3.1",
+     "section_heading": "Near-duplicates that were correctly NOT closed",
+     "page_number": 4
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.2429,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.1.3",
+     "section_heading": "Load path and why the solid web persists",
+     "page_number": 8
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.2115,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "3.2",
+     "section_heading": "Duplicate checks performed during the workshop",
+     "page_number": 3
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.1987,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.1928,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "6.1",
+     "section_heading": "Actions",
+     "page_number": 6
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.270 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-029",
+   "type": "near_miss",
+   "answerable": true,
+   "half": "calibration",
+   "query": "What is the warranty cost of the bracket failures?",
+   "expected": [
+    {
+     "doc": "WF-FA/2024/021",
+     "section": "4.2",
+     "page": 4
+    }
+   ],
+   "top_score": 0.5928,
+   "anchor_hit_rank": 4,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 4,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5928,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "2",
+     "section_heading": "Claims by failure mode",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5718,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "1",
+     "section_heading": "Population and method",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5144,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5142,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.2",
+     "section_heading": "Consequence",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4887,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.1",
+     "section_heading": "History",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Figure 1 - Warranty claims by failure mode for cab and suspension bracketry, FY24.\"\n\nSource: CVOEM/VAVE/WF-FA/2024/021, Field failure and warranty analysis, section 2 Claims by failure mode, p. 2 (cosine 0.593)"
+  },
+  {
+   "id": "M2-030",
+   "type": "cross_register",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Can I use a lock washer to stop the bolt coming loose?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "2.2",
+     "page": 3
+    }
+   ],
+   "top_score": 0.6315,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6315,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 3
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4985,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3727,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "4.1",
+     "section_heading": "Permitted joint types",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3581,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "4.2",
+     "section_heading": "Dissimilar material joints",
+     "page_number": 5
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3484,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.1",
+     "section_heading": "Rationalised family list",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Separate lock washers are withdrawn. Analysis of 188 fastener-loosening claims in FY24 found the plain washer under flanged nut arrangement in 71 per cent of cases.\"\n\nSource: CVOEM/VAVE/ES-STD/2023/004, Fastener and corrosion protection standard, section 2.2 Selection rules, p. 3 (cosine 0.631)"
+  },
+  {
+   "id": "M2-031",
+   "type": "cross_register",
+   "answerable": true,
+   "half": "calibration",
+   "query": "My bracket keeps rusting through. What should I have specified?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "3.1",
+     "page": 4
+    }
+   ],
+   "top_score": 0.4209,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 4,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4209,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "3.1",
+     "section_heading": "Mechanism",
+     "page_number": 3
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4077,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "2",
+     "section_heading": "Claims by failure mode",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3998,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.3",
+     "section_heading": "What was NOT the cause",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3771,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3642,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4.1.2",
+     "section_heading": "Mounting bracket",
+     "page_number": 7
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.421 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-032",
+   "type": "cross_register",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Do I need approval to use a fastener that is not on the list?",
+   "expected": [
+    {
+     "doc": "ES-STD/2023/004",
+     "section": "5",
+     "page": 6
+    }
+   ],
+   "top_score": 0.4694,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4694,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 3
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4607,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4369,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "1",
+     "section_heading": "Scope and normative language",
+     "page_number": 2
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4195,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4041,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "1.1",
+     "section_heading": "Normative language",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.469 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-033",
+   "type": "cross_register",
+   "answerable": true,
+   "half": "calibration",
+   "query": "Why does my cost case keep getting rejected when the saving looks fine?",
+   "expected": [
+    {
+     "doc": "MC-IX/2025/003",
+     "section": "5",
+     "page": 5
+    }
+   ],
+   "top_score": 0.3823,
+   "anchor_hit_rank": 1,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": 1,
+   "citation_correct": true,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.3823,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "5",
+     "section_heading": "Guidance for idea submission",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.3621,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "4.1",
+     "section_heading": "Sensitivity of material substitution cases",
+     "page_number": 5
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3382,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3087,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "1.1",
+     "section_heading": "Costing basis",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "5",
+     "section_heading": "Closures below the benefit threshold",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.382 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-034",
+   "type": "cross_register",
+   "answerable": true,
+   "half": "held_out",
+   "query": "Someone already tried this. Where do I find out what happened?",
+   "expected": [
+    {
+     "doc": "VE-CL/2024/008",
+     "section": "1.1",
+     "page": 2
+    }
+   ],
+   "top_score": 0.1869,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": 1,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.1869,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "6.1",
+     "section_heading": "A reversal is not a failure to record",
+     "page_number": 7
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.1373,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "2.1",
+     "section_heading": "Protocol",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.1261,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "4",
+     "section_heading": "Closures on validation risk",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.1072,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "1.1",
+     "section_heading": "Teardown protocol",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.0977,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.1",
+     "section_heading": "History",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.187 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-035",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "calibration",
+   "query": "What is the fuel consumption improvement from the aerodynamic cab roof fairing?",
+   "expected": [],
+   "top_score": 0.4468,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4468,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "4",
+     "section_heading": "Opportunities and conclusions",
+     "page_number": 8
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4215,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "3",
+     "section_heading": "Cost and mass",
+     "page_number": 6
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3994,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "3.2",
+     "section_heading": "Consequence at cruise",
+     "page_number": 7
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3937,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "5",
+     "section_heading": "Conclusions",
+     "page_number": 8
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3901,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "2",
+     "section_heading": "Allocation by sub-system",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.447 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-036",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "held_out",
+   "query": "What was the tyre rolling resistance benchmark result?",
+   "expected": [],
+   "top_score": 0.4371,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4371,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "2",
+     "section_heading": "Vehicles and build standard",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4113,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "9.1",
+     "section_heading": "Opportunities considered and rejected",
+     "page_number": 9
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4083,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "2",
+     "section_heading": "Vehicles and teardown protocol",
+     "page_number": 3
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.405,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "2.1",
+     "section_heading": "Propeller shaft arrangement",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3922,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/012",
+     "section_number": "3.1",
+     "section_heading": "Transmission ratio comparison",
+     "page_number": 6
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.437 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-037",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "calibration",
+   "query": "How many warranty claims were there for the gearbox in FY24?",
+   "expected": [],
+   "top_score": 0.5668,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.5668,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "2",
+     "section_heading": "Claims by failure mode",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5195,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "4.2",
+     "section_heading": "Consequence",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5066,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4921,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "5.1",
+     "section_heading": "Fastener loosening",
+     "page_number": 5
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4648,
+     "document_number": "CVOEM/VAVE/WF-FA/2024/021",
+     "section_number": "1.1",
+     "section_heading": "Exposure normalisation",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Figure 1 - Warranty claims by failure mode for cab and suspension bracketry, FY24.\"\n\nSource: CVOEM/VAVE/WF-FA/2024/021, Field failure and warranty analysis, section 2 Claims by failure mode, p. 2 (cosine 0.567)"
+  },
+  {
+   "id": "M2-038",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "held_out",
+   "query": "What is the cost of titanium per kilogram?",
+   "expected": [],
+   "top_score": 0.4206,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4206,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "1.2",
+     "section_heading": "Costing basis",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4162,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "3.2",
+     "section_heading": "Process cost adders",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3982,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "3.1",
+     "section_heading": "Coating and surface treatment",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3951,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "4",
+     "section_heading": "Worked example: front spring bracket",
+     "page_number": 6
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3899,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "3.2",
+     "section_heading": "Material and process",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.421 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-039",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "calibration",
+   "query": "What is the FY28 kerb mass target?",
+   "expected": [],
+   "top_score": 0.7832,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.7832,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "1",
+     "section_heading": "Target and basis",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.609,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.599,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "4",
+     "section_heading": "The unallocated gap",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.5689,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "3.1",
+     "section_heading": "Ideas at risk",
+     "page_number": 4
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5462,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "1.1",
+     "section_heading": "Why mass, and why now",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"The FY24 baseline kerb mass of 2,840 kg is the measured average of twelve production vehicles built in September 2024, in the standard specification with a full fuel tank and without body. The FY27 target of 2,608 kg is derived from the payload commitment in the platform brief and is not negotiable at sub-system level.\"\n\nSource: CVOEM/VAVE/WR-RM/2024/002, Kerb mass reduction roadmap, section 1 Target and basis, p. 2 (cosine 0.783)"
+  },
+  {
+   "id": "M2-040",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "held_out",
+   "query": "Which supplier was selected for the composite air reservoir?",
+   "expected": [],
+   "top_score": 0.3352,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.3352,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": null,
+     "section_heading": "Front matter",
+     "page_number": 1
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.3341,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "3.1",
+     "section_heading": "Ideas at risk",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.32,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "4",
+     "section_heading": "Opportunities",
+     "page_number": 7
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3123,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "5",
+     "section_heading": "Conclusions",
+     "page_number": 8
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.3067,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "1.2",
+     "section_heading": "Capability constraints that affect design",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.335 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-041",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "calibration",
+   "query": "What torque is specified for an M24 fastener?",
+   "expected": [],
+   "top_score": 0.6876,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6876,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "4.3",
+     "section_heading": "Torque specification",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.5595,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.1",
+     "section_heading": "Rationalised family list",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.5344,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 2
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.519,
+     "document_number": "CVOEM/VAVE/ES-STD/2023/004",
+     "section_number": "2.2",
+     "section_heading": "Selection rules",
+     "page_number": 3
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.5133,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/013",
+     "section_number": "4.2",
+     "section_heading": "Sub-frame attachment",
+     "page_number": 7
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"Size Grade 8.8 (Nm) Grade 10.9 (Nm) Grade 12.9 (Nm) M8 24 34 40 M10 47 67 79 M12 82 115 135 M16 200 285 335 M20 390 555 650 Values are for a zinc-nickel coated fastener with a friction coefficient of 0.12 to 0.18.\"\n\nSource: CVOEM/VAVE/ES-STD/2023/004, Fastener and corrosion protection standard, section 4.3 Torque specification, p. 5 (cosine 0.688)"
+  },
+  {
+   "id": "M2-042",
+   "type": "unanswerable",
+   "answerable": false,
+   "half": "held_out",
+   "query": "What did the FY25 teardown benchmark conclude?",
+   "expected": [],
+   "top_score": 0.6857,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.6857,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "3.3",
+     "section_heading": "Summary of the chassis group",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.6813,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "2",
+     "section_heading": "Vehicles and teardown protocol",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.6787,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "1",
+     "section_heading": "Scope and method",
+     "page_number": 2
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.6728,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "2.1",
+     "section_heading": "Protocol",
+     "page_number": 3
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.6466,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "2.2",
+     "section_heading": "Limitations of the method",
+     "page_number": 3
+    }
+   ],
+   "mode_at_scored_threshold": "extractive",
+   "answer_at_scored_threshold": "Extractive answer: no language model was used. This is the most relevant passage of the best-matching section, quoted as written.\n\n\"The chassis and frame group accounts for 41.6 kg and INR 4,120 of gap against the lightest benchmark. Neither of the two findings above is deliverable as a running change, which is characteristic of frame content: the validation burden is high and the lead time long.\"\n\nSource: CVOEM/VAVE/TD-BM/FY23/014, Teardown benchmark report FY23, section 3.3 Summary of the chassis group, p. 5 (cosine 0.686)"
+  },
+  {
+   "id": "M2-043",
+   "type": "vague",
+   "answerable": false,
+   "half": "calibration",
+   "query": "What about the bracket?",
+   "expected": [],
+   "top_score": 0.4637,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.4637,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "4",
+     "section_heading": "Engine ancillary sub-systems",
+     "page_number": 6
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.4477,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "3",
+     "section_heading": "Duplicate closures and precedent references",
+     "page_number": 4
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.4387,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "9",
+     "section_heading": "Value engineering opportunities",
+     "page_number": 9
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.4313,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "4.2",
+     "section_heading": "Bracket design comparison",
+     "page_number": 6
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.4178,
+     "document_number": "CVOEM/VAVE/SC-TC/2024/009",
+     "section_number": "4",
+     "section_heading": "Worked example: front spring bracket",
+     "page_number": 5
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.464 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-044",
+   "type": "vague",
+   "answerable": false,
+   "half": "held_out",
+   "query": "Was it approved?",
+   "expected": [],
+   "top_score": 0.2726,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.2726,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "5",
+     "section_heading": "Closures below the benefit threshold",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.2386,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "4",
+     "section_heading": "Closures on validation risk",
+     "page_number": 5
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.2316,
+     "document_number": "CVOEM/VAVE/VE-CL/2024/008",
+     "section_number": "6.3",
+     "section_heading": "Programme applicability is not captured",
+     "page_number": 7
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.2235,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "6.2",
+     "section_heading": "Chair's closing remark",
+     "page_number": 6
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.22,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "2.1",
+     "section_heading": "Screening criteria applied in the room",
+     "page_number": 2
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.273 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-045",
+   "type": "vague",
+   "answerable": false,
+   "half": "calibration",
+   "query": "Tell me about the cost.",
+   "expected": [],
+   "top_score": 0.3485,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.3485,
+     "document_number": "CVOEM/VAVE/TD-BM/2024/015",
+     "section_number": "1.2",
+     "section_heading": "Costing basis",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.3279,
+     "document_number": "CVOEM/VAVE/TD-BM/FY23/014",
+     "section_number": "1.1",
+     "section_heading": "Costing basis",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3201,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "5",
+     "section_heading": "Guidance for idea submission",
+     "page_number": 5
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.3112,
+     "document_number": "CVOEM/VAVE/MC-IX/2025/003",
+     "section_number": "1",
+     "section_heading": "Basis and scope",
+     "page_number": 2
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.2867,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "1.4",
+     "section_heading": "Cost comparison",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.348 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-046",
+   "type": "vague",
+   "answerable": false,
+   "half": "held_out",
+   "query": "What is the weight saving?",
+   "expected": [],
+   "top_score": 0.3989,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.3989,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "1.1",
+     "section_heading": "Why mass, and why now",
+     "page_number": 2
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.3211,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "1",
+     "section_heading": "Target and basis",
+     "page_number": 2
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.3062,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "2.1.1",
+     "section_heading": "Measured performance",
+     "page_number": 6
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.306,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/007",
+     "section_number": "3",
+     "section_heading": "Recommendations",
+     "page_number": 7
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.2963,
+     "document_number": "CVOEM/VAVE/CB-BM/2024/011",
+     "section_number": "5",
+     "section_heading": "Conclusions",
+     "page_number": 8
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.399 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  },
+  {
+   "id": "M2-047",
+   "type": "vague",
+   "answerable": false,
+   "half": "calibration",
+   "query": "Any issues with the design?",
+   "expected": [],
+   "top_score": 0.2592,
+   "anchor_hit_rank": null,
+   "doc_hit_rank": null,
+   "first_relevant_rank": null,
+   "citation_correct": false,
+   "top5_changed_by_dedup": false,
+   "hits": [
+    {
+     "rank": 1,
+     "cosine_similarity": 0.2592,
+     "document_number": "CVOEM/VAVE/WR-RM/2024/002",
+     "section_number": "4",
+     "section_heading": "The unallocated gap",
+     "page_number": 5
+    },
+    {
+     "rank": 2,
+     "cosine_similarity": 0.2395,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "3.2",
+     "section_heading": "Duplicate checks performed during the workshop",
+     "page_number": 3
+    },
+    {
+     "rank": 3,
+     "cosine_similarity": 0.2387,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "4.2",
+     "section_heading": "Discussion on item 4.1.1",
+     "page_number": 4
+    },
+    {
+     "rank": 4,
+     "cosine_similarity": 0.2353,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "2",
+     "section_heading": "Objectives and method",
+     "page_number": 1
+    },
+    {
+     "rank": 5,
+     "cosine_similarity": 0.2349,
+     "document_number": "CVOEM/VAVE/VE-WS/2024/017",
+     "section_number": "4.1",
+     "section_heading": "Ideas logged",
+     "page_number": 4
+    }
+   ],
+   "mode_at_scored_threshold": "abstained",
+   "answer_at_scored_threshold": "No answer is given. The best retrieved passage scored 0.259 cosine, below the citation-confidence threshold of 0.487, so no passage is a reliable enough source to cite. No general model knowledge has been added."
+  }
+ ],
+ "tradeoff": [
+  {
+   "threshold": 0.2,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 17,
+    "answerable_abstained": 0,
+    "citation_correct": 12,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 0,
+    "false_answers": 7,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-043",
+     "M2-045",
+     "M2-047"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 16,
+    "answerable_abstained": 1,
+    "citation_correct": 6,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 0,
+    "false_answers": 6,
+    "false_answer_ids": [
+     "M2-036",
+     "M2-038",
+     "M2-040",
+     "M2-042",
+     "M2-044",
+     "M2-046"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 33,
+    "answerable_abstained": 1,
+    "citation_correct": 18,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 0,
+    "false_answers": 13,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-036",
+     "M2-037",
+     "M2-038",
+     "M2-039",
+     "M2-040",
+     "M2-041",
+     "M2-042",
+     "M2-043",
+     "M2-044",
+     "M2-045",
+     "M2-046",
+     "M2-047"
+    ]
+   }
+  },
+  {
+   "threshold": 0.25,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 17,
+    "answerable_abstained": 0,
+    "citation_correct": 12,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 0,
+    "false_answers": 7,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-043",
+     "M2-045",
+     "M2-047"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 16,
+    "answerable_abstained": 1,
+    "citation_correct": 6,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 0,
+    "false_answers": 6,
+    "false_answer_ids": [
+     "M2-036",
+     "M2-038",
+     "M2-040",
+     "M2-042",
+     "M2-044",
+     "M2-046"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 33,
+    "answerable_abstained": 1,
+    "citation_correct": 18,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 0,
+    "false_answers": 13,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-036",
+     "M2-037",
+     "M2-038",
+     "M2-039",
+     "M2-040",
+     "M2-041",
+     "M2-042",
+     "M2-043",
+     "M2-044",
+     "M2-045",
+     "M2-046",
+     "M2-047"
+    ]
+   }
+  },
+  {
+   "threshold": 0.3,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 17,
+    "answerable_abstained": 0,
+    "citation_correct": 12,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 1,
+    "false_answers": 6,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-043",
+     "M2-045"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 15,
+    "answerable_abstained": 2,
+    "citation_correct": 5,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 1,
+    "false_answers": 5,
+    "false_answer_ids": [
+     "M2-036",
+     "M2-038",
+     "M2-040",
+     "M2-042",
+     "M2-046"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 32,
+    "answerable_abstained": 2,
+    "citation_correct": 17,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 2,
+    "false_answers": 11,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-036",
+     "M2-037",
+     "M2-038",
+     "M2-039",
+     "M2-040",
+     "M2-041",
+     "M2-042",
+     "M2-043",
+     "M2-045",
+     "M2-046"
+    ]
+   }
+  },
+  {
+   "threshold": 0.35,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 17,
+    "answerable_abstained": 0,
+    "citation_correct": 12,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 2,
+    "false_answers": 5,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-043"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 15,
+    "answerable_abstained": 2,
+    "citation_correct": 5,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 2,
+    "false_answers": 4,
+    "false_answer_ids": [
+     "M2-036",
+     "M2-038",
+     "M2-042",
+     "M2-046"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 32,
+    "answerable_abstained": 2,
+    "citation_correct": 17,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 4,
+    "false_answers": 9,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-036",
+     "M2-037",
+     "M2-038",
+     "M2-039",
+     "M2-041",
+     "M2-042",
+     "M2-043",
+     "M2-046"
+    ]
+   }
+  },
+  {
+   "threshold": 0.4,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 15,
+    "answerable_abstained": 2,
+    "citation_correct": 10,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 2,
+    "false_answers": 5,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-043"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 14,
+    "answerable_abstained": 3,
+    "citation_correct": 5,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 3,
+    "false_answers": 3,
+    "false_answer_ids": [
+     "M2-036",
+     "M2-038",
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 29,
+    "answerable_abstained": 5,
+    "citation_correct": 15,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 5,
+    "false_answers": 8,
+    "false_answer_ids": [
+     "M2-035",
+     "M2-036",
+     "M2-037",
+     "M2-038",
+     "M2-039",
+     "M2-041",
+     "M2-042",
+     "M2-043"
+    ]
+   }
+  },
+  {
+   "threshold": 0.45,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 13,
+    "answerable_abstained": 4,
+    "citation_correct": 9,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 3,
+    "false_answers": 4,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-043"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 14,
+    "answerable_abstained": 3,
+    "citation_correct": 5,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 5,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 27,
+    "answerable_abstained": 7,
+    "citation_correct": 14,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 8,
+    "false_answers": 5,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-042",
+     "M2-043"
+    ]
+   }
+  },
+  {
+   "threshold": 0.4873,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 13,
+    "answerable_abstained": 4,
+    "citation_correct": 9,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 4,
+    "false_answers": 3,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 11,
+    "answerable_abstained": 6,
+    "citation_correct": 4,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 5,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 24,
+    "answerable_abstained": 10,
+    "citation_correct": 13,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 9,
+    "false_answers": 4,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-042"
+    ]
+   }
+  },
+  {
+   "threshold": 0.5,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 13,
+    "answerable_abstained": 4,
+    "citation_correct": 9,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 4,
+    "false_answers": 3,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 11,
+    "answerable_abstained": 6,
+    "citation_correct": 4,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 5,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 24,
+    "answerable_abstained": 10,
+    "citation_correct": 13,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 9,
+    "false_answers": 4,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-042"
+    ]
+   }
+  },
+  {
+   "threshold": 0.55,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 10,
+    "answerable_abstained": 7,
+    "citation_correct": 6,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 4,
+    "false_answers": 3,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 9,
+    "answerable_abstained": 8,
+    "citation_correct": 3,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 5,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 19,
+    "answerable_abstained": 15,
+    "citation_correct": 9,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 9,
+    "false_answers": 4,
+    "false_answer_ids": [
+     "M2-037",
+     "M2-039",
+     "M2-041",
+     "M2-042"
+    ]
+   }
+  },
+  {
+   "threshold": 0.6,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 8,
+    "answerable_abstained": 9,
+    "citation_correct": 5,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 5,
+    "false_answers": 2,
+    "false_answer_ids": [
+     "M2-039",
+     "M2-041"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 8,
+    "answerable_abstained": 9,
+    "citation_correct": 2,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 5,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 16,
+    "answerable_abstained": 18,
+    "citation_correct": 7,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 10,
+    "false_answers": 3,
+    "false_answer_ids": [
+     "M2-039",
+     "M2-041",
+     "M2-042"
+    ]
+   }
+  },
+  {
+   "threshold": 0.65,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 5,
+    "answerable_abstained": 12,
+    "citation_correct": 3,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 5,
+    "false_answers": 2,
+    "false_answer_ids": [
+     "M2-039",
+     "M2-041"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 6,
+    "answerable_abstained": 11,
+    "citation_correct": 1,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 5,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-042"
+    ]
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 11,
+    "answerable_abstained": 23,
+    "citation_correct": 4,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 10,
+    "false_answers": 3,
+    "false_answer_ids": [
+     "M2-039",
+     "M2-041",
+     "M2-042"
+    ]
+   }
+  },
+  {
+   "threshold": 0.7,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 3,
+    "answerable_abstained": 14,
+    "citation_correct": 1,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 6,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-039"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 3,
+    "answerable_abstained": 14,
+    "citation_correct": 1,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 6,
+    "false_answers": 0,
+    "false_answer_ids": []
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 6,
+    "answerable_abstained": 28,
+    "citation_correct": 2,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 12,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-039"
+    ]
+   }
+  },
+  {
+   "threshold": 0.75,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 0,
+    "answerable_abstained": 17,
+    "citation_correct": 0,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 6,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-039"
+    ]
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 2,
+    "answerable_abstained": 15,
+    "citation_correct": 1,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 6,
+    "false_answers": 0,
+    "false_answer_ids": []
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 2,
+    "answerable_abstained": 32,
+    "citation_correct": 1,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 12,
+    "false_answers": 1,
+    "false_answer_ids": [
+     "M2-039"
+    ]
+   }
+  },
+  {
+   "threshold": 0.8,
+   "calibration": {
+    "answerable_n": 17,
+    "answerable_answered": 0,
+    "answerable_abstained": 17,
+    "citation_correct": 0,
+    "must_abstain_n": 7,
+    "must_abstain_refused": 7,
+    "false_answers": 0,
+    "false_answer_ids": []
+   },
+   "held_out": {
+    "answerable_n": 17,
+    "answerable_answered": 0,
+    "answerable_abstained": 17,
+    "citation_correct": 0,
+    "must_abstain_n": 6,
+    "must_abstain_refused": 6,
+    "false_answers": 0,
+    "false_answer_ids": []
+   },
+   "all": {
+    "answerable_n": 34,
+    "answerable_answered": 0,
+    "answerable_abstained": 34,
+    "citation_correct": 0,
+    "must_abstain_n": 13,
+    "must_abstain_refused": 13,
+    "false_answers": 0,
+    "false_answer_ids": []
+   }
+  }
+ ],
+ "top1_cosine": {
+  "answerable": [
+   0.1869,
+   0.2702,
+   0.363,
+   0.3823,
+   0.393,
+   0.413,
+   0.4209,
+   0.4506,
+   0.4694,
+   0.4714,
+   0.5108,
+   0.5152,
+   0.5271,
+   0.5367,
+   0.5379,
+   0.569,
+   0.585,
+   0.5928,
+   0.6038,
+   0.6163,
+   0.6182,
+   0.6315,
+   0.6368,
+   0.6621,
+   0.666,
+   0.6695,
+   0.6852,
+   0.6886,
+   0.7058,
+   0.712,
+   0.7286,
+   0.7379,
+   0.7586,
+   0.7829
+  ],
+  "must_abstain": [
+   0.2592,
+   0.2726,
+   0.3352,
+   0.3485,
+   0.3989,
+   0.4206,
+   0.4371,
+   0.4468,
+   0.4637,
+   0.5668,
+   0.6857,
+   0.6876,
+   0.7832
+  ]
+ },
+ "primary": {
+  "calibration": {
+   "answerable_n": 17,
+   "answerable_answered": 13,
+   "answerable_abstained": 4,
+   "citation_correct": 9,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 4,
+   "false_answers": 3,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  "held_out": {
+   "answerable_n": 17,
+   "answerable_answered": 11,
+   "answerable_abstained": 6,
+   "citation_correct": 4,
+   "must_abstain_n": 6,
+   "must_abstain_refused": 5,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-042"
+   ]
+  }
+ },
+ "no_false_answer": {
+  "calibration": {
+   "answerable_n": 17,
+   "answerable_answered": 0,
+   "answerable_abstained": 17,
+   "citation_correct": 0,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 7,
+   "false_answers": 0,
+   "false_answer_ids": []
+  },
+  "held_out": {
+   "answerable_n": 17,
+   "answerable_answered": 0,
+   "answerable_abstained": 17,
+   "citation_correct": 0,
+   "must_abstain_n": 6,
+   "must_abstain_refused": 6,
+   "false_answers": 0,
+   "false_answer_ids": []
+  }
+ },
+ "scored": {
+  "calibration": {
+   "answerable_n": 17,
+   "answerable_answered": 13,
+   "answerable_abstained": 4,
+   "citation_correct": 9,
+   "must_abstain_n": 7,
+   "must_abstain_refused": 4,
+   "false_answers": 3,
+   "false_answer_ids": [
+    "M2-037",
+    "M2-039",
+    "M2-041"
+   ]
+  },
+  "held_out": {
+   "answerable_n": 17,
+   "answerable_answered": 11,
+   "answerable_abstained": 6,
+   "citation_correct": 4,
+   "must_abstain_n": 6,
+   "must_abstain_refused": 5,
+   "false_answers": 1,
+   "false_answer_ids": [
+    "M2-042"
+   ]
+  }
+ },
+ "multi_hop_sensitivity": [
+  {
+   "id": "M2-015",
+   "half": "calibration",
+   "k": 10,
+   "anchor_ranks": [
+    7,
+    5
+   ],
+   "doc_ranks": [
+    1
+   ],
+   "all_anchors_rank": 7,
+   "all_docs_rank": 1
+  },
+  {
+   "id": "M2-016",
+   "half": "held_out",
+   "k": 10,
+   "anchor_ranks": [
+    6,
+    4
+   ],
+   "doc_ranks": [
+    6,
+    1
+   ],
+   "all_anchors_rank": 6,
+   "all_docs_rank": 6
+  },
+  {
+   "id": "M2-017",
+   "half": "calibration",
+   "k": 10,
+   "anchor_ranks": [
+    3,
+    1
+   ],
+   "doc_ranks": [
+    2,
+    1
+   ],
+   "all_anchors_rank": 3,
+   "all_docs_rank": 2
+  },
+  {
+   "id": "M2-018",
+   "half": "held_out",
+   "k": 10,
+   "anchor_ranks": [
+    1,
+    2
+   ],
+   "doc_ranks": [
+    1,
+    2
+   ],
+   "all_anchors_rank": 2,
+   "all_docs_rank": 2
+  },
+  {
+   "id": "M2-019",
+   "half": "calibration",
+   "k": 10,
+   "anchor_ranks": [
+    1,
+    4
+   ],
+   "doc_ranks": [
+    1,
+    4
+   ],
+   "all_anchors_rank": 4,
+   "all_docs_rank": 4
+  },
+  {
+   "id": "M2-020",
+   "half": "held_out",
+   "k": 10,
+   "anchor_ranks": [
+    null,
+    null
+   ],
+   "doc_ranks": [
+    1,
+    null
+   ],
+   "all_anchors_rank": null,
+   "all_docs_rank": null
+  },
+  {
+   "id": "M2-021",
+   "half": "calibration",
+   "k": 10,
+   "anchor_ranks": [
+    2,
+    3
+   ],
+   "doc_ranks": [
+    2,
+    1
+   ],
+   "all_anchors_rank": 3,
+   "all_docs_rank": 2
+  },
+  {
+   "id": "M2-022",
+   "half": "held_out",
+   "k": 10,
+   "anchor_ranks": [
+    2,
+    null
+   ],
+   "doc_ranks": [
+    1,
+    9
+   ],
+   "all_anchors_rank": null,
+   "all_docs_rank": 9
+  }
+ ],
+ "retrieval": {
+  "calibration": {
+   "n": 17,
+   "recall@1": 7,
+   "recall@3": 11,
+   "recall@5": 13,
+   "mrr": 0.634313725490196
+  },
+  "held_out": {
+   "n": 17,
+   "recall@1": 5,
+   "recall@3": 11,
+   "recall@5": 11,
+   "mrr": 0.5441176470588235
+  },
+  "all_answerable": {
+   "n": 34,
+   "recall@1": 12,
+   "recall@3": 22,
+   "recall@5": 24,
+   "mrr": 0.5892156862745098
+  }
+ }
+}

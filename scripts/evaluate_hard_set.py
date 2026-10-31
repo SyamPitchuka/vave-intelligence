@@ -125,6 +125,7 @@ def main() -> None:
     parser.add_argument("--semantic-threshold", type=float, default=None)
     parser.add_argument("--sweep", type=float, nargs=3, metavar=("START", "STOP", "STEP"), default=None)
     parser.add_argument("--split-families", type=int, default=None, metavar="N")
+    parser.add_argument("--split-by-time", action="store_true")
     parser.add_argument("--disable", action="append", default=[], choices=CLASSIFIER_FLAGS)
     args = parser.parse_args()
     workbook, out_path = args.workbook, args.out
@@ -283,6 +284,17 @@ def main() -> None:
     # A family is the query component. The three queries of a family paraphrase one idea, so splitting by query
     # would leak; the split is by family, in the order families first appear in TestQueries.
     family_order = list(dict.fromkeys(str(row.get("Component", "")).strip() for row in queries))
+    _first = {}
+    for _row in queries:
+        _f = str(_row.get("Component", "")).strip()
+        _d = _row.get("Idea generation date")
+        if _d is None or str(_d).strip() == "":
+            continue
+        _d = _d.isoformat()[:10] if hasattr(_d, "isoformat") else str(_d)[:10]
+        if _f not in _first or _d < _first[_f]:
+            _first[_f] = _d
+    if args.split_by_time:
+        family_order = sorted(family_order, key=lambda f: (_first.get(f, "9999-99-99"), f))
     family_of_query = {str(row["Idea_ID"]).strip(): str(row.get("Component", "")).strip() for row in queries}
     for record in records:
         record["family"] = family_of_query[record["query"]]
